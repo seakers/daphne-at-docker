@@ -1,0 +1,35 @@
+{
+  "type": "run_function",
+  "params":
+  [
+    { "name": "ANOMALY", "type": "ANOMALY", "options": "", "from_context": false, "mandatory": true }
+  ],
+  "objective": "provide the risks of a certain anomaly",
+  "function":
+  {
+    "run_template": "dialogue_functions.get_anomaly_risks(data['ANOMALY'])",
+    "results": [
+      {
+        "result_type": "list",
+        "result_fields": {
+          "risk": "item"
+        }
+      }
+    ]
+  },
+  "voice_response": [
+    {
+      "type": "list",
+      "begin": "The potential risks for the ${ANOMALY} anomaly are:",
+      "repeat": "${risk}",
+      "end": "."
+    }
+  ],
+  "visual_response": [
+    {
+      "type": "list",
+      "begin": "The potential risks for the ${ANOMALY} anomaly are: ",
+      "item_template": "${risk}"
+    }
+  ]
+}
