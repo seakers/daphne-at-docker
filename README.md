@@ -13,9 +13,7 @@ git clone https://github.com/seakers/daphne-at-docker.git
 cd daphne-at-docker
 ```
 
-2. Add the OpenAI API key
-<br>
-   Create a .env file in the daphne_brain folder and the open ai api key
+2. Create a .env file in the daphne_brain folder and the open ai api key
 ```bash
 api_key=APIKEY
 ```
