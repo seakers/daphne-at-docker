@@ -11,8 +11,17 @@
 ```bash
 git clone https://github.com/seakers/daphne-at-docker.git
 cd daphne-at-docker
-docker-compose up
+```
 
+2. Add the OpenAI API key
+   Create a .env file in the daphne_brain folder and the open ai api key
+```bash
+api_key=APIKEY
+```
+
+3.Setup the docker container 
+```bash
+docker-compose up
 ```
 
 ## Access
