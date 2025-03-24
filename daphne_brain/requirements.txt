@@ -1,0 +1,33 @@
+channels~=3.0.3
+channels-redis~=3.2.0
+dateparser~=1.0.0
+Django~=3.2.2
+django-cors-headers~=3.7.0
+django-filter~=2.4.0
+djangorestframework~=3.12.2
+neo4j==5.25.0
+neo4j-driver==4.2.1
+numpy~=1.24.4
+pandas~=2.1.0
+pika~=1.2.0
+psycopg2-binary~=2.9.10
+python-Levenshtein~=0.12.2
+redis~=3.5.3
+schedule==1.1.0
+scipy~=1.13.1
+# spacy~=3.0.3
+# statsmodels~=0.12.2
+SQLAlchemy==1.4.14
+# tensorflow~=2.4.1
+thrift~=0.13.0
+xlrd~=2.0.1
+asgiref~=3.3.4
+scikit-learn~=1.0.1
+pslpython~=2.2.2
+PyYAML~=6.0.2
+openai~=1.63.2
+langchain~=0.3.17
+langchain-community~=0.3.16
+python-dotenv[cli]~=1.0.1
+typing_extensions~=4.12.2
+langchain_neo4j~=0.3.0

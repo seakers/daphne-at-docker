@@ -1,0 +1,35 @@
+{
+  "type": "run_function",
+  "params":
+  [
+    { "name": "ANOMALY", "type": "ANOMALY", "options": "", "from_context": false, "mandatory": true }
+  ],
+  "objective": "provide the components affected by a certain anomaly",
+  "function":
+  {
+    "run_template": "dialogue_functions.get_anomaly_affected_subsystem(data['ANOMALY'])",
+    "results": [
+      {
+        "result_type": "list",
+        "result_fields": {
+          "subsystem": "item"
+        }
+      }
+    ]
+  },
+  "voice_response": [
+    {
+      "type": "list",
+      "begin": "The components/subsystems affected by the ${ANOMALY} anomaly are:",
+      "repeat": "${subsystem}.",
+      "end": "."
+    }
+  ],
+  "visual_response": [
+    {
+      "type": "list",
+      "begin": "The components/subsystems affected by the ${ANOMALY} anomaly are:",
+      "item_template": "${subsystem}."
+    }
+  ]
+}
