@@ -68,8 +68,10 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
         parsed_symptoms_list.append(symptom)
 
     # Setup neo4j database connection
+    print("Connecting to the neo4j database...")
     driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
     session = driver.session()
+    print("Connected to the neo4j database.")
 
     # Build the query based on the symptoms list
     query = 'MATCH (m:Measurement)-[r]->(a:Anomaly) WHERE '
@@ -80,11 +82,13 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
             clause = clause + ' OR '
         query = query + clause
     query = query + ' RETURN DISTINCT a.Title'
+    print("Querying the neo4j database...")
 
     # Query the database and parse the result (which is a list of the anomalies which symptoms have non empty
     # intersection with the requested symptoms)
     result = session.run(query)
     diagnosis = [node[0] for node in result]
+    print("Query successful.")
 
     parsed_input_symptoms = []
     for symptom in parsed_symptoms_list:
@@ -1083,19 +1087,19 @@ def get_binary_signatures(signature, header):
 
 def get_astrobee_procedure_list_from_pride():
     requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
-    # url = "http://localhost:8000/api/procedures/available"
+    url = "https://localhost:8000/api/procedures/available"
     # For testing, temporarily disable SSL verification at the Python level
     # WARNING: This is not recommended for production code
     old_https_context = ssl._create_default_https_context
     ssl._create_default_https_context = ssl._create_unverified_context
     print("here1------------------------------------------")
-    url = "https://localhost/api/procedures/available"
+    # url = "https://localhost/api/procedures/available"
     payload = {}
     headers = {
         'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
     }
 
-    response = requests.request("GET", url, headers=headers, data=payload,verify=False)
+    response = requests.request("GET", url, headers=headers, data=payload, verify=False)
     print("Response status code:", response.status_code)
     # response = json.loads(response.content)
     if response.status_code == 200:

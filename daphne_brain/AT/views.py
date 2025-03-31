@@ -117,8 +117,8 @@ class UserResponse(APIView):
 class YesOrNO(APIView):
     def post(self, request):
         global astrobee_status
-        print("yes or no status:", astrobee_status)
-        print("yes or not data:", request.data)
+        # print("yes or no status:", astrobee_status)
+        # print("yes or not data:", request.data)
         if 'user_response' in request.data:
             global response
             response = request.data['user_response']
@@ -138,7 +138,7 @@ class YesOrNO(APIView):
 class PrideStatus(APIView):
     def post(self, request):
         date = datetime.now().astimezone().isoformat()
-        print("pride view", request.data)
+        # print("pride view", request.data)
         if 'initialData' in request.data:
             params = request.data['initialData']
             status = params[0]['argValue']
@@ -149,7 +149,7 @@ class PrideStatus(APIView):
 
 class AstrobeeStatus(APIView):
     def post(self, request, format=None):
-        print("astrobee_status:", astrobee_status)
+        # print("astrobee_status:", astrobee_status)
         status = {'astrobee_status': astrobee_status}
         return Response(status)
 
@@ -160,8 +160,8 @@ class StartAstrobeeProcedure(APIView):
         procedure_staticID = request.data['procedureID'].replace('"', '')
 
         # start/open a procedure to send astrobee
-        # url = "http://0.0.0.0:8000/api/procedures/available/" + procedure_staticID
-        url = "https://localhost/api/procedures/available/" + procedure_staticID
+        # url = "https://0.0.0.0:8000/api/procedures/available/" + procedure_staticID
+        url = "https://localhost:8000/api/procedures/available/" + procedure_staticID
 
         payload = json.dumps({
             "user": "test",
@@ -180,8 +180,8 @@ class StartAstrobeeProcedure(APIView):
 
         if response.ok:
             # start automation of the procedure
-            # url = 'http://0.0.0.0:8000/api/procedures/' + procedure_runtime_ID + '/startAutomation'
-            url = 'https://localhost/api/procedures/' + procedure_runtime_ID + '/startAutomation'
+            # url = 'https://0.0.0.0:8000/api/procedures/' + procedure_runtime_ID + '/startAutomation'
+            url = 'https://localhost:8000/api/procedures/' + procedure_runtime_ID + '/startAutomation'
             payload = json.dumps({
                 "user": "test",
             })
@@ -276,7 +276,7 @@ class RequestDiagnosis(APIView):
     def post(self, request):
         # Retrieve the symptoms list from the request
         symptoms_list = json.loads(request.data['symptomsList'])
-        print("hetre----------------------------------")
+        print("herrrre----------------------------------")
 
         # Query the neo4j graph (do not delete first line until second one is tested)
         # diagnosis_list = diagnose_symptoms_by_subset_of_anomaly(parsed_symptoms_list)

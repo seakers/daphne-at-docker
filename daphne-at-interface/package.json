@@ -9,7 +9,7 @@
     "build": "webpack --display-optimization-bailout --config webpack.dev.js",
     "build:prod": "webpack --display-optimization-bailout --config webpack.prod.js",
     "watch": "webpack --watch --display-optimization-bailout --config webpack.dev.js",
-    "serve": "firefox http://localhost:8080/index.html",
+    "serve": "firefox http://localhost:8081/index.html",
     "nocache:index": "node node_modules/asset-cache-bust/bin/asset-cache-bust --asset-root dist dist/index.html"
   },
   "author": "SEAK",

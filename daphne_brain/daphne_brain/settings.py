@@ -125,14 +125,16 @@ AUTH_PASSWORD_VALIDATORS = [
 
 CORS_ORIGIN_WHITELIST = (
     'http://daphne.engr.tamu.edu',
-    'http://localhost:8080'
+    'http://localhost:8080',
+    'http://localhost:8081'
 )
 
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = (
     'http://daphne.engr.tamu.edu',
-    'http://localhost:8080'
+    'http://localhost:8080',
+    'http://localhost:8081'
 )
 
 # Internationalization

@@ -247,8 +247,8 @@ export default {
         console.log('Polling Astrobee status...');
         try {
           const response = await fetchPost('/api/at/astrobee_status');
-          const response1 = await fetchPost('/api/at/pride_status');
-          const response2 = await fetchPost('/api/at/yesorno');
+          // const response1 = await fetchPost('/api/at/pride_status');
+          // const response2 = await fetchPost('/api/at/yesorno');
           if (response.ok) {
             const data = await response.json();
             console.log('Got Astrobee status:', data);
