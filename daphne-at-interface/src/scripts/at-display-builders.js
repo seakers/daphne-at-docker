@@ -1,6 +1,6 @@
 export function detectionColorStyle(symptomsList) {
     if (symptomsList.length === 0) {
-        let theColors = {'background': 'var(--primary-color)', 'font': 'var(--secondary-color)'};
+        let theColors = { 'background': 'var(--primary-color)', 'font': 'var(--secondary-color)' };
         return theColors
     }
     else {
@@ -17,11 +17,11 @@ export function detectionColorStyle(symptomsList) {
             }
         }
         if (topThresholdTag === 'warningLevel') {
-            let theColors = {'background': '#3A0000', 'font': '#FF0000'};
+            let theColors = { 'background': '#3A0000', 'font': '#FF0000' };
             return theColors
         }
         else {
-            let theColors = {'background': '#342E00', 'font': '#FFBF00'};
+            let theColors = { 'background': '#342E00', 'font': '#FFBF00' };
             return theColors
         }
     }
@@ -58,7 +58,8 @@ function buildThresholdTrace(xaxis, yval, the_color, the_style, the_name, the_bo
             color: the_color,
             dash: the_style,
             width: 1,
-        }};
+        }
+    };
 
     return trace
 }
@@ -154,6 +155,8 @@ export function processedPlotData(telemetryDict, selectedVariables) {
     // Parse de jsoned dataframe to a javascript object
     let values = JSON.parse(telemetryDict['values']);
     let info = JSON.parse(telemetryDict['info']);
+    console.log("telemetry values", values);
+    console.log("telemetry info", info);
     let selectedVariablesUnits = {};
     for (let index in selectedVariables) {
         let variable = selectedVariables[index];
@@ -226,7 +229,7 @@ export function processedPlotData(telemetryDict, selectedVariables) {
             if (colorIndex == colors.length - 1) {
                 colorIndex = 0;
             }
-            trace['line'] = {color: colors[colorIndex]};
+            trace['line'] = { color: colors[colorIndex] };
             trace['yaxis'] = axisName;
             processedData.push(trace);
             axisIndex++;
@@ -247,9 +250,9 @@ export function setLayout(selectedVariables, telemetryInfo, plotData) {
 
     let layout = {
         autosize: true,
-        margin: {l: 35, r: 10, b: 25, t: 20, pad: 0},
+        margin: { l: 35, r: 10, b: 25, t: 20, pad: 0 },
         showlegend: true,
-        legend: {orientation: 'h', font: {family: 'sans-serif', size: 12, color: 'var(--color__text)'}},
+        legend: { orientation: 'h', font: { family: 'sans-serif', size: 12, color: 'var(--color__text)' } },
         plot_bgcolor: '#111111',
         paper_bgcolor: '#111111',
         xaxis: {
@@ -259,12 +262,12 @@ export function setLayout(selectedVariables, telemetryInfo, plotData) {
         },
         yaxis: {
             side: 'left',
-            titlefont: {color: 'var(--color__text)',},
-            tickfont: {color: 'var(--color__text)',},
+            titlefont: { color: 'var(--color__text)', },
+            tickfont: { color: 'var(--color__text)', },
             tickcolor: 'var(--color__text)',
             gridcolor: 'var(--color__text)',
             linecolor: 'var(--color__text)',
-            anchor:'free',
+            anchor: 'free',
             position: 0.01,
         }
     };
@@ -316,14 +319,14 @@ export function setLayout(selectedVariables, telemetryInfo, plotData) {
                 layout[axisName] = JSON.parse(JSON.stringify(layout['yaxis']));
                 layout[axisName]['range'] = buildRange(plotData, currentVariableWithUnits, currentVariable, telemetryInfo);
                 layout[axisName]['overlaying'] = 'y';
-                layout[axisName]['position'] = shift*i + 0.01;
+                layout[axisName]['position'] = shift * i + 0.01;
             }
 
             if (colorIndex == colors.length - 1) {
                 colorIndex = 0;
             }
 
-            layout[axisName]['tickfont'] = {color: colors[colorIndex]};
+            layout[axisName]['tickfont'] = { color: colors[colorIndex] };
             layout[axisName]['tickcolor'] = colors[colorIndex];
             layout[axisName]['gridcolor'] = gridcolors[colorIndex];
             layout[axisName]['linecolor'] = gridcolors[colorIndex];
@@ -331,7 +334,7 @@ export function setLayout(selectedVariables, telemetryInfo, plotData) {
             colorIndex++;
             axisIndex++;
         }
-        layout['xaxis']['domain'] = [0.01+shift*(selectedVariables.length-1), 1];
+        layout['xaxis']['domain'] = [0.01 + shift * (selectedVariables.length - 1), 1];
         layout['showlegend'] = true;
     }
 
@@ -354,7 +357,7 @@ function markChildrenObtainNonChildrenIndex(procedure, stepIndex, checkThis) {
         i += 1;
         // If the iteration variable is outside range, switch the loop condition (to break the while, although we
         // actually haven't found a non-children)
-        if (i >= totalSteps) {break}
+        if (i >= totalSteps) { break }
         else {
             // Retrieve next step depth
             let nextDepth = procedure['procedureSteps'][i]['depth'];

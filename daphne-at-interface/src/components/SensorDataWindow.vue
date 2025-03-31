@@ -84,6 +84,12 @@
             },
             plotLayout () {
                 try {
+                    console.log('symptomsList', this.symptomsList);
+                    console.log('selectedVariables', this.selectedVariables);
+                    console.log('telemetryInfo', this.telemetryInfo);
+                    console.log('input variables', this.inputVariables);
+                    console.log('plotData', this.plotData);
+                
                     return setLayout(this.selectedVariables, this.telemetryInfo, this.plotData);
                 }
                 catch(err) {

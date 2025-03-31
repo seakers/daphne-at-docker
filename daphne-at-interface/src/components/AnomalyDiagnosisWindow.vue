@@ -462,8 +462,8 @@ export default {
     },
   },
   mounted() {
-    this.startAstrobeeStatusPolling();
-    console.log("Astrobee status polling started");
+    // this.startAstrobeeStatusPolling();
+    // console.log("Astrobee status polling started");
   },
   beforeDestroy() {
     // Clean up interval when component is destroyed
