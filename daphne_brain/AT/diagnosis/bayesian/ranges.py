@@ -1,11 +1,11 @@
 # ranges.py
 # Author: Joshua Elston
-# Last Edited: 12/11/2024
+# Last Edited: 03/31/2025
 
 # Stores the measurement_ranges dictionary --> called in probabilities.py
 
-# 35 (out of 65 distinct (and 79 total)) measurement ranges from Neo4j are summarized below. The criteria for including these measurements are:
-#   1) Must be a unique measurement (those measured independently for L1 and L2 in HERA only mentioned once) <-- such measurements are also identified with notes
+# 43 (out of 65 distinct (and 79 total)) measurement ranges from Neo4j are summarized below. The criteria for including these measurements are:
+#   1) Must be a unique measurement (those measured independently for L1 and L2 in HERA are now split into individual entries)
 #   2) Measurement must be included in Neo4j
 #   3) Measurement must be related to at least one anomaly in Neo4j
 # Measurements not satisfying either criterion 2 or 3 are included in the [UNUSED]ranges.py script
@@ -14,7 +14,7 @@
 # included in the HSS on Kazuki's lab machine. They are still reported here to match the KG, but this discrepancy should be
 # resolved in future
 
-# Example bound meanings are shown for ppO2 (lines 227-233)
+# Example bound meanings are shown for ppO2 (L1) (lines 263-267)
 
 # Create a dictionary to store the measurement ranges for each of the parameters being measured
 measurement_ranges = {
@@ -46,7 +46,14 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (1500, 3500, False, True),
         'Exceeds_LowerWarningLimit': (None, 1500, False, True)
     },
-    "Cabin Temperature": { # NOTE: Only one Temperature value is stored, though it is separately measured on L1 and L2
+    "Cabin Temperature (L1)": {
+        'Exceeds_UpperWarningLimit': (87.7, None, True, False),
+        'Exceeds_UpperCautionLimit': (79, 87.7, True, False),
+        'Nominal': (68, 79, False, False), # Nominal: 72.3°F (L1 = L2)
+        'Exceeds_LowerCautionLimit': (64, 68, False, True),
+        'Exceeds_LowerWarningLimit': (None, 64, False, True)
+    },
+    "Cabin Temperature (L2)": {
         'Exceeds_UpperWarningLimit': (87.7, None, True, False),
         'Exceeds_UpperCautionLimit': (79, 87.7, True, False),
         'Nominal': (68, 79, False, False), # Nominal: 72.3°F (L1 = L2)
@@ -138,7 +145,14 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
-    "Humidity": { # NOTE: Only one Humidity value is stored, though it is separately measured on L1 and L2
+    "Humidity (L1)": {
+        'Exceeds_UpperWarningLimit': (70, None, True, False),
+        'Exceeds_UpperCautionLimit': (61, 70, True, False),
+        'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
+        'Exceeds_LowerCautionLimit': (40, 50, False, True),
+        'Exceeds_LowerWarningLimit': (None, 40, False, True)
+    },
+    "Humidity (L2)": {
         'Exceeds_UpperWarningLimit': (70, None, True, False),
         'Exceeds_UpperCautionLimit': (61, 70, True, False),
         'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
@@ -203,38 +217,73 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (2, 5, False, True),
         'Exceeds_LowerWarningLimit': (None, 2, False, True)
     },
-    "ppCO2": { # NOTE: Only one ppCO2 value is stored, though it is separately measured on L1 and L2
+    "ppCO2 (L1)": {
         'Exceeds_UpperWarningLimit': (6, None, True, False),
         'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
         'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
-    "ppH2": { # NOTE: Only one ppH2 value is stored, though it is separately measured on L1 and L2
+    "ppCO2 (L2)": {
+        'Exceeds_UpperWarningLimit': (6, None, True, False),
+        'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
+        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
+        'Exceeds_LowerCautionLimit': (-2, -1, False, True),
+        'Exceeds_LowerWarningLimit': (None, -2, False, True)
+    },
+    "ppH2 (L1)": {
         'Exceeds_UpperWarningLimit': (0.1, None, True, False),
         'Exceeds_UpperCautionLimit': (0.07, 0.1, True, False),
         'Nominal': (0.02, 0.07, False, False), # Nominal: 0.04 mmHG (L1 = L2)
         'Exceeds_LowerCautionLimit': (0.01, 0.02, False, True),
         'Exceeds_LowerWarningLimit': (None, 0.01, False, True)
     },
-    "ppN2": { # NOTE: Only one ppN2 value is stored, though it is separately measured on L1 and L2
+    "ppH2 (L2)": {
+        'Exceeds_UpperWarningLimit': (0.1, None, True, False),
+        'Exceeds_UpperCautionLimit': (0.07, 0.1, True, False),
+        'Nominal': (0.02, 0.07, False, False), # Nominal: 0.04 mmHG (L1 = L2)
+        'Exceeds_LowerCautionLimit': (0.01, 0.02, False, True),
+        'Exceeds_LowerWarningLimit': (None, 0.01, False, True)
+    },
+    "ppN2 (L1)": {
         'Exceeds_UpperWarningLimit': (600, None, True, False),
         'Exceeds_UpperCautionLimit': (591, 600, True, False),
-        'Nominal': (480, 591, False, False), # NOTE: L1 Nominal: 581.75 mmHG, L2 Nominal: 581.84 mmHG
+        'Nominal': (480, 591, False, False), # Nominal: 581.75 mmHG
         'Exceeds_LowerCautionLimit': (220.1, 480, False, True),
         'Exceeds_LowerWarningLimit': (None, 220.1, False, True)
     },
-    "ppO2": { # NOTE: Only one ppO2 value is stored, though it is separately measured on L1 and L2
+    "ppN2 (L2)": {
+        'Exceeds_UpperWarningLimit': (600, None, True, False),
+        'Exceeds_UpperCautionLimit': (591, 600, True, False),
+        'Nominal': (480, 591, False, False), # Nominal: 581.84 mmHG
+        'Exceeds_LowerCautionLimit': (220.1, 480, False, True),
+        'Exceeds_LowerWarningLimit': (None, 220.1, False, True)
+    },
+    "ppO2 (L1)": {
         'Exceeds_UpperWarningLimit': (185, None, True, False), # ≥ 185
         'Exceeds_UpperCautionLimit': (175, 185, True, False), # 175 ≤ ppO2 < 185
-        'Nominal': (155, 175, False, False), # 155 < ppO2 < 175 --> NOTE: L1 Nominal: 163.79 mmHG, L2 Nominal: 163.81 mmHG
+        'Nominal': (155, 175, False, False), # 155 < ppO2 < 175 --> Nominal: 163.79 mmHG
         'Exceeds_LowerCautionLimit': (145, 155, False, True), # 145 < ppO2 ≤ 155
         'Exceeds_LowerWarningLimit': (None, 145, False, True) # ≤ 145
     },
-    "Pressure": { # NOTE: Only one Pressure value is stored, though it is separately measured on L1 and L2
+    "ppO2 (L2)": {
+        'Exceeds_UpperWarningLimit': (185, None, True, False),
+        'Exceeds_UpperCautionLimit': (175, 185, True, False),
+        'Nominal': (155, 175, False, False), # Nominal: 163.81 mmHG
+        'Exceeds_LowerCautionLimit': (145, 155, False, True),
+        'Exceeds_LowerWarningLimit': (None, 145, False, True)
+    },
+    "Pressure (L1)": {
         'Exceeds_UpperWarningLimit': (1.5, None, True, False),
         'Exceeds_UpperCautionLimit': (1.15, 1.5, True, False),
-        'Nominal': (0.89, 1.15, False, False), # NOTE: L1 Nominal: 0.99 atm, L2 Nominal: 0.98 atm
+        'Nominal': (0.89, 1.15, False, False), # Nominal: 0.99 atm
+        'Exceeds_LowerCautionLimit': (0.58, 0.89, False, True),
+        'Exceeds_LowerWarningLimit': (None, 0.58, False, True)
+    },
+    "Pressure (L2)": {
+        'Exceeds_UpperWarningLimit': (1.5, None, True, False),
+        'Exceeds_UpperCautionLimit': (1.15, 1.5, True, False),
+        'Nominal': (0.89, 1.15, False, False), # Nominal: 0.98 atm
         'Exceeds_LowerCautionLimit': (0.58, 0.89, False, True),
         'Exceeds_LowerWarningLimit': (None, 0.58, False, True)
     },
@@ -245,7 +294,14 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (1292, 1333, False, True),
         'Exceeds_LowerWarningLimit': (None, 1292, False, True)
     },
-    "Total Cabin Pressure": { # NOTE: Only one Total Cabin Pressure value is stored, though it is separately measured on L1 and L2
+    "Total Cabin Pressure (L1)": {
+        'Exceeds_UpperWarningLimit': (15.2, None, True, False),
+        'Exceeds_UpperCautionLimit': (14.9, 15.2, True, False),
+        'Nominal': (14.55, 14.9, False, False), # Nominal: 14.7 psi (L1 = L2)
+        'Exceeds_LowerCautionLimit': (12.7, 14.55, False, True),
+        'Exceeds_LowerWarningLimit': (None, 12.7, False, True)
+    },
+    "Total Cabin Pressure (L2)": {
         'Exceeds_UpperWarningLimit': (15.2, None, True, False),
         'Exceeds_UpperCautionLimit': (14.9, 15.2, True, False),
         'Nominal': (14.55, 14.9, False, False), # Nominal: 14.7 psi (L1 = L2)
