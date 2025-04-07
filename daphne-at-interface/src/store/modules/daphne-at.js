@@ -471,7 +471,11 @@ const actions = {
 
         // Make a local copy of the couple of state variables to be used
         let info = JSON.parse(JSON.stringify(state.telemetryInfo));
+        let telemetryValues = state.telemetryValues;
+        console.log("telemetry values", telemetryValues)
+        console.log("selectedSymptomsList", selectedSymptomsList)
         let parsedSelectedSymptomsList = JSON.parse(JSON.stringify(selectedSymptomsList));
+
 
         // Parse the selected symptoms list. Such list contains the names of each measurement with the level add-on
         // (for example, "ppN2 (L1)". To query the knowledge graph, such add-on should be removed (amazing).
@@ -483,12 +487,67 @@ const actions = {
             parsedSelectedSymptomsList[index]['display_name'] = displayName;
         }
 
+       
+
         // Make the diagnosis request to the backend
         let reqData = new FormData();
+        let telemetryValuesDict = Object.fromEntries(
+            Object.entries(telemetryValues).map(([key, value]) => [key, { ...value }])
+        );
+        
+        let parsedTelemetryValues = {};
+
+        for (let i in telemetryValuesDict) { 
+            let value = telemetryValuesDict[i];
+            let valueDict = telemetryValuesDict[i];
+            const reversedArray = Object.entries(valueDict)
+                .reverse()  // Reverse the array
+                .map(([key, value]) => [Number(key), value]);  // Convert keys back to numbers if needed
+
+            console.log("telemetry reversed array", reversedArray)
+
+                // Convert the array back into an object
+            console.log("telemetry reversed array i", reversedArray[0])
+            parsedTelemetryValues[i] = reversedArray[0][1];
+            // console.log("telemetry reversed dict value", reversedValueDict)
+            // for (let j in value) {
+            //     console.log("telemetry dict value j", value[j])
+            // if (value[j] != null || value[j] != undefined) {
+            //         parsedTelemetryValues[i] = value[j];
+            //         break;
+            //     }
+            // }
+            // console.log("telemetry dict value", value)
+        }
+
+        console.log("parsed telemetry values", parsedTelemetryValues); 
+
+
+        // for (let key in telemetryValues) {
+        //     const plainObj = JSON.parse(JSON.stringify(telemetryValues[key]));
+    
+        //     // Find the first numeric value in the object (excluding __ob__ property)
+        //     let firstValueIndex = null;
+        //     for (let i = 0; i < Object.keys(plainObj).length; i++) {
+        //         if (!isNaN(Number(plainObj[i])) && plainObj[i] !== null && plainObj[i] !== undefined) {
+        //             firstValueIndex = i;
+        //             break;
+        //         }
+        //     }
+            
+        //     // Use the found index, or undefined if none found
+        //     parsedTelemetryValues[key] = firstValueIndex !== null ? plainObj[firstValueIndex] : undefined;
+        //     console.log("telemetry value each", parsedTelemetryValues[key]);
+        // }
+
+        console.log("parsedTelemetryValues", parsedTelemetryValues)
+        console.log("telemetry values", telemetryValues)
         reqData.append('symptomsList',  JSON.stringify(parsedSelectedSymptomsList));
+        reqData.append('telemetryValues',  JSON.stringify(parsedTelemetryValues));
         let response = await fetchPost('/api/at/requestDiagnosis', reqData);
         if (response.ok) {
             let diagnosis_report = await response.json();
+            console.log("new diagnosis_report from backend", diagnosis_report)
             commit('mutateDiagnosisReport', diagnosis_report);
             const now = new Date();
             let formattedDate = now.toLocaleString('en-US', {

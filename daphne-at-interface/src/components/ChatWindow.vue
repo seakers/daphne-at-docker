@@ -11,6 +11,17 @@
           <component v-for="(response, index) in piece['visual_message']"
                      v-bind:is="responseTypes[piece['visual_message_type'][index]]" :response="formatText(response)"
                      :key="index"></component>
+
+          <!-- Add option buttons if present in the message -->
+          <div v-if="piece.options && piece.options.length > 0" class="option-buttons">
+            <button 
+              v-for="option in piece.options" 
+              :key="option"
+              class="button theme-buttons option-button"
+              @click="handleOptionClick(piece, option)">
+              {{ option }}
+            </button>
+          </div>  
         </div>
         <img src="assets/img/loader.svg" style="display: block; margin: auto;" align="center" height="64" width="64"
              v-if="isLoading" alt="Loading spinner">
@@ -157,6 +168,28 @@ export default {
     }
   },
   methods: {
+    handleOptionClick(message, option) {
+      // First, add the user's selection to dialogue history
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": option,
+        "visual_message_type": ["text"],
+        "visual_message": [option],
+        "writer": "user"
+      });
+      
+      // If there's an optionsCallback, call it
+      if (message.optionsCallback && typeof message.optionsCallback === 'function') {
+        message.optionsCallback(option);
+      } else if (message.optionsCallbackEvent) {
+        // Emit event for external handlers
+        this.$root.$emit(message.optionsCallbackEvent, option);
+      }
+      
+      // Remove options from the message to prevent multiple selections
+      this.$nextTick(() => {
+        message.options = [];
+      });
+    },
     scrollToBottom: function () {
       let container = this.$el.querySelector(".chat-area");
       container.scrollTop = container.scrollHeight;
@@ -309,6 +342,27 @@ export default {
   overflow: auto;
   flex-grow: 1;
   margin: 0.5em;
+}
+
+.option-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.option-button {
+  padding: 6px 12px;
+  background-color: #005454;
+  color: white;
+  border: 1px solid #0AFEFF;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.option-button:hover {
+  background-color: #007777;
 }
 
 .chat-message {

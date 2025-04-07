@@ -22,8 +22,8 @@ def hidden_queries(infer, split_probability_dict, evidence, potential_evidence, 
     }
 
     additional_evidence[potential_evidence] = additional_evidence_mapping[evidence_state]
-    print(f'Analyzing {additional_evidence}')
-    print('---------------------------------------------------------------------------')
+    # print(f'Analyzing {additional_evidence}')
+    # print('---------------------------------------------------------------------------')
 
     evidence.update(additional_evidence)
     # print(f'Updated evidence: {evidence}')
@@ -63,14 +63,14 @@ def hidden_queries(infer, split_probability_dict, evidence, potential_evidence, 
     sorted_anomalies = sorted(normalized_probabilities.items(), key = lambda x: x[1], reverse = True)
 
     # Print the sorted anomalies with their probabilities of being present
-    print()
-    print("Anomalies ranked by probability of presence:")
-    for anomaly, prob in sorted_anomalies[:5]:
-        if anomaly == 'No Anomalies Present':
-            print(f"P({anomaly}): {prob:.6f}")
-        else:
-            print(f"P({anomaly} = 1): {prob:.6f}")
-    print()
+    # print()
+    # print("Anomalies ranked by probability of presence:")
+    # for anomaly, prob in sorted_anomalies[:5]:
+    #     if anomaly == 'No Anomalies Present':
+    #         print(f"P({anomaly}): {prob:.6f}")
+    #     else:
+    #         print(f"P({anomaly} = 1): {prob:.6f}")
+    # print()
 
     formatted_probabilities = {key: float(value) for key, value in normalized_probabilities.items()}
     # print(f'Formatted probabilities: {formatted_probabilities}')
@@ -97,10 +97,10 @@ def select_best_evidence(infer, split_probability_dict, hidden_probabilities_dic
 
     # Iterate over all hidden nodes
     for potential_evidence, associated_anomaly in hidden_probabilities_dict.items():
-        print(f'Potential Evidence: {potential_evidence}')
+        # print(f'Potential Evidence: {potential_evidence}')
         hidden_based_on_tm = infer.query(variables = [potential_evidence], evidence = current_evidence)
         hp_equals_1 = hidden_based_on_tm.values[1]
-        print(f"Pr({potential_evidence} = 1|TM) = {round(hp_equals_1, 8)}")
+        # print(f"Pr({potential_evidence} = 1|TM) = {round(hp_equals_1, 8)}")
 
         # # Extract the name of the anomaly associated with the piece of hidden evidence being added
         # anomaly_name = next(iter(associated_anomaly))
@@ -128,32 +128,33 @@ def select_best_evidence(infer, split_probability_dict, hidden_probabilities_dic
 
         # Calculate the average entropy of the probabilities distributions based on the
         # addition of the new piece of information (whether it is True or False)
-        print('========================================================================================================================================')
-        print(f'For {potential_evidence}, the updated entropies are: {entropies}')
+        # print('========================================================================================================================================')
+        # print(f'For {potential_evidence}, the updated entropies are: {entropies}')
         # print(f'Computing as: {1 - initial_prob} * {entropies[0]} + {initial_prob} * {entropies[1]}')
         average_entropy = ((1 - hp_equals_1) * entropies[0]) + (hp_equals_1 * entropies[1])
         average_entropy = round(average_entropy, 8) # MAY DELETE LATER, MORE FOR READABILITY
-        print(f'The average entropy when observing the {potential_evidence} is: {average_entropy}')
+        # print(f'The average entropy when observing the {potential_evidence} is: {average_entropy}')
         delta_h = initial_entropy - average_entropy
         delta_h = round(delta_h, 8) # MAY DELETE LATER, MORE FOR READABILITY
-        print(f'The change in entropy of the probability distribution when collecting {potential_evidence} is: {delta_h}')
-        print('========================================================================================================================================')
-        print()
+        # print(f'The change in entropy of the probability distribution when collecting {potential_evidence} is: {delta_h}')
+        # print('========================================================================================================================================')
+        # print()
 
         # Track the piece of additional evidence the provides the greatest reduction in entropy
         if delta_h > best_entropy_reduction:
             best_entropy_reduction = delta_h
             best_evidence = potential_evidence
 
-    toc = time.time()
-    evidence_outcome_times = toc - tic
-    print(f'Expanded possible additional evidence states in {round(evidence_outcome_times, 2)}s.')
-    print()
+    # toc = time.time()
+    # evidence_outcome_times = toc - tic
+    # print(f'Expanded possible additional evidence states in {round(evidence_outcome_times, 2)}s.')
+    # print()
 
-    # Return the best piece of additional evidence
-    print(f'The best piece of additional evidence to collect is: {best_evidence} with an average reduction in entropy of {best_entropy_reduction}')
-    time.sleep(3)
-    print()
-    crew_prompt = input(f'Can you report the status of {best_evidence}? (yes/no): ')
+    # # Return the best piece of additional evidence
+    # print(f'The best piece of additional evidence to collect is: {best_evidence} with an average reduction in entropy of {best_entropy_reduction}')
+    # time.sleep(3)
+    # print()
+    # crew_prompt = input(f'Can you report the status of {best_evidence}? (yes/no): ')
+    # crew_prompt = 'no'
     
-    return best_evidence, crew_prompt
+    return best_evidence
