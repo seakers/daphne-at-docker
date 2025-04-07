@@ -388,13 +388,13 @@ class RequestDiagnosis(APIView):
         print("done1-----------------------------------")
 
         # Send request to pride to get all the procedures
-        astrobee_procedure_list = get_astrobee_procedure_list_from_pride()
+        # astrobee_procedure_list = get_astrobee_procedure_list_from_pride()
         print("done2-----------------------------------")
 
         # Build the diagnosis report and send it to the frontend
         diagnosis_report = {'symptoms_list': symptoms_list, 'diagnosis_list': final_report, "best_evidence": best_evidence,
                             'hidden_components': hidden_components,
-                            'astrobee_procedure_list': astrobee_procedure_list,
+                            'astrobee_procedure_list': None,
                             'current_telemetry_values': telemetry_values}
 
         return Response(diagnosis_report)
