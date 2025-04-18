@@ -10,7 +10,7 @@ RUN npm install --silent
 # Copy Interface
 COPY . ./
 
-EXPOSE 8080
+EXPOSE 8081
 
 #CMD npm run dev
 CMD [ "npm", "run", "dev"]

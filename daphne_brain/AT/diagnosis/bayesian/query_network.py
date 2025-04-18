@@ -7,7 +7,7 @@
 
 import time
 
-def query_network(infer, parameter_values, measurement_ranges, split_probability_dict):
+def query_network(infer, parameter_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
     # Start timing the network query
     tic = time.time()
     
@@ -87,9 +87,19 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
     # Initialize a dictionary to store the probability of each anomaly being present
     anomaly_probabilities = {}
 
+
     # Perform the inference one anomaly at a time
     # NOTE: Trying to perform inference on all anomalies at once leads to a runtime error, as it is too big of problem;
     # thus, it seems that the individual query approach is the most feasible currently
+    if additional_evidence is not None:
+        additional_evidence_dict = {}
+        for i in additional_evidence:
+            if additional_evidence[i] in [1,2]:
+                additional_evidence_dict[i] = 0
+            else:
+                additional_evidence_dict[i] = 1
+        # Add the additional evidence to the existing evidence dictionary
+        evidence.update(additional_evidence_dict)
     try:
         for anomaly in anomalies_to_query:
             result = infer.query(variables = [anomaly], evidence = evidence)
@@ -111,3 +121,27 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
 
     # Return results and evidence
     return normalized_probabilities, evidence, runtime
+
+
+def get_evidence_info(hidden_probabilities_dict):
+    # Extract the names of the additional evidence variables (used to verify if variables entered correctly)
+    additional_evidence_variables = []
+
+    for evidence_names, _ in hidden_probabilities_dict.items():
+        additional_evidence_variables.append(evidence_names)
+
+    # Collect additional evidence from the crew
+    hidden_parameter = input(f"Enter the additional evidence being collected: ").strip()
+    # Verify that the variable name entered by the crew matches one of the hidden variables
+    # defined in the Bayesian network
+    if hidden_parameter not in additional_evidence_variables:
+        print("Invalid additional evidence. Please try again.")
+        return get_evidence_info(hidden_probabilities_dict) # recursively prompt user to correctly enter additional evidence
+
+    # Collect the state (True/False) of the additional evidence being entered by the crew
+    hidden_state = input("Enter the state (True/False): ").strip()
+    if hidden_state not in ['False', 'True']:
+        print(f"Invalid state for additional evidence variable {hidden_parameter}. Please enter either 'True' or 'False'")
+        return get_evidence_info(hidden_probabilities_dict) # recursively prompt user to correctly enter additional evidence
+
+    return hidden_parameter, hidden_state

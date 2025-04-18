@@ -23,6 +23,7 @@ def create_user_information(session_key=None, username=None, version='EOSS'):
             raise Exception("Unexpected input for create_user_information")
 
         # Save the newly created user information in the database
+        
         user_info.save()
 
         # Create the EOSS Context and its children

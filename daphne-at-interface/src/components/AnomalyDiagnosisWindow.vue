@@ -73,9 +73,11 @@
         </div>
        -->
 
-  <div v-else>
+<!-- ################### MAIN Diagnosis report previous ########################-->
+
+<!-- <div v-else> -->
   <!-- Most probable anomaly highlighting -->
-  <div v-if="diagnosisReport['diagnosis_list'].length > 0" class="most-probable-anomaly" 
+  <!-- <div v-if="diagnosisReport['diagnosis_list'].length > 0" class="most-probable-anomaly" 
        style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
     <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly:</h3>
     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -84,10 +86,10 @@
         Probability: {{ (diagnosisReport['diagnosis_list'][0].probability * 100 ).toFixed(4) }}%
       </span>
     </div>
-  </div>
+  </div> -->
 
   <!-- Top 5 anomalies table -->
-  <div style="margin-bottom: 20px;">
+  <!-- <div style="margin-bottom: 20px;">
     <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies:</span>
     <div class="table-container" style="margin-top: 10px;">
       <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
@@ -120,8 +122,141 @@
       </table>
     </div>
   </div>
-</div>
+</div> -->
        
+<!-- ################### MAIN Diagnosis report previous ########################-->
+
+<div v-else>
+  <!-- Diagnosis tabs -->
+  <div class="tabs is-boxed">
+    <ul>
+      <li :class="{'is-active': activeDiagnosticTab === diagnosticHistory.length}">
+        <a @click="activeDiagnosticTab = diagnosticHistory.length">
+          <span>Current Diagnosis</span>
+        </a>
+      </li>
+      <li v-for="(diag, index) in diagnosticHistory" :key="index"
+          :class="{'is-active': activeDiagnosticTab === index}">
+        <a @click="activeDiagnosticTab = index">
+          <span>Previous #{{index + 1}}</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+  
+  <!-- Current diagnosis content -->
+  <div v-if="activeDiagnosticTab === diagnosticHistory.length">
+    <!-- Display current diagnosis from store -->
+    <div v-if="$store.getters.getDiagnosisReport && $store.getters.getDiagnosisReport.diagnosis_list && $store.getters.getDiagnosisReport.diagnosis_list.length > 0">
+      <div class="most-probable-anomaly" style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
+        <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly:</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 18px; font-weight: bold;">{{ $store.getters.getDiagnosisReport.diagnosis_list[0].anomaly }}</span>
+          <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+            Probability: {{ ($store.getters.getDiagnosisReport.diagnosis_list[0].probability * 100).toFixed(2) }}%
+          </span>
+        </div>
+      </div>
+      
+      <!-- Top 5 anomalies with progress bar - Current diagnosis -->
+      <div style="margin-bottom: 20px;">
+        <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies:</span>
+        <div class="table-container" style="margin-top: 10px;">
+          <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
+                 style="background: transparent; color: white;">
+            <thead>
+              <tr style="background: #002E2E;">
+                <th style="color: #0AFEFF; width: 60%;">Anomaly</th>
+                <th style="color: #0AFEFF; width: 40%;">Probability</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in $store.getters.getDiagnosisReport.diagnosis_list.slice(0, 5)" 
+                  style="background: rgba(0,46,46,0.7);">
+                <td style="padding: 8px; vertical-align: middle;">{{ item.anomaly }}</td>
+                <td style="padding: 8px;">
+                  <div class="progress" 
+                       style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
+                    <div :style="{
+                      width: `${item.probability * 100}%`,
+                      background: getProbabilityColor(item.probability),
+                      height: '100%'
+                    }"></div>
+                    <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
+                      {{ (item.probability * 100).toFixed(4) }}%
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div v-else class="notification is-warning">
+      No diagnosis data available. Select symptoms and request a diagnosis.
+    </div>
+  </div>
+  
+  <!-- Historical diagnoses -->
+  <div v-else>
+    <!-- Display historical diagnosis from history array -->
+    <div v-if="diagnosticHistory[activeDiagnosticTab] && diagnosticHistory[activeDiagnosticTab].diagnosis_list && diagnosticHistory[activeDiagnosticTab].diagnosis_list.length > 0">
+      <div class="most-probable-anomaly" style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
+        <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly (Previous #{{activeDiagnosticTab + 1}}):</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 18px; font-weight: bold;">{{ diagnosticHistory[activeDiagnosticTab].diagnosis_list[0].anomaly }}</span>
+          <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+            Probability: {{ (diagnosticHistory[activeDiagnosticTab].diagnosis_list[0].probability * 100).toFixed(2) }}%
+          </span>
+        </div>
+      </div>
+      
+      <!-- Top 5 anomalies with progress bar - Historical diagnosis -->
+      <div style="margin-bottom: 20px;">
+        <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies (Previous #{{activeDiagnosticTab + 1}}):</span>
+        <div class="table-container" style="margin-top: 10px;">
+          <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
+                 style="background: transparent; color: white;">
+            <thead>
+              <tr style="background: #002E2E;">
+                <th style="color: #0AFEFF; width: 60%;">Anomaly</th>
+                <th style="color: #0AFEFF; width: 40%;">Probability</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in diagnosticHistory[activeDiagnosticTab].diagnosis_list.slice(0, 5)" 
+                  style="background: rgba(0,46,46,0.7);">
+                <td style="padding: 8px; vertical-align: middle;">{{ item.anomaly }}</td>
+                <td style="padding: 8px;">
+                  <div class="progress" 
+                       style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
+                    <div :style="{
+                      width: `${item.probability * 100}%`,
+                      background: getProbabilityColor(item.probability),
+                      height: '100%'
+                    }"></div>
+                    <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
+                      {{ (item.probability * 100).toFixed(4) }}%
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add a clear button at the bottom if needed -->
+  <div style="text-align: center; margin-top: 20px;">
+    <button @click="clearSymptoms" class="button is-danger">
+      Clear All Symptoms & Diagnoses
+    </button>
+  </div>
+</div>
+
        
 
 
@@ -129,7 +264,7 @@
       <div class="horizontal-divider" style="margin-top: 10px; margin-bottom: 10px"></div>
         <div class="is-content">
           <div class="is-mini-title" style="margin-bottom:5px; font-size: 22px">
-            Astrobee Status
+            Robot Status
           </div>
           
           <div class="box is-main" style="margin-top: 20px; padding: 15px;">
@@ -284,6 +419,9 @@ export default {
       unconfirmedSymptoms: [],
       bestEvidence: null,
       currentTelemetryValues: {},
+      diagnosticHistory: [],
+      activeDiagnosticTab: 0,
+      bestEvidenceListener: null,
     }
   },
 
@@ -548,6 +686,10 @@ export default {
     clearSymptoms() {
       this.selectedLeftSymptoms.splice(0, this.selectedLeftSymptoms.length);
       this.selectedRightSymptoms.splice(0, this.selectedRightSymptoms.length);
+
+      this.diagnosticHistory = [];
+      this.activeDiagnosticTab = 0;
+
       this.$store.dispatch('clearSelectedSymptoms');
       this.$store.dispatch('clearDiagnosisReport');
       this.explaining = false;
@@ -568,20 +710,27 @@ export default {
       this.unconfirmedSymptoms = diagnosisReport.hidden_components;
       this.bestEvidence = diagnosisReport.best_evidence;     
       this.currentTelemetryValues = diagnosisReport.current_telemetry_values
-
+      this.activeDiagnosticTab = this.diagnosticHistory.length;
+      this.diagnosticHistory.push(JSON.parse(JSON.stringify(diagnosisReport)));
+      console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
+      // console.log("current diagnostic history 1111111", this.diagnosticHistory);
+      // console.log("current diagnostic history 2222222", this.diagnosticHistory[this.activeDiagnosticTab]);
       // After getting diagnosis report, ask if user has additional evidence
       setTimeout(() => {
+      if (this.bestEvidence) {
         this.$store.commit('addDialoguePiece', {
-          "voice_message": "Would you like to provide additional evidence to improve the diagnosis?",
+          "voice_message": `I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
           "visual_message_type": ["text"],
-          "visual_message": ["Would you like to provide additional evidence to improve the diagnosis?"],
+          "visual_message": [`I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
           "writer": "daphne",
-          // "options": ["Yes", "No"]
+          "options": ["Yes", "No"],
+          "optionsCallbackEvent": "bestEvidenceResponse"
         });
         
-        // Set up listener for user response
-        this.setupAdditionalEvidenceListener();
-      }, 1000);
+        // Set up listener for response
+        this.setupBestEvidenceListener();
+      }
+    }, 1000);
 
       // Display Astrobee procedures in chat after diagnosis
       console.log("diagnosos report",diagnosisReport, diagnosisReport.astrobee_procedure_list);
@@ -615,6 +764,72 @@ export default {
     showSymptomSelectionDialog() {
     this.showSymptomDialog = true;
   },
+
+  setupBestEvidenceListener() {
+    // Add event listener for options response
+    if (!this.bestEvidenceListener) {
+      this.$root.$on('bestEvidenceResponse', this.handleBestEvidenceResponse);
+      this.bestEvidenceListener = true;
+    }
+  },
+
+  handleBestEvidenceResponse(response) {
+    if (response === "Yes") {
+      // Show damage assessment slider for best evidence
+      this.showDamageAssessmentSlider();
+    } else {
+      // User doesn't want to provide additional evidence
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": "Alright, I'll work with the current information.",
+        "visual_message_type": ["text"],
+        "visual_message": ["Alright, I'll work with the current information."],
+        "writer": "daphne"
+      });
+    }
+    
+    // Clean up event listener
+    this.$root.$off('bestEvidenceResponse', this.handleBestEvidenceResponse);
+    this.bestEvidenceListener = false;
+  },
+
+  showDamageAssessmentSlider() {
+    this.$store.commit('addDialoguePiece', {
+      "voice_message": `On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`,
+      "visual_message_type": ["slider"],
+      "visual_message": [`On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`],
+      "writer": "daphne",
+      "sliderOptions": {
+        "min": 1,
+        "max": 5,
+        "step": 1,
+        "defaultValue": 3,
+        "callbackEvent": "damageAssessmentResponse"
+      }
+    });
+    
+    // Set up listener for slider response
+    this.$root.$on('damageAssessmentResponse', this.handleDamageAssessmentResponse);
+  },
+
+  handleDamageAssessmentResponse(value) {
+    // Add the assessment to additional evidence
+    this.additionalEvidence[this.bestEvidence] = value
+    
+    // Thank the user and submit the evidence
+    this.$store.commit('addDialoguePiece', {
+      "voice_message": `Thank you for your assessment of ${this.bestEvidence}.`,
+      "visual_message_type": ["text"],
+      "visual_message": [`Thank you for your assessment of ${this.bestEvidence}.`],
+      "writer": "daphne"
+    });
+    
+    // Clean up listener
+    this.$root.$off('damageAssessmentResponse', this.handleDamageAssessmentResponse);
+    
+    // Submit the evidence and update diagnosis
+    this.submitAdditionalEvidence();
+  },
+
   handleSymptomSelection(selectedSymptoms) {
     this.showSymptomDialog = false;
     this.symptomsToConfirm = selectedSymptoms;
@@ -704,37 +919,61 @@ handleSymptomEvidenceResponse(response) {
       });
       
       // Convert evidence to API format
-      const evidenceData = {
-        additional_evidence: this.additionalEvidence,
-        current_telemetry_values: this.currentTelemetryValues,
-      };
+
+      // const currentDiagnosisReport = this.$store.getters.getDiagnosisReport;
+      // if (currentDiagnosisReport && currentDiagnosisReport.diagnosis_list) {
+      //   this.diagnosticHistory.push(JSON.parse(JSON.stringify(currentDiagnosisReport)));
+      // }
+      // const evidenceData = {
+      //   additional_evidence: this.additionalEvidence,
+      //   current_telemetry_values: this.currentTelemetryValues,
+      // };
 
       console.log("Submitting additional evidence:", this.additionalEvidence);
+
+      const requestPayload = {
+      symptoms: this.selectedSymptomsList,
+      additional_evidence: this.additionalEvidence,
+      current_telemetry_values: this.currentTelemetryValues
+    };
       
       // Make API call
-      const response = await fetchPost('/api/at/update_diagnosis_with_evidence', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(evidenceData)
-      });
+
+      await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
+      await this.$store.dispatch('requestDiagnosisWithEvidence', requestPayload);
+      const diagnosisReport = this.$store.getters.getDiagnosisReport;
+      this.unconfirmedSymptoms = diagnosisReport.hidden_components;
+      this.bestEvidence = diagnosisReport.best_evidence;     
+      this.currentTelemetryValues = diagnosisReport.current_telemetry_values
       
-      if (response.ok) {
-        const updatedDiagnosis = await response.json();
-        
-        // Update diagnosis report in store
-        this.$store.commit('mutateDiagnosisReport', updatedDiagnosis);
-        
-        this.$store.commit('addDialoguePiece', {
-          "voice_message": "Diagnosis has been updated with your additional evidence!",
-          "visual_message_type": ["text"],
-          "visual_message": ["Diagnosis has been updated with your additional evidence!"],
-          "writer": "daphne"
-        });
-      } else {
-        throw new Error('Failed to update diagnosis');
-      }
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": "Diagnosis has been updated with your additional evidence!",
+        "visual_message_type": ["text"],
+        "visual_message": ["Diagnosis has been updated with your additional evidence!"],
+        "writer": "daphne"
+      });
+
+      this.activeDiagnosticTab = this.diagnosticHistory.length;
+      this.diagnosticHistory.push(JSON.parse(JSON.stringify(this.diagnosisReport)));
+      console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
+      console.log("current diagnostic history", this.diagnosticHistory);
+
+      setTimeout(() => {
+        if (this.bestEvidence) {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": `I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
+            "visual_message_type": ["text"],
+            "visual_message": [`I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
+            "writer": "daphne",
+            "options": ["Yes", "No"],
+            "optionsCallbackEvent": "bestEvidenceResponse"
+          });
+          
+          // Set up listener for response
+          this.setupBestEvidenceListener();
+        }
+      }, 1000);
+
     } catch (error) {
       console.error('Error updating diagnosis with additional evidence:', error);
       this.$store.commit('addDialoguePiece', {
@@ -861,6 +1100,11 @@ handleAdditionalEvidenceResponse(response) {
   if (this.yesNoQuestionListener) {
     this.$root.$off('symptomEvidenceResponse', this.handleSymptomEvidenceResponse);
   }
+  if (this.bestEvidenceListener) {
+    this.$root.$off('bestEvidenceResponse', this.handleBestEvidenceResponse);
+  }
+  
+  this.$root.$off('damageAssessmentResponse', this.handleDamageAssessmentResponse);
   }
 }
 </script>

@@ -565,6 +565,105 @@ const actions = {
             return [];
         }
     },
+
+    async requestDiagnosisWithEvidence({state, commit}, requestPayload) {
+        // Clean the current diagnosis report
+        commit('mutateDiagnosisReport', []);
+
+        const now = new Date();
+        let formattedDate = now.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',  // e.g., October
+            day: 'numeric', // e.g., 15
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+            hour12: true    // Use 12-hour format with AM/PM
+          });
+
+          console.log("formatttttttttttt", formattedDate)
+        commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
+
+        console.log("mutateeeeeeeee updateeeeeeeeee", now, "55555555555555");
+
+        // Update the last selected symptoms list
+        let lastSelectedSymptomsList = JSON.parse(JSON.stringify(state.selectedSymptomsList));
+        commit('mutateLastSelectedSymptomsList', lastSelectedSymptomsList);
+
+        // Clean the selected symptoms list
+        //commit('mutateSelectedSymptomsList', []);
+
+        // Make a local copy of the couple of state variables to be used
+        let info = JSON.parse(JSON.stringify(state.telemetryInfo));
+        let telemetryValues = state.telemetryValues;
+        console.log("telemetry values", telemetryValues)
+        console.log("selectedSymptomsList", requestPayload['symptoms'])
+        let parsedSelectedSymptomsList = JSON.parse(JSON.stringify(requestPayload['symptoms']));
+
+
+        // Parse the selected symptoms list. Such list contains the names of each measurement with the level add-on
+        // (for example, "ppN2 (L1)". To query the knowledge graph, such add-on should be removed (amazing).
+
+        for (let index in parsedSelectedSymptomsList) {
+            let displayName = parsedSelectedSymptomsList[index]['measurement'];
+            let kgName = info[displayName]['kg_name'];
+            parsedSelectedSymptomsList[index]['measurement'] = kgName;
+            parsedSelectedSymptomsList[index]['display_name'] = displayName;
+        }
+
+       
+
+        // Make the diagnosis request to the backend
+        let reqData = new FormData();
+        let telemetryValuesDict = Object.fromEntries(
+            Object.entries(telemetryValues).map(([key, value]) => [key, { ...value }])
+        );
+        
+        let parsedTelemetryValues = {};
+
+        for (let i in telemetryValuesDict) { 
+            let value = telemetryValuesDict[i];
+            let valueDict = telemetryValuesDict[i];
+            const reversedArray = Object.entries(valueDict)
+                .reverse()  // Reverse the array
+                .map(([key, value]) => [Number(key), value]);  // Convert keys back to numbers if needed
+
+            console.log("telemetry reversed array", reversedArray)
+
+                // Convert the array back into an object
+            console.log("telemetry reversed array i", reversedArray[0])
+            parsedTelemetryValues[i] = reversedArray[0][1];
+        
+        }
+
+        console.log("parsed telemetry values", parsedTelemetryValues); 
+
+        console.log("parsedTelemetryValues", parsedTelemetryValues)
+        console.log("telemetry values", telemetryValues)
+        reqData.append('symptomsList',  JSON.stringify(parsedSelectedSymptomsList));
+        reqData.append('telemetryValues',  JSON.stringify(parsedTelemetryValues));
+        reqData.append('additionalEvidence',  JSON.stringify(requestPayload['additional_evidence']));
+        let response = await fetchPost('/api/at/requestDiagnosis', reqData);
+        if (response.ok) {
+            let diagnosis_report = await response.json();
+            console.log("new diagnosis_report from backend", diagnosis_report)
+            commit('mutateDiagnosisReport', diagnosis_report);
+            const now = new Date();
+            let formattedDate = now.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',  // e.g., October
+                day: 'numeric', // e.g., 15
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                hour12: true    // Use 12-hour format with AM/PM
+              });
+        commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
+        } else {
+            console.log('Error requesting a diagnosis report.')
+            return [];
+        }
+    },
     async loadAllAnomalies({state, commit}) {
         let reqData = new FormData();
         let response = await fetchPost('/api/at/loadAllAnomalies', reqData);

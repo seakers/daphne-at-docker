@@ -43,8 +43,7 @@ from AT.diagnosis.bayesian.add_cpds import add_cpds
 from AT.diagnosis.bayesian.user_input import query_parameters, query_additional_evidence
 from AT.diagnosis.bayesian.reduce_entropy import calculate_entropy, select_best_evidence
 
-def get_probabilities(telemetry_values):
-    # Read .json files with probability dictionary (such that these do not need to computed each time the script is ran)
+def get_probabilities(telemetry_values, additional_evidence=None):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     split_probability_dict = os.path.join(current_dir, "split_probability_dict.json")
     hidden_probabilities_dict = os.path.join(current_dir, "hidden_probabilities_dict.json")
@@ -53,7 +52,6 @@ def get_probabilities(telemetry_values):
     with open(hidden_probabilities_dict, "r") as file:
         hidden_probabilities_dict = json.load(file)
 
-    # Define the cardinality of each measurement as 5, representing the 5 possible states that a parameter measurement can be within:
     thresholds = [
         'Exceeds_UpperWarningLimit',
         'Exceeds_UpperCautionLimit',
@@ -86,46 +84,16 @@ def get_probabilities(telemetry_values):
     # Add the CPDs for the parameters conditioned on multiple anomalies
     add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_cardinality)
 
-    # Verify that the CPDs have been added correctly
-    # for cpd in model.get_cpds():
-    #     print(f'CPD for {cpd.variable}:')
-    #     print(cpd)
-    #     print()
-
-    # If desired, plot the Bayesian network with CPDs displayed next to the nodes
-    # plot_bayesian_network(model)
-
-    # Create an inference to the model
     infer = VariableElimination(model)
+    probabilities, evidence = query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict)
 
-    # Add user-provided evidence to the Bayesian network and update the beliefs about the presence of anomalies
-    # print(query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict))
-    probabilities, evidence = query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict)
-
-    # print(f'Probabilities: {probabilities.values()}')
-    # print(f'Evidence: {evidence}')
-
-    # Execute the remainder of the code if evidence is entered by the user
     if probabilities:
-        # Calculate the initial entropy of the probability distribution based on only readings from the telemetry feed
         initial_probabilities = list(probabilities.values())
         initial_entropy = calculate_entropy(initial_probabilities)
         print(f'Initial entropy: {initial_entropy}')
         print()
-
-        # Determine which piece of additional evidence the crew member(s) could collect to
-        # cause the greatest reduction in the entropy of the probability distribution
-        # (corresponding to the largest information gain)
+      
         best_evidence = select_best_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
-
-        # Prompt the crew to collect the additional piece of evidence
-        # if crew_prompt == 'yes':
-        #     updated_probabilities = query_additional_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence)
-        #     updated_probabilities = list(updated_probabilities.values())
-        #     final_entropy = calculate_entropy(updated_probabilities)
-        #     print(f'Final entropy: {final_entropy}')
-        # else:
-        #     print('Understood. Pausing evidence collection.')
     else:
         print('No evidence entered. Exiting script.')
         best_evidence = None
@@ -177,26 +145,13 @@ def update_probabilities_additional(telemetry_values, additional_evidence):
     # Add the CPDs for the parameters conditioned on multiple anomalies
     add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_cardinality)
 
-    # Verify that the CPDs have been added correctly
-    # for cpd in model.get_cpds():
-    #     print(f'CPD for {cpd.variable}:')
-    #     print(cpd)
-    #     print()
-
-    # If desired, plot the Bayesian network with CPDs displayed next to the nodes
-    # plot_bayesian_network(model)
-
-    # Create an inference to the model
+  
     infer = VariableElimination(model)
 
     # Add user-provided evidence to the Bayesian network and update the beliefs about the presence of anomalies
     # print(query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict))
     probabilities, evidence = query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict)
 
-    # print(f'Probabilities: {probabilities.values()}')
-    # print(f'Evidence: {evidence}')
-
-    # Execute the remainder of the code if evidence is entered by the user
     if probabilities:
         # Calculate the initial entropy of the probability distribution based on only readings from the telemetry feed
         initial_probabilities = list(probabilities.values())
@@ -209,7 +164,7 @@ def update_probabilities_additional(telemetry_values, additional_evidence):
         # (corresponding to the largest information gain)
         best_evidence = select_best_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
 
-        updated_probabilities = query_additional_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence)
+        updated_probabilities = query_additional_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence, additional_evidence)
         updated_probabilities = list(updated_probabilities.values())
         final_entropy = calculate_entropy(updated_probabilities)
         print(f'Final entropy: {final_entropy}')

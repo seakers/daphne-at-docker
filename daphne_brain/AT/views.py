@@ -159,7 +159,7 @@ class AstrobeeStatus(APIView):
 class GetCurrentInstruction(APIView):
     def post(self, request, format=None):
 
-        url = "https://localhost:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
+        url = "https://pride-dev:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
         payload = {}
         headers = {
             'Content-Type': 'application/json',
@@ -197,7 +197,7 @@ class GetCurrentInstruction(APIView):
 class GetPrideSharedVariables(APIView):
     def post(self, request, format=None):
 
-        url = "https://localhost/api/sharedVariables/telemetry/" + global_procedure_runtime_ID + "?fromSystemRepresentation=Gateway_Robots" 
+        url = "https://pride-dev/api/sharedVariables/telemetry/" + global_procedure_runtime_ID + "?fromSystemRepresentation=Gateway_Robots" 
         # url = "https://localhost:8000/api/procedures/" + global_procedure_runtime_ID + "currentInstruction"
         payload = {}
         headers = {
@@ -228,7 +228,7 @@ class StartAstrobeeProcedure(APIView):
 
         # start/open a procedure to send astrobee
         # url = "https://0.0.0.0:8000/api/procedures/available/" + procedure_staticID
-        url = "https://localhost:8000/api/procedures/available/" + procedure_staticID
+        url = "https://pride-dev:8000/api/procedures/available/" + procedure_staticID
 
         payload = json.dumps({
             "user": "test",
@@ -248,7 +248,7 @@ class StartAstrobeeProcedure(APIView):
 
         if response.ok:
             # start automation of the procedure
-            url = 'https://localhost:8000/api/procedures/' + procedure_runtime_ID + '/startAutomation'
+            url = 'https://pride-dev:8000/api/procedures/' + procedure_runtime_ID + '/startAutomation'
             payload = json.dumps({
                 "user": "test",
             })
@@ -342,7 +342,11 @@ class RequestDiagnosis(APIView):
         # Retrieve the symptoms list from the request
         symptoms_list = json.loads(request.data['symptomsList'])
         telemetry_values = json.loads(request.data['telemetryValues'])
+        addtional_evidence = None
+        if 'additionalEvidence' in request.data:
+            addtional_evidence = json.loads(request.data['additionalEvidence'])
         print("previous telemetry values", telemetry_values)
+        print("got additional evidence", addtional_evidence) 
         updated_telemetry_values = {}
         for i in telemetry_values:
             if ("Cabin Temperature" in i or "Humidity" in i or "ppCO2" in i or "ppH2" in i or 
@@ -366,7 +370,7 @@ class RequestDiagnosis(APIView):
         # diagnosis_list = diagnose_symptoms_by_subset_of_anomaly(parsed_symptoms_list)
         # diagnosis_list = diagnose_symptoms_by_intersection_with_anomaly(symptoms_list)
         diagnosis_list = []
-        probabilities, best_evidence, hidden_components = get_probabilities(telemetry_values)
+        probabilities, best_evidence, hidden_components = get_probabilities(telemetry_values, additional_evidence=addtional_evidence)
         top_5_probabilities = dict(sorted(probabilities.items(), 
                                      key=lambda item: item[1], 
                                      reverse=True)[:5])
@@ -389,12 +393,14 @@ class RequestDiagnosis(APIView):
 
         # Send request to pride to get all the procedures
         # astrobee_procedure_list = get_astrobee_procedure_list_from_pride()
+        astrobee_procedure_list = None
+        print("astrovee procedure list", astrobee_procedure_list)
         print("done2-----------------------------------")
 
         # Build the diagnosis report and send it to the frontend
         diagnosis_report = {'symptoms_list': symptoms_list, 'diagnosis_list': final_report, "best_evidence": best_evidence,
                             'hidden_components': hidden_components,
-                            'astrobee_procedure_list': None,
+                            'astrobee_procedure_list': astrobee_procedure_list,
                             'current_telemetry_values': telemetry_values}
 
         return Response(diagnosis_report)

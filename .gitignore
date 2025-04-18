@@ -23,3 +23,4 @@ daphne-at-interface/dist/
 *.DS_Store
 .idea/
 daphne_brain/.env
+bayesian-daphne-at/*

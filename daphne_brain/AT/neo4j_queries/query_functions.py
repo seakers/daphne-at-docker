@@ -1087,7 +1087,7 @@ def get_binary_signatures(signature, header):
 
 def get_astrobee_procedure_list_from_pride():
     requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
-    url = "https://localhost:8000/api/procedures/available"
+    url = "http://host.docker.internal:8000/api/procedures/available"
     # For testing, temporarily disable SSL verification at the Python level
     # WARNING: This is not recommended for production code
     old_https_context = ssl._create_default_https_context

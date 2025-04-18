@@ -33,7 +33,7 @@ def get_parameter_input(telemetry_values,measurement_ranges):
     
     return parameter, value
 
-def query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict):
+def query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
     # Collect parameter values from the user, and query the Bayesian network with the updated evidence
     # while True:
     #     parameter_values = {}
@@ -58,7 +58,7 @@ def query_parameters(infer, telemetry_values, measurement_ranges, split_probabil
         try:
             # Query the Bayesian network
             print("i am here")
-            normalized_probabilities, evidence, runtime = query_network(infer, parameter_values, measurement_ranges, split_probability_dict)
+            normalized_probabilities, evidence, runtime = query_network(infer, parameter_values, measurement_ranges, split_probability_dict, additional_evidence,hidden_probabilities_dict)
 
             # Sort anomalies based on the probability of their presence
             sorted_anomalies = sorted(normalized_probabilities.items(), key = lambda x: x[1], reverse = True)
@@ -116,32 +116,32 @@ def get_evidence_info(hidden_probabilities_dict):
 
     return hidden_parameter, hidden_state
 
-def query_additional_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence):
+def query_additional_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence, additional_evidence):
     # Function takes elements from query_network without the need to remap evidence that should have previous been set and stored there
 
     while True:
         # Create a dictionary to store additional evidence added by the crew
-        additional_evidence = {}
+        # additional_evidence = {}
 
         # Gather additional evidence from the crew
-        while True:
-            hidden_parameter, hidden_state = get_evidence_info(hidden_probabilities_dict)
+        # # while True:
+        # #     # hidden_parameter, hidden_state = get_evidence_info(hidden_probabilities_dict)
 
-            # Create state mappings for the additional evidence
-            additional_evidence_mapping = {
-                'False': 0,
-                'True': 1
-            }
+        #     # Create state mappings for the additional evidence
+        #     additional_evidence_mapping = {
+        #         'False': 0,
+        #         'True': 1
+        #     }
 
-            additional_evidence[hidden_parameter] = additional_evidence_mapping[hidden_state]
-            print(f"Collected: {hidden_parameter} with state {hidden_state}")
-            print()
+        #     additional_evidence[hidden_parameter] = additional_evidence_mapping[hidden_state]
+        #     print(f"Collected: {hidden_parameter} with state {hidden_state}")
+        #     print()
 
-            if hidden_parameter != best_evidence:
-                if input(f"The additional evidence collected does not provide the most information about the present anomaly. Would you like to add evidence for {best_evidence}? (yes/no): ") != 'yes':
-                    break
-            else:
-                    break
+            # if hidden_parameter != best_evidence:
+            #     if input(f"The additional evidence collected does not provide the most information about the present anomaly. Would you like to add evidence for {best_evidence}? (yes/no): ") != 'yes':
+            #         break
+            # else:
+            #         break
 
         if additional_evidence: # proceed if additional evidence provided
             evidence.update(additional_evidence) # add the additional evidence to the main evidence dictionary

@@ -4,6 +4,7 @@ import redis
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 import AT.global_objects as global_obj
+import os
 
 from auth_API.helpers import get_or_create_user_information
 
@@ -23,7 +24,7 @@ def hub_routine(front_to_hub, sEclss_to_hub, hera_to_hub, sim_to_hub_one, sim_to
                 hera_at_to_hub, sim_at_to_hub_one, sim_at_to_hub_two, sim_at_to_hub_three, sim_at_to_hub_four):
 
     r = redis.Redis(
-            host='localhost',
+            host=os.environ.get('REDIS_HOST', 'localhost'),
             port=6379,
             db=0,
             socket_timeout=5,
