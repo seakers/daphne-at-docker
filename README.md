@@ -11,6 +11,7 @@
 ```bash
 git clone https://github.com/seakers/daphne-at-docker.git
 cd daphne-at-docker
+git switch bayesian
 ```
 
 2. Create a .env file in the daphne_brain folder and the open ai api key
