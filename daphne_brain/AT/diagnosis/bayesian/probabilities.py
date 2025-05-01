@@ -1233,6 +1233,30 @@ probability_dict = {
             'value_ranges': measurement_ranges["Humidity (L1)"]
         },
     },
+
+    # Previous Time-Step Variable Added
+    "Humidity (L1) (t-1)": {
+        "CDRA Failure": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.20,
+                    'Exceeds_UpperCautionLimit': 0.78,
+                    'Nominal': 0.01989,
+                    'Exceeds_LowerCautionLimit': 0.0001,
+                    'Exceeds_LowerWarningLimit': 0.00001
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["Humidity (L1)"]
+        },
+    },
+
     "Humidity (L2)": {
         "CDRA Failure": {
             'probabilities': {
@@ -1330,6 +1354,30 @@ probability_dict = {
             'value_ranges': measurement_ranges["Humidity (L2)"]
         },
     },
+
+    # Previous Time-Step Variable Added
+    "Humidity (L2) (t-1)": {
+        "CDRA Failure": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.20,
+                    'Exceeds_UpperCautionLimit': 0.78,
+                    'Nominal': 0.01989,
+                    'Exceeds_LowerCautionLimit': 0.0001,
+                    'Exceeds_LowerWarningLimit': 0.00001
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["Humidity (L2)"]
+        },
+    },
+
     "LiOH CO2 Saturation": {
         "CDRA LiOH Canister Saturation": {
             'probabilities': {
@@ -1747,6 +1795,30 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppCO2 (L1)"]
         },
     },
+
+    # Previous Time-Step Variable Added
+    "ppCO2 (L1) (t-1)": {
+        "CDRA Failure": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.75,
+                    'Exceeds_UpperCautionLimit': 0.23,
+                    'Nominal': 0.01989,
+                    'Exceeds_LowerCautionLimit': 0.0001,
+                    'Exceeds_LowerWarningLimit': 0.00001
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppCO2 (L1)"]
+        },
+    },
+
     "ppCO2 (L2)": {
         "Biological Filter Saturation": {
             'probabilities': {
@@ -1844,6 +1916,30 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppCO2 (L2)"]
         },
     },
+
+    # Previous Time-Step Variable Added
+    "ppCO2 (L2) (t-1)": {
+        "CDRA Failure": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.75,
+                    'Exceeds_UpperCautionLimit': 0.23,
+                    'Nominal': 0.01989,
+                    'Exceeds_LowerCautionLimit': 0.0001,
+                    'Exceeds_LowerWarningLimit': 0.00001
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppCO2 (L2)"]
+        },
+    },
+
     "ppH2 (L1)": {
         "Excess Gas Leak": {
             'probabilities': {
@@ -2101,6 +2197,30 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppO2 (L1)"]
         },
     },
+
+    # Previous Time-Step Variable Added
+    "ppO2 (L1) (t-1)": {
+        "CDRA Failure": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.00001,
+                    'Exceeds_UpperCautionLimit': 0.0001,
+                    'Nominal': 0.02989,
+                    'Exceeds_LowerCautionLimit': 0.78,
+                    'Exceeds_LowerWarningLimit': 0.19
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppO2 (L1)"]
+        },
+    },
+
     "ppO2 (L2)": {
         "Biological Filter Saturation": {
             'probabilities': {
@@ -2236,6 +2356,30 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppO2 (L2)"]
         },
     },
+
+    # Previous Time-Step Variable Added
+    "ppO2 (L2) (t-1)": {
+        "CDRA Failure": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.00001,
+                    'Exceeds_UpperCautionLimit': 0.0001,
+                    'Nominal': 0.02989,
+                    'Exceeds_LowerCautionLimit': 0.78,
+                    'Exceeds_LowerWarningLimit': 0.19
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppO2 (L2)"]
+        },
+    },
+
     "Pressure (L1)": {
         "Loss of Pressure": {
             'probabilities': {

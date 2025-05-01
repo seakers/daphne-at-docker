@@ -21,6 +21,11 @@ network = [
     # CDRA Failure
     ("CDRA Failure", "high Humidity (L1)"), ("CDRA Failure", "high Humidity (L2)"), ("CDRA Failure", "high ppCO2 (L1)"), ("CDRA Failure", "high ppCO2 (L2)"), ("CDRA Failure", "high ppO2 (L1)"), ("CDRA Failure", "high ppO2 (L2)"),
     ("CDRA Failure", "low Humidity (L1)"), ("CDRA Failure", "low Humidity (L2)"), ("CDRA Failure", "low ppCO2 (L1)"), ("CDRA Failure", "low ppCO2 (L2)"), ("CDRA Failure", "low ppO2 (L1)"), ("CDRA Failure", "low ppO2 (L2)"),
+
+    # Previous Time-Step Variables Added to CDRA Failure
+    ("CDRA Failure", "high Humidity (L1) (t-1)"), ("CDRA Failure", "high Humidity (L2) (t-1)"), ("CDRA Failure", "high ppCO2 (L1) (t-1)"), ("CDRA Failure", "high ppCO2 (L2) (t-1)"), ("CDRA Failure", "high ppO2 (L1) (t-1)"), ("CDRA Failure", "high ppO2 (L2) (t-1)"),
+    ("CDRA Failure", "low Humidity (L1) (t-1)"), ("CDRA Failure", "low Humidity (L2) (t-1)"), ("CDRA Failure", "low ppCO2 (L1) (t-1)"), ("CDRA Failure", "low ppCO2 (L2) (t-1)"), ("CDRA Failure", "low ppO2 (L1) (t-1)"), ("CDRA Failure", "low ppO2 (L2) (t-1)"),
+
     ("CDRA Failure", "[HIDDEN] CDRA Failure Component"),
 
     # CDRA LiOH Canister Saturation
