@@ -7,6 +7,7 @@
 
 from ranges import measurement_ranges
 import json
+import os
 
 # Create a dictionary to map the symptom probabilities to string states
 # All probability blocks below are parameters conditioned on a single anomaly at a time
@@ -3289,7 +3290,9 @@ def process_probability_dict(probability_dict):
 
 # Split the original probability dictionary into high and low dictionaries for each parameter
 split_probability_dict = process_probability_dict(probability_dict)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+output_file_path = os.path.join(current_dir, "split_probability_dict.json")
 
 # Store probability dictionary as a .json file
-with open("split_probability_dict.json", "w") as file:
+with open(output_file_path, "w") as file:
     json.dump(split_probability_dict, file)
