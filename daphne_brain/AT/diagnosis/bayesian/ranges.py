@@ -250,7 +250,7 @@ measurement_ranges = {
     },
 
     # Added Previous Time-Step Variables
-        "ppCO2 (L1) (t-1)": {
+    "ppCO2 (L1) (t-1)": {
         'Exceeds_UpperWarningLimit': (6, None, True, False),
         'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
         'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
