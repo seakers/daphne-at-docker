@@ -158,47 +158,50 @@ class AstrobeeStatus(APIView):
     
 class GetCurrentInstruction(APIView):
     def post(self, request, format=None):
+        try:
 
-        url = "https://pride-dev:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
-        payload = {}
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
-        }       
-        response = requests.request("GET", url, headers=headers, data=payload, verify=False)
-        # print("get pride shared variables response procedure id", global_procedure_runtime_ID)
-        if response.status_code == 200:
-            try:
-                instruction_data = response.json()
-                # Extract the important information from the response
-                # current_instruction = {
-                #     'text': instruction_data.get('text', ''),
-                #     'instructionType': instruction_data.get('instructionType', ''),
-                #     'instructionNumber': instruction_data.get('instructionNumber', ''),
-                #     'userResponseType': instruction_data.get('userResponseType', []),
-                #     'status': instruction_data.get('status', '')
-                # }
-                # print("current instruction", instruction_data, response)
-            
-                return Response({
-                    "instruction_data": instruction_data
-                })
-            except json.JSONDecodeError:
-                # print("Error decoding JSON response")
-                return Response({"error": "Invalid response format"}, status=500)
-            
-        else:
-            # print(f"Error fetching current instruction: {response.status_code}")
-            return Response({"error": f"API request failed with status code: {response.status_code}"}, 
-                           status=response.status_code)
+            url = "https://localhost:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
+            payload = {}
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
+            }       
+            response = requests.request("GET", url, headers=headers, data=payload, verify=False)
+            # print("get pride shared variables response procedure id", global_procedure_runtime_ID)
+            if response.status_code == 200:
+                try:
+                    instruction_data = response.json()
+                    # Extract the important information from the response
+                    # current_instruction = {
+                    #     'text': instruction_data.get('text', ''),
+                    #     'instructionType': instruction_data.get('instructionType', ''),
+                    #     'instructionNumber': instruction_data.get('instructionNumber', ''),
+                    #     'userResponseType': instruction_data.get('userResponseType', []),
+                    #     'status': instruction_data.get('status', '')
+                    # }
+                    # print("current instruction", instruction_data, response)
+                
+                    return Response({
+                        "instruction_data": instruction_data
+                    })
+                except json.JSONDecodeError:
+                    # print("Error decoding JSON response")
+                    return Response({"error": "Invalid response format"}, status=500)
+                
+            else:
+                # print(f"Error fetching current instruction: {response.status_code}")
+                return Response({"error": f"API request failed with status code: {response.status_code}"}, 
+                            status=response.status_code)
+        except requests.RequestException as e:
+            pass
 
     
 
 class GetPrideSharedVariables(APIView):
     def post(self, request, format=None):
 
-        url = "https://pride-dev/api/sharedVariables/telemetry/" + global_procedure_runtime_ID + "?fromSystemRepresentation=Gateway_Robots" 
-        # url = "https://localhost:8000/api/procedures/" + global_procedure_runtime_ID + "currentInstruction"
+        # url = "https://pride-dev/api/sharedVariables/telemetry/" + global_procedure_runtime_ID + "?fromSystemRepresentation=Gateway_Robots" 
+        url = "https://localhost:8000/api/procedures/" + global_procedure_runtime_ID + "currentInstruction"
         payload = {}
         headers = {
             'Content-Type': 'application/json',
@@ -228,7 +231,7 @@ class StartAstrobeeProcedure(APIView):
 
         # start/open a procedure to send astrobee
         # url = "https://0.0.0.0:8000/api/procedures/available/" + procedure_staticID
-        url = "https://pride-dev:8000/api/procedures/available/" + procedure_staticID
+        url = "https://localhost:8000/api/procedures/available/" + procedure_staticID
 
         payload = json.dumps({
             "user": "test",
@@ -248,7 +251,7 @@ class StartAstrobeeProcedure(APIView):
 
         if response.ok:
             # start automation of the procedure
-            url = 'https://pride-dev:8000/api/procedures/' + procedure_runtime_ID + '/startAutomation'
+            url = 'https://localhost:8000/api/procedures/' + procedure_runtime_ID + '/startAutomation'
             payload = json.dumps({
                 "user": "test",
             })
@@ -342,6 +345,7 @@ class RequestDiagnosis(APIView):
         # Retrieve the symptoms list from the request
         symptoms_list = json.loads(request.data['symptomsList'])
         telemetry_values = json.loads(request.data['telemetryValues'])
+        telemetry_values_t1 = json.loads(request.data['telemetryValuest1'])
         addtional_evidence = None
         if 'additionalEvidence' in request.data:
             addtional_evidence = json.loads(request.data['additionalEvidence'])
@@ -350,7 +354,7 @@ class RequestDiagnosis(APIView):
         updated_telemetry_values = {}
         for i in telemetry_values:
             if ("Cabin Temperature" in i or "Humidity" in i or "ppCO2" in i or "ppH2" in i or 
-            "ppO2" in i or "ppN2" in i or "Pressure" in i or "Total Cabin Pressure" in i):
+            "ppO2" in i or "ppN2" in i or "Pressure" in i or "Total Cabin Pressure" in i or "H2O" in i):
                 # print("telemetry x", i)
                 x = i
                 # print("telemetry x" , x, i)
@@ -360,6 +364,20 @@ class RequestDiagnosis(APIView):
                 x = i.split('(')[0].strip()
                 updated_telemetry_values[x] = float(telemetry_values[i])
         telemetry_values = updated_telemetry_values
+        for i in telemetry_values_t1:
+            if ("Cabin Temperature" in i or "Humidity" in i or "ppCO2" in i or "ppH2" in i or 
+            "ppO2" in i or "ppN2" in i or "Pressure" in i or "Total Cabin Pressure" in i or "H2O" in i):
+                # print("telemetry x", i)
+                x = i
+                # print("telemetry x" , x, i)
+                name = i + " (t-1)"
+                telemetry_values[name] = float(telemetry_values_t1[i])
+
+            else:
+                x = i.split('(')[0].strip()
+                name = x + " (t-1)"
+                telemetry_values[name] = float(telemetry_values_t1[i])
+
     
         print("herrrre----------------------------------")
         print("symptoms list",symptoms_list)
@@ -370,7 +388,9 @@ class RequestDiagnosis(APIView):
         # diagnosis_list = diagnose_symptoms_by_subset_of_anomaly(parsed_symptoms_list)
         # diagnosis_list = diagnose_symptoms_by_intersection_with_anomaly(symptoms_list)
         diagnosis_list = []
+        entropy_reduction = True
         probabilities, best_evidence, hidden_components = get_probabilities(telemetry_values, additional_evidence=addtional_evidence)
+    
         top_5_probabilities = dict(sorted(probabilities.items(), 
                                      key=lambda item: item[1], 
                                      reverse=True)[:5])
@@ -394,14 +414,15 @@ class RequestDiagnosis(APIView):
         # Send request to pride to get all the procedures
         # astrobee_procedure_list = get_astrobee_procedure_list_from_pride()
         astrobee_procedure_list = None
-        print("astrovee procedure list", astrobee_procedure_list)
+        # print("astrovee procedure list", astrobee_procedure_list)
         print("done2-----------------------------------")
 
         # Build the diagnosis report and send it to the frontend
         diagnosis_report = {'symptoms_list': symptoms_list, 'diagnosis_list': final_report, "best_evidence": best_evidence,
                             'hidden_components': hidden_components,
                             'astrobee_procedure_list': astrobee_procedure_list,
-                            'current_telemetry_values': telemetry_values}
+                            'current_telemetry_values': telemetry_values,
+                           }
 
         return Response(diagnosis_report)
 

@@ -25,6 +25,7 @@ export default new Vuex.Store({
     actions: {
         async onWebsocketsMessage({ commit, state, getters, dispatch }, message) {
             let received_info = JSON.parse(message.data);
+            
 
             // Get result of trying to start the hub thread
             if (received_info['type'] === 'hub_thread_response') {
@@ -162,6 +163,7 @@ export default new Vuex.Store({
             else if (received_info['type'] === 'initialize_telemetry') {
                 console.log("Telemetry initialized.");
                 let telemetryDict = received_info['content'];
+                commit('setTimeCounter', 0)
                 if (telemetryDict !== '') {
                     let telemetryVariablesNames = telemetryDict['variables_names'];
                     commit('mutateTelemetryInputVariables', telemetryVariablesNames);
@@ -173,7 +175,25 @@ export default new Vuex.Store({
             else if (received_info['type'] === 'telemetry_update') {
                 // Only update telemetry plot if it is initialized
                 if (state.daphneat.isTelemetryInitialized) {
-                    console.log('Telemetry Update Received - All good');
+                    function formatTime(timestamp) {
+                        const date = new Date(timestamp);
+                        const hours = date.getHours().toString().padStart(2, '0');
+                        const minutes = date.getMinutes().toString().padStart(2, '0');
+                        const seconds = date.getSeconds().toString().padStart(2, '0');
+                        return `${hours}:${minutes}:${seconds}`;
+                      }
+                    let counter = state.daphne.timeCounter;
+                    if (counter < 30){
+                        commit('setTimeCounter', counter+1);
+                        console.log('Telemetry Update Received - All good', formatTime(Date.now()));
+                    }
+                    this.timeInterval = window.setInterval(() => {
+                        this.now = Date.now();
+                        if (this.endTime - this.now <= 0) {
+                            window.clearInterval(this.timeInterval);
+                            console.log()
+                        }
+                    }, 1000);
                     let telemetryDict = received_info['content'];
                     // console.log("telemetry dict",telemetryDict);
                     let selectedVariables = state.daphneat.telemetryPlotSelectedVariables;

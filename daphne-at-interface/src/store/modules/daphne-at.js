@@ -42,7 +42,9 @@ const state = {
     loadingNewAnomaly: false,
     isLoggedIn: false,
     isChatVisible: true,
-    symptoms_timestamp: ""
+    symptoms_timestamp: "",
+
+    additional_evidence: {},
 };
 
 const getters = {
@@ -74,6 +76,7 @@ const getters = {
     getLastUpdatedProceduresTimestamp(state) {return state.lastUpdatedProceduresTimestamp},
     getLastUpdatedProceduresInfoTimestamp(state) {return state.lastUpdatedProceduresInfoTimestamp},
     getLastUpdatedDiagnosisTimestamp(state) {return state.lastUpdatedDiagnosisTimestamp},
+    getAdditionalEvidence(state) {return state.additional_evidence},
 };
 
 const actions = {
@@ -496,6 +499,7 @@ const actions = {
         );
         
         let parsedTelemetryValues = {};
+        let parsedTelemetryValuest1 = {};
 
         for (let i in telemetryValuesDict) { 
             let value = telemetryValuesDict[i];
@@ -509,6 +513,14 @@ const actions = {
                 // Convert the array back into an object
             console.log("telemetry reversed array i", reversedArray[0])
             parsedTelemetryValues[i] = reversedArray[0][1];
+            if (reversedArray.length > 30){
+                parsedTelemetryValuest1[i] = reversedArray[29][1];
+                console.log("telemetry reversed dict value", reversedArray[29][1])
+            }
+            else{
+                parsedTelemetryValuest1[i] = reversedArray[reversedArray.length-1][1];
+                console.log("telemetry reversed dict value", reversedArray[reversedArray.length-1][1])
+            }
             // console.log("telemetry reversed dict value", reversedValueDict)
             // for (let j in value) {
             //     console.log("telemetry dict value j", value[j])
@@ -521,6 +533,7 @@ const actions = {
         }
 
         console.log("parsed telemetry values", parsedTelemetryValues); 
+        console.log("parsed telemetry values t1", parsedTelemetryValuest1);
 
 
         // for (let key in telemetryValues) {
@@ -544,10 +557,14 @@ const actions = {
         console.log("telemetry values", telemetryValues)
         reqData.append('symptomsList',  JSON.stringify(parsedSelectedSymptomsList));
         reqData.append('telemetryValues',  JSON.stringify(parsedTelemetryValues));
+        reqData.append('telemetryValuest1',  JSON.stringify(parsedTelemetryValuest1));
+
+
         let response = await fetchPost('/api/at/requestDiagnosis', reqData);
         if (response.ok) {
             let diagnosis_report = await response.json();
             console.log("new diagnosis_report from backend", diagnosis_report)
+            diagnosis_report.additional_evidence = null
             commit('mutateDiagnosisReport', diagnosis_report);
             const now = new Date();
             let formattedDate = now.toLocaleString('en-US', {
@@ -643,10 +660,15 @@ const actions = {
         reqData.append('symptomsList',  JSON.stringify(parsedSelectedSymptomsList));
         reqData.append('telemetryValues',  JSON.stringify(parsedTelemetryValues));
         reqData.append('additionalEvidence',  JSON.stringify(requestPayload['additional_evidence']));
+
+        commit('mutateAdditionalEvidence', requestPayload['additional_evidence']);
+
         let response = await fetchPost('/api/at/requestDiagnosis', reqData);
+        
         if (response.ok) {
             let diagnosis_report = await response.json();
             console.log("new diagnosis_report from backend", diagnosis_report)
+            diagnosis_report.additional_evidence = requestPayload['additional_evidence']
             commit('mutateDiagnosisReport', diagnosis_report);
             const now = new Date();
             let formattedDate = now.toLocaleString('en-US', {
@@ -742,6 +764,7 @@ const mutations = {
     mutateLastUpdatedProceduresTimestamp(state, newVal) { state.lastUpdatedProceduresTimestamp = newVal},
     mutateLastUpdatedProceduresInfoTimestamp(state, newVal) { state.lastUpdatedProceduresInfoTimestamp = newVal},
     mutateLastUpdatedDiagnosisTimestamp(state, newVal) { state.lastUpdatedDiagnosisTimestamp = newVal},
+    mutateAdditionalEvidence(state, newVal) { state.additional_evidence = newVal},
 };
 
 export default {
