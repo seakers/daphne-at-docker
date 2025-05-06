@@ -1,6 +1,6 @@
 # network_struture.py
 # Author: Joshua Elston
-# Last Updated: 03/31/2025
+# Last Updated: 05/06/2025
 
 # Define Bayesian network structure --> called in ECLSS_Bayesian_Network.py
 
@@ -21,10 +21,10 @@ network = [
     ("Biological Filter Saturation", "[HIDDEN] BFS Component"),
 
     # CDRA Failure (with previous time-step symptoms added)
-    ("CDRA Failure", "high Humidity (L1)"), ("CDRA Failure", "high Humidity (L1) (t-1)") ("CDRA Failure", "high Humidity (L2)"), ("CDRA Failure", "high Humidity (L2) (t-1)")
+    ("CDRA Failure", "high Humidity (L1)"), ("CDRA Failure", "high Humidity (L1) (t-1)"), ("CDRA Failure", "high Humidity (L2)"), ("CDRA Failure", "high Humidity (L2) (t-1)")
     ("CDRA Failure", "high ppCO2 (L1)"), ("CDRA Failure", "high ppCO2 (L1) (t-1)"), ("CDRA Failure", "high ppCO2 (L2)"), ("CDRA Failure", "high ppCO2 (L2) (t-1)"),
     ("CDRA Failure", "high ppO2 (L1)"), ("CDRA Failure", "high ppO2 (L1) (t-1)"), ("CDRA Failure", "high ppO2 (L2)"), ("CDRA Failure", "high ppO2 (L2) (t-1)"),
-    ("CDRA Failure", "low Humidity (L1)"), ("CDRA Failure", "low Humidity (L1) (t-1)"), ("CDRA Failure", "low Humidity (L2)"), ("CDRA Failure", "low Humidity (L1) (t-1)"),
+    ("CDRA Failure", "low Humidity (L1)"), ("CDRA Failure", "low Humidity (L1) (t-1)"), ("CDRA Failure", "low Humidity (L2)"), ("CDRA Failure", "low Humidity (L2) (t-1)"),
     ("CDRA Failure", "low ppCO2 (L1)"), ("CDRA Failure", "low ppCO2 (L1) (t-1)"), ("CDRA Failure", "low ppCO2 (L2)"), ("CDRA Failure", "low ppCO2 (L2) (t-1)"),
     ("CDRA Failure", "low ppO2 (L1)"), ("CDRA Failure", "low ppO2 (L1) (t-1)"), ("CDRA Failure", "low ppO2 (L2)"), ("CDRA Failure", "low ppO2 (L2) (t-1)"),
     ("CDRA Failure", "[HIDDEN] CDRA Failure Component"),
