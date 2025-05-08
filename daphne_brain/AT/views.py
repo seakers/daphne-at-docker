@@ -384,6 +384,7 @@ class RequestDiagnosis(APIView):
         # diagnosis_list = diagnose_symptoms_by_subset_of_anomaly(parsed_symptoms_list)
         # diagnosis_list = diagnose_symptoms_by_intersection_with_anomaly(symptoms_list)
         diagnosis_list = []
+        entropy_reduction = True
         probabilities, best_evidence, hidden_components = get_probabilities(telemetry_values, additional_evidence=addtional_evidence)
         top_5_probabilities = dict(sorted(probabilities.items(), 
                                      key=lambda item: item[1], 

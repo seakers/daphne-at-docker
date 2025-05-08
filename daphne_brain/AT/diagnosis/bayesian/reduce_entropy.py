@@ -93,8 +93,6 @@ def select_best_evidence(infer, split_probability_dict, hidden_probabilities_dic
     best_entropy_reduction = float('-inf')
     best_evidence = None
 
-    tic = time.time()
-
     # Iterate over all hidden nodes
     for potential_evidence, associated_anomaly in hidden_probabilities_dict.items():
         # print(f'Potential Evidence: {potential_evidence}')
@@ -122,4 +120,4 @@ def select_best_evidence(infer, split_probability_dict, hidden_probabilities_dic
             best_entropy_reduction = delta_h
             best_evidence = potential_evidence
 
-    return best_evidence
+    return best_evidence, best_entropy_reduction
