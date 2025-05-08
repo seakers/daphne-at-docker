@@ -5,10 +5,10 @@
 # Adds the CPTs computed in noisy_MAX.py as Tabular CPDs to the Bayesian network --> called in the ECLSS_Baysian_Network.py script
 # CPTs for hidden evidence nodes also added here, which are only related to a single anomaly
 
-from noisy_MAX import noisy_MAX
+from AT.diagnosis.bayesian.noisy_MAX import noisy_MAX
 from pgmpy.factors.discrete import TabularCPD
 from itertools import product
-from dictionaries import subgroup_dict, nap_dict
+from AT.diagnosis.bayesian.dictionaries import subgroup_dict, nap_dict
 
 def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_cardinality):
     for parameter, anomalies in split_probability_dict.items():

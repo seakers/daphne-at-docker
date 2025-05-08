@@ -164,6 +164,8 @@ CHANNEL_LAYERS = {
                     os.environ.get('REDIS_HOST', 'localhost'),
                     int(os.environ.get('REDIS_PORT', 6379))
                 )],
+            "capacity": 100,  # Increase capacity (default is often 10)
+            "expiry": 60,
         }
     },
 }

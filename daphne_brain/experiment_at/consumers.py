@@ -27,21 +27,46 @@ class ATExperimentConsumer(JsonWebsocketConsumer):
             experiment_context = user_info.atexperimentcontext
 
             if content.get('msg_type') == 'add_action':
-                experiment_stage = experiment_context.atexperimentstage_set.all().order_by("id")[content['stage']]
-                ATExperimentAction.objects.create(atexperimentstage=experiment_stage, action=json.dumps(content['action']),
-                                                  date=datetime.datetime.utcnow())
-                self.save_json_file(experiment_context)
-                self.send_json({
-                    'action': content['action'],
-                    'date': datetime.datetime.utcnow().isoformat()
-                })
+                try:
+                    # Get all stages and check if the requested stage exists
+                    experiment_stages = experiment_context.atexperimentstage_set.all().order_by("id")
+                    stage_index = content.get('stage', 0)
+                    
+                    if stage_index < 0 or stage_index >= experiment_stages.count():
+                        self.send_json({
+                            'error': True,
+                            'message': f"Stage index {stage_index} out of range. Available stages: 0-{experiment_stages.count()-1 if experiment_stages.count() > 0 else 'None'}"
+                        })
+                        return
+                        
+                    experiment_stage = experiment_stages[stage_index]
+                    ATExperimentAction.objects.create(atexperimentstage=experiment_stage, 
+                                                action=json.dumps(content['action']),
+                                                date=datetime.datetime.utcnow())
+                    self.save_json_file(experiment_context)
+                    self.send_json({
+                        'action': content['action'],
+                        'date': datetime.datetime.utcnow().isoformat()
+                    })
+                except Exception as e:
+                    self.send_json({
+                        'error': True,
+                        'message': f"Error processing action: {str(e)}"
+                    })
+                    
             elif content.get('msg_type') == 'update_state':
-                experiment_context.current_state = json.dumps(content['state'])
-                experiment_context.save()
-                self.save_json_file(experiment_context)
-                self.send_json({
-                    "state": json.loads(experiment_context.current_state)
-                })
+                try:
+                    experiment_context.current_state = json.dumps(content['state'])
+                    experiment_context.save()
+                    self.save_json_file(experiment_context)
+                    self.send_json({
+                        "state": json.loads(experiment_context.current_state)
+                    })
+                except Exception as e:
+                    self.send_json({
+                        'error': True,
+                        'message': f"Error updating state: {str(e)}"
+                    })
 
     def save_json_file(self, experiment_context):
         # Save experiment results to file

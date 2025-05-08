@@ -22,6 +22,7 @@ class UserInformation(models.Model):
 
     # Websockets communication
     channel_name = models.CharField(max_length=120)
+    # mycroft_connection = models.CharField(max_length=255, default="default_connection")
 
     # Special restrictions
     class Meta:

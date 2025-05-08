@@ -175,7 +175,7 @@ export default new Vuex.Store({
                 if (state.daphneat.isTelemetryInitialized) {
                     console.log('Telemetry Update Received - All good');
                     let telemetryDict = received_info['content'];
-                    console.log("telemetry dict",telemetryDict);
+                    // console.log("telemetry dict",telemetryDict);
                     let selectedVariables = state.daphneat.telemetryPlotSelectedVariables;
                     let plotData = processedPlotData(telemetryDict, selectedVariables);
             

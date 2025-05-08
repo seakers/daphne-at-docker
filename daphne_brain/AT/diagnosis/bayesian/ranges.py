@@ -159,6 +159,23 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (40, 50, False, True),
         'Exceeds_LowerWarningLimit': (None, 40, False, True)
     },
+
+    # Added Previous Time-Step Variables
+    "Humidity (L1) (t-1)": {
+        'Exceeds_UpperWarningLimit': (70, None, True, False),
+        'Exceeds_UpperCautionLimit': (61, 70, True, False),
+        'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
+        'Exceeds_LowerCautionLimit': (40, 50, False, True),
+        'Exceeds_LowerWarningLimit': (None, 40, False, True)
+    },
+    "Humidity (L2) (t-1)": {
+        'Exceeds_UpperWarningLimit': (70, None, True, False),
+        'Exceeds_UpperCautionLimit': (61, 70, True, False),
+        'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
+        'Exceeds_LowerCautionLimit': (40, 50, False, True),
+        'Exceeds_LowerWarningLimit': (None, 40, False, True)
+    },
+
     # NOTE: LiOH CO2 Saturation appears in Neo4j in relation to the CDRA LiOH Canister Saturation anomaly, but is not mentioned on the HSS machine
     "LiOH CO2 Saturation": {
         'Exceeds_UpperWarningLimit': (80, None, True, False),
@@ -231,6 +248,23 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
+
+    # Added Previous Time-Step Variables
+    "ppCO2 (L1) (t-1)": {
+        'Exceeds_UpperWarningLimit': (6, None, True, False),
+        'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
+        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
+        'Exceeds_LowerCautionLimit': (-2, -1, False, True),
+        'Exceeds_LowerWarningLimit': (None, -2, False, True)
+    },
+    "ppCO2 (L2) (t-1)": {
+        'Exceeds_UpperWarningLimit': (6, None, True, False),
+        'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
+        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
+        'Exceeds_LowerCautionLimit': (-2, -1, False, True),
+        'Exceeds_LowerWarningLimit': (None, -2, False, True)
+    },
+
     "ppH2 (L1)": {
         'Exceeds_UpperWarningLimit': (0.1, None, True, False),
         'Exceeds_UpperCautionLimit': (0.07, 0.1, True, False),
@@ -273,6 +307,23 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (145, 155, False, True),
         'Exceeds_LowerWarningLimit': (None, 145, False, True)
     },
+
+    # Added Previous Time-Step Variables
+    "ppO2 (L1) (t-1)": {
+        'Exceeds_UpperWarningLimit': (185, None, True, False), # ≥ 185
+        'Exceeds_UpperCautionLimit': (175, 185, True, False), # 175 ≤ ppO2 < 185
+        'Nominal': (155, 175, False, False), # 155 < ppO2 < 175 --> Nominal: 163.79 mmHG
+        'Exceeds_LowerCautionLimit': (145, 155, False, True), # 145 < ppO2 ≤ 155
+        'Exceeds_LowerWarningLimit': (None, 145, False, True) # ≤ 145
+    },
+    "ppO2 (L2) (t-1)": {
+        'Exceeds_UpperWarningLimit': (185, None, True, False),
+        'Exceeds_UpperCautionLimit': (175, 185, True, False),
+        'Nominal': (155, 175, False, False), # Nominal: 163.81 mmHG
+        'Exceeds_LowerCautionLimit': (145, 155, False, True),
+        'Exceeds_LowerWarningLimit': (None, 145, False, True)
+    },
+
     "Pressure (L1)": {
         'Exceeds_UpperWarningLimit': (1.5, None, True, False),
         'Exceeds_UpperCautionLimit': (1.15, 1.5, True, False),

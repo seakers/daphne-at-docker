@@ -11,6 +11,39 @@
           <component v-for="(response, index) in piece['visual_message']"
                      v-bind:is="responseTypes[piece['visual_message_type'][index]]" :response="formatText(response)"
                      :key="index"></component>
+
+          <!-- Add option buttons if present in the message -->
+          <div v-if="piece.options && piece.options.length > 0" class="option-buttons">
+            <button 
+              v-for="option in piece.options" 
+              :key="option"
+              class="button theme-buttons option-button"
+              @click="handleOptionClick(piece, option)">
+              {{ option }}
+            </button>
+          </div>  
+
+          <!-- Add slider if present in the message -->
+          <div v-if="piece.sliderOptions" class="slider-container">
+            <input 
+              type="range" 
+              class="slider" 
+              :min="piece.sliderOptions.min" 
+              :max="piece.sliderOptions.max" 
+              :step="piece.sliderOptions.step"
+              :value="piece.sliderOptions.defaultValue"
+              @input="handleSliderInput($event, piece)">
+            <div class="slider-labels">
+              <span>{{ piece.sliderOptions.min }}</span>
+              <span>{{ currentSliderValue || piece.sliderOptions.defaultValue }}</span>
+              <span>{{ piece.sliderOptions.max }}</span>
+            </div>
+            <button 
+              class="button theme-buttons confirm-button"
+              @click="confirmSliderValue(piece)">
+              Confirm
+            </button>
+          </div>
         </div>
         <img src="assets/img/loader.svg" style="display: block; margin: auto;" align="center" height="64" width="64"
              v-if="isLoading" alt="Loading spinner">
@@ -101,7 +134,10 @@ export default {
         multilist: 'MultiListResponse',
         timeline_plot: 'TimelineResponse',
         active_message: 'ActiveMessage',
+        slider: 'TextResponse',
       },
+      currentSliderValue: null,
+      activeSlider: null,
     }
   },
   computed: {
@@ -157,6 +193,60 @@ export default {
     }
   },
   methods: {
+
+    handleSliderInput(event, message) {
+      this.currentSliderValue = parseInt(event.target.value);
+      this.activeSlider = message;
+    },
+
+    confirmSliderValue(message) {
+      if (this.currentSliderValue !== null) {
+        // Add the slider value as a user message to the chat
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `${this.currentSliderValue}`,
+          "visual_message_type": ["text"],
+          "visual_message": [`I selected a value of ${this.currentSliderValue}`],
+          "writer": "user"
+        });
+        
+        // Emit the event with the selected value
+        if (message.sliderOptions.callbackEvent) {
+          this.$root.$emit(message.sliderOptions.callbackEvent, this.currentSliderValue);
+        }
+        
+        // Remove the slider from the message to prevent multiple submissions
+        this.$nextTick(() => {
+          message.sliderOptions = null;
+        });
+        
+        // Reset the current slider value
+        this.currentSliderValue = null;
+        this.activeSlider = null;
+      }
+    },
+
+    handleOptionClick(message, option) {
+      // First, add the user's selection to dialogue history
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": option,
+        "visual_message_type": ["text"],
+        "visual_message": [option],
+        "writer": "user"
+      });
+      
+      // If there's an optionsCallback, call it
+      if (message.optionsCallback && typeof message.optionsCallback === 'function') {
+        message.optionsCallback(option);
+      } else if (message.optionsCallbackEvent) {
+        // Emit event for external handlers
+        this.$root.$emit(message.optionsCallbackEvent, option);
+      }
+      
+      // Remove options from the message to prevent multiple selections
+      this.$nextTick(() => {
+        message.options = [];
+      });
+    },
     scrollToBottom: function () {
       let container = this.$el.querySelector(".chat-area");
       container.scrollTop = container.scrollHeight;
@@ -311,6 +401,27 @@ export default {
   margin: 0.5em;
 }
 
+.option-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.option-button {
+  padding: 6px 12px;
+  background-color: #005454;
+  color: white;
+  border: 1px solid #0AFEFF;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.option-button:hover {
+  background-color: #007777;
+}
+
 .chat-message {
   width: 100%;
   border-radius: 10px;
@@ -342,5 +453,66 @@ export default {
 
 ::placeholder {
   color: gray !important;
+}
+
+.slider-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.slider {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  background: #003f3f;
+  border-radius: 5px;
+  margin: 10px 0;
+  
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #0AFEFF;
+    cursor: pointer;
+  }
+  
+  &::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #0AFEFF;
+    cursor: pointer;
+    border: none;
+  }
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 10px;
+  
+  span {
+    color: #0AFEFF;
+  }
+}
+
+.confirm-button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #005454;
+  color: white;
+  border: 1px solid #0AFEFF;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  
+  &:hover {
+    background-color: #007777;
+  }
 }
 </style>

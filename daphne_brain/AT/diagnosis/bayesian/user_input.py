@@ -5,9 +5,9 @@
 # Used to process user inputs and display updated Bayesian network beliefs based on provided evidence --> called in ECLSS_Bayesian_Network.py
 
 import time
-from query_network import query_network
+from AT.diagnosis.bayesian.query_network import query_network
 
-def get_parameter_input(measurement_ranges):
+def get_parameter_input(telemetry_values,measurement_ranges):
     # Prompt the user to enter a parameter and its value
     parameter = input("Enter a parameter to update its value (or 'exit' to quit): ")
     # Check the exit criteria
@@ -33,60 +33,63 @@ def get_parameter_input(measurement_ranges):
     
     return parameter, value
 
-def query_parameters(infer, measurement_ranges, split_probability_dict):
+def query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
     # Collect parameter values from the user, and query the Bayesian network with the updated evidence
-    while True:
-        parameter_values = {}
+    # while True:
+    #     parameter_values = {}
 
-        # Gather parameter values from the user
-        while True:
-            parameter, value = get_parameter_input(measurement_ranges)
-            if parameter is None:
-                return {}, {} # exit if the user types 'exit'
+    #     # Gather parameter values from the user
+    #     while True:
+    #         parameter, value = get_parameter_input(telemetry_values, measurement_ranges)
+    #         if parameter is None:
+    #             return {}, {} # exit if the user types 'exit'
 
-            # Store parameter-value pairs in a dictionary (to be passed to the 'query_network' function)
-            parameter_values[parameter] = value
-            print(f"Collected: {parameter} with value {value}")
+    #         # Store parameter-value pairs in a dictionary (to be passed to the 'query_network' function)
+    #         parameter_values[parameter] = value
+    #         print(f"Collected: {parameter} with value {value}")
+    #         print()
+
+    #         # Ask the user if they want to enter additional parameter values
+    #         if input("Add another parameter? (yes/no): ").strip().lower() != 'yes':
+    #             break
+    parameter_values = telemetry_values
+    print("Parameter values: ", parameter_values)
+    if parameter_values: # proceed if parameters detected
+        try:
+            # Query the Bayesian network
+            print("i am here")
+            normalized_probabilities, evidence, runtime = query_network(infer, parameter_values, measurement_ranges, split_probability_dict, additional_evidence,hidden_probabilities_dict)
+
+            # Sort anomalies based on the probability of their presence
+            sorted_anomalies = sorted(normalized_probabilities.items(), key = lambda x: x[1], reverse = True)
+
+            # Print the sorted anomalies with their probabilities of being present
             print()
-
-            # Ask the user if they want to enter additional parameter values
-            if input("Add another parameter? (yes/no): ").strip().lower() != 'yes':
-                break
-
-        if parameter_values: # proceed if parameters detected
-            try:
-                # Query the Bayesian network
-                normalized_probabilities, evidence, runtime = query_network(infer, parameter_values, measurement_ranges, split_probability_dict)
-
-                # Sort anomalies based on the probability of their presence
-                sorted_anomalies = sorted(normalized_probabilities.items(), key = lambda x: x[1], reverse = True)
-
-                # Print the sorted anomalies with their probabilities of being present
-                print()
-                print("Anomalies ranked by probability of presence:")
-                for anomaly, prob in sorted_anomalies[:5]:
-                    if anomaly == 'No Anomalies Present':
-                        print(f"P({anomaly}): {prob:.6f}")
-                    else:
-                        print(f"P({anomaly} = 1): {prob:.6f}")
-                print()
-                print(f"Query runtime: {runtime:.2f}s")
-                print()
-            
-                formatted_probabilities = {key: float(value) for key, value in normalized_probabilities.items()}
-                # Return the formatted probabilities to calculate the entropy of the probability distribution
-                return formatted_probabilities, evidence
-
-            except RuntimeError as e:
-                print(f"Error during querying: {e}")
-
-        # Ask the user if they wish to continue updating parameters
-        # NOTE: WITH NEW CALL TO QUERY ADDITIONAL EVIDENCE, DOESN'T APPEAR THAT THIS
-        # BLOCK IS BEING USED
-        if input("Would you like to continue updating parameter values? (yes/no): ").strip().lower() != 'yes':
+            print("Anomalies ranked by probability of presence:")
+            for anomaly, prob in sorted_anomalies[:5]:
+                if anomaly == 'No Anomalies Present':
+                    print(f"P({anomaly}): {prob:.6f}")
+                else:
+                    print(f"P({anomaly} = 1): {prob:.6f}")
             print()
-            print("Exiting parameter updating process.")
-            break
+            print(f"Query runtime: {runtime:.2f}s")
+            print()
+        
+            formatted_probabilities = {key: float(value) for key, value in normalized_probabilities.items()}
+            print("Formatted probabilities: ", formatted_probabilities)
+            # Return the formatted probabilities to calculate the entropy of the probability distribution
+            return formatted_probabilities, evidence
+
+        except RuntimeError as e:
+            print(f"Error during querying: {e}")
+
+        # # Ask the user if they wish to continue updating parameters
+        # # NOTE: WITH NEW CALL TO QUERY ADDITIONAL EVIDENCE, DOESN'T APPEAR THAT THIS
+        # # BLOCK IS BEING USED
+        # if input("Would you like to continue updating parameter values? (yes/no): ").strip().lower() != 'yes':
+        #     print()
+        #     print("Exiting parameter updating process.")
+        #     break
 
 
 #################### User inputs for additional evidence ####################
@@ -113,32 +116,32 @@ def get_evidence_info(hidden_probabilities_dict):
 
     return hidden_parameter, hidden_state
 
-def query_additional_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence):
+def query_additional_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence, additional_evidence):
     # Function takes elements from query_network without the need to remap evidence that should have previous been set and stored there
 
     while True:
         # Create a dictionary to store additional evidence added by the crew
-        additional_evidence = {}
+        # additional_evidence = {}
 
         # Gather additional evidence from the crew
-        while True:
-            hidden_parameter, hidden_state = get_evidence_info(hidden_probabilities_dict)
+        # # while True:
+        # #     # hidden_parameter, hidden_state = get_evidence_info(hidden_probabilities_dict)
 
-            # Create state mappings for the additional evidence
-            additional_evidence_mapping = {
-                'False': 0,
-                'True': 1
-            }
+        #     # Create state mappings for the additional evidence
+        #     additional_evidence_mapping = {
+        #         'False': 0,
+        #         'True': 1
+        #     }
 
-            additional_evidence[hidden_parameter] = additional_evidence_mapping[hidden_state]
-            print(f"Collected: {hidden_parameter} with state {hidden_state}")
-            print()
+        #     additional_evidence[hidden_parameter] = additional_evidence_mapping[hidden_state]
+        #     print(f"Collected: {hidden_parameter} with state {hidden_state}")
+        #     print()
 
-            if hidden_parameter != best_evidence:
-                if input(f"The additional evidence collected does not provide the most information about the present anomaly. Would you like to add evidence for {best_evidence}? (yes/no): ") != 'yes':
-                    break
-            else:
-                    break
+            # if hidden_parameter != best_evidence:
+            #     if input(f"The additional evidence collected does not provide the most information about the present anomaly. Would you like to add evidence for {best_evidence}? (yes/no): ") != 'yes':
+            #         break
+            # else:
+            #         break
 
         if additional_evidence: # proceed if additional evidence provided
             evidence.update(additional_evidence) # add the additional evidence to the main evidence dictionary
@@ -182,14 +185,14 @@ def query_additional_evidence(infer, split_probability_dict, hidden_probabilitie
             sorted_anomalies = sorted(normalized_probabilities.items(), key = lambda x: x[1], reverse = True)
 
             # Print the sorted anomalies with their probabilities of being present
-            print()
-            print("Anomalies ranked by probability of presence (following inclusion of additional evidence):")
-            for anomaly, prob in sorted_anomalies[:5]:
-                if anomaly == 'No Anomalies Present':
-                    print(f"P({anomaly}): {prob:.6f}")
-                else:
-                    print(f"P({anomaly} = 1): {prob:.6f}")
-            print()
+            # print()
+            # print("Anomalies ranked by probability of presence (following inclusion of additional evidence):")
+            # for anomaly, prob in sorted_anomalies[:5]:
+            #     if anomaly == 'No Anomalies Present':
+            #         print(f"P({anomaly}): {prob:.6f}")
+            #     else:
+            #         print(f"P({anomaly} = 1): {prob:.6f}")
+            # print()
 
             formatted_probabilities = {key: float(value) for key, value in normalized_probabilities.items()}
             # print(f'Formatted probabilities: {formatted_probabilities}')

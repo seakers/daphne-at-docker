@@ -1,6 +1,6 @@
 # network_struture.py
 # Author: Joshua Elston
-# Last Updated: 03/31/2025
+# Last Updated: 05/06/2025
 
 # Define Bayesian network structure --> called in ECLSS_Bayesian_Network.py
 
@@ -14,33 +14,45 @@
 # the for loop at the bottom of the script
 network = [
     # Biological Filter Saturation
-    ("Biological Filter Saturation", "high ppCO2 (L1)"), ("Biological Filter Saturation", "high ppCO2 (L2)"), ("Biological Filter Saturation", "high ppO2 (L1)"), ("Biological Filter Saturation", "high ppO2 (L2)"),
-    ("Biological Filter Saturation", "low ppCO2 (L1)"), ("Biological Filter Saturation", "low ppCO2 (L2)"), ("Biological Filter Saturation", "low ppO2 (L1)"), ("Biological Filter Saturation", "low ppO2 (L2)"),
+    ("Biological Filter Saturation", "high ppCO2 (L1)"), ("Biological Filter Saturation", "high ppCO2 (L1) (t-1)"), ("Biological Filter Saturation", "high ppCO2 (L2)"), ("Biological Filter Saturation", "high ppCO2 (L2) (t-1)"),
+    ("Biological Filter Saturation", "high ppO2 (L1)"), ("Biological Filter Saturation", "high ppO2 (L1) (t-1)"), ("Biological Filter Saturation", "high ppO2 (L2)"), ("Biological Filter Saturation", "high ppO2 (L2) (t-1)"),
+    ("Biological Filter Saturation", "low ppCO2 (L1)"), ("Biological Filter Saturation", "low ppCO2 (L1) (t-1)"), ("Biological Filter Saturation", "low ppCO2 (L2)"), ("Biological Filter Saturation", "low ppCO2 (L2) (t-1)"),
+    ("Biological Filter Saturation", "low ppO2 (L1)"), ("Biological Filter Saturation", "low ppO2 (L1) (t-1)"), ("Biological Filter Saturation", "low ppO2 (L2)"), ("Biological Filter Saturation", "low ppO2 (L2) (t-1)"),
     ("Biological Filter Saturation", "[HIDDEN] BFS Component"),
 
-    # CDRA Failure
-    ("CDRA Failure", "high Humidity (L1)"), ("CDRA Failure", "high Humidity (L2)"), ("CDRA Failure", "high ppCO2 (L1)"), ("CDRA Failure", "high ppCO2 (L2)"), ("CDRA Failure", "high ppO2 (L1)"), ("CDRA Failure", "high ppO2 (L2)"),
-    ("CDRA Failure", "low Humidity (L1)"), ("CDRA Failure", "low Humidity (L2)"), ("CDRA Failure", "low ppCO2 (L1)"), ("CDRA Failure", "low ppCO2 (L2)"), ("CDRA Failure", "low ppO2 (L1)"), ("CDRA Failure", "low ppO2 (L2)"),
+    # CDRA Failure (with previous time-step symptoms added)
+    ("CDRA Failure", "high Humidity (L1)"), ("CDRA Failure", "high Humidity (L1) (t-1)"), ("CDRA Failure", "high Humidity (L2)"), ("CDRA Failure", "high Humidity (L2) (t-1)"),
+    ("CDRA Failure", "high ppCO2 (L1)"), ("CDRA Failure", "high ppCO2 (L1) (t-1)"), ("CDRA Failure", "high ppCO2 (L2)"), ("CDRA Failure", "high ppCO2 (L2) (t-1)"),
+    ("CDRA Failure", "high ppO2 (L1)"), ("CDRA Failure", "high ppO2 (L1) (t-1)"), ("CDRA Failure", "high ppO2 (L2)"), ("CDRA Failure", "high ppO2 (L2) (t-1)"),
+    ("CDRA Failure", "low Humidity (L1)"), ("CDRA Failure", "low Humidity (L1) (t-1)"), ("CDRA Failure", "low Humidity (L2)"), ("CDRA Failure", "low Humidity (L2) (t-1)"),
+    ("CDRA Failure", "low ppCO2 (L1)"), ("CDRA Failure", "low ppCO2 (L1) (t-1)"), ("CDRA Failure", "low ppCO2 (L2)"), ("CDRA Failure", "low ppCO2 (L2) (t-1)"),
+    ("CDRA Failure", "low ppO2 (L1)"), ("CDRA Failure", "low ppO2 (L1) (t-1)"), ("CDRA Failure", "low ppO2 (L2)"), ("CDRA Failure", "low ppO2 (L2) (t-1)"),
     ("CDRA Failure", "[HIDDEN] CDRA Failure Component"),
 
     # CDRA LiOH Canister Saturation
-    ("CDRA LiOH Canister Saturation", "high ppCO2 (L1)"), ("CDRA LiOH Canister Saturation", "high ppCO2 (L2)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L1)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L2)"), ("CDRA LiOH Canister Saturation", "high LiOH CO2 Saturation"),
-    ("CDRA LiOH Canister Saturation", "low ppCO2 (L1)"), ("CDRA LiOH Canister Saturation", "low ppCO2 (L2)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L1)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L2)"), ("CDRA LiOH Canister Saturation", "low LiOH CO2 Saturation"),
+    ("CDRA LiOH Canister Saturation", "high ppCO2 (L1)"), ("CDRA LiOH Canister Saturation", "high ppCO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "high ppCO2 (L2)"), ("CDRA LiOH Canister Saturation", "high ppCO2 (L2) (t-1)"),
+    ("CDRA LiOH Canister Saturation", "high ppO2 (L1)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L2)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L2) (t-1)"),
+    ("CDRA LiOH Canister Saturation", "high LiOH CO2 Saturation"),
+    ("CDRA LiOH Canister Saturation", "low ppCO2 (L1)"), ("CDRA LiOH Canister Saturation", "low ppCO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "low ppCO2 (L2)"), ("CDRA LiOH Canister Saturation", "low ppCO2 (L2) (t-1)"),
+    ("CDRA LiOH Canister Saturation", "low ppO2 (L1)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L2)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L2) (t-1)"),
+    ("CDRA LiOH Canister Saturation", "low LiOH CO2 Saturation"),
     ("CDRA LiOH Canister Saturation", "[HIDDEN] CDRA LiOH Canister Saturation Component"),
 
     # Electrolysis System Failure
-    ("Electrolysis System Failure", "high H2O (Crew)"), ("Electrolysis System Failure", "high ppO2 (L1)"), ("Electrolysis System Failure", "high ppO2 (L2)"),
-    ("Electrolysis System Failure", "low H2O (Crew)"), ("Electrolysis System Failure", "low ppO2 (L1)"), ("Electrolysis System Failure", "low ppO2 (L2)"),
+    ("Electrolysis System Failure", "high H2O (Crew)"),
+    ("Electrolysis System Failure", "high ppO2 (L1)"), ("Electrolysis System Failure", "high ppO2 (L1) (t-1)"), ("Electrolysis System Failure", "high ppO2 (L2)"), ("Electrolysis System Failure", "high ppO2 (L2) (t-1)"),
+    ("Electrolysis System Failure", "low H2O (Crew)"),
+    ("Electrolysis System Failure", "low ppO2 (L1)"), ("Electrolysis System Failure", "low ppO2 (L1) (t-1)"), ("Electrolysis System Failure", "low ppO2 (L2)"), ("Electrolysis System Failure", "low ppO2 (L2) (t-1)"),
     ("Electrolysis System Failure", "[HIDDEN] Electrolysis System Failure Component"),
 
     # Emergency O2 System Maintenance
-    ("Emergency O2 System Maintenance", "high ppO2 (L1)"), ("Emergency O2 System Maintenance", "high ppO2 (L2)"),
-    ("Emergency O2 System Maintenance", "low ppO2 (L1)"), ("Emergency O2 System Maintenance", "low ppO2 (L2)"),
+    ("Emergency O2 System Maintenance", "high ppO2 (L1)"), ("Emergency O2 System Maintenance", "high ppO2 (L1) (t-1)"), ("Emergency O2 System Maintenance", "high ppO2 (L2)"), ("Emergency O2 System Maintenance", "high ppO2 (L2) (t-1)"),
+    ("Emergency O2 System Maintenance", "low ppO2 (L1)"), ("Emergency O2 System Maintenance", "low ppO2 (L1) (t-1)"), ("Emergency O2 System Maintenance", "low ppO2 (L2)"), ("Emergency O2 System Maintenance", "low ppO2 (L2) (t-1)"),
     ("Emergency O2 System Maintenance", "[HIDDEN] Emergency O2 System Maintenance Component"),
 
     # Excess CO2 in Cabin
-    ("Excess CO2 in Cabin", "high ppCO2 (L1)"), ("Excess CO2 in Cabin", "high ppCO2 (L2)"),
-    ("Excess CO2 in Cabin", "low ppCO2 (L1)"), ("Excess CO2 in Cabin", "low ppCO2 (L2)"),
+    ("Excess CO2 in Cabin", "high ppCO2 (L1)"), ("Excess CO2 in Cabin", "high ppCO2 (L1) (t-1)"), ("Excess CO2 in Cabin", "high ppCO2 (L2)"), ("Excess CO2 in Cabin", "high ppCO2 (L2) (t-1)"),
+    ("Excess CO2 in Cabin", "low ppCO2 (L1)"), ("Excess CO2 in Cabin", "low ppCO2 (L1) (t-1)"), ("Excess CO2 in Cabin", "low ppCO2 (L2)"), ("Excess CO2 in Cabin", "low ppCO2 (L2) (t-1)"),
     ("Excess CO2 in Cabin", "[HIDDEN] Excess CO2 in Cabin Component"),
 
     # Excess Gas Leak
@@ -49,33 +61,35 @@ network = [
     ("Excess Gas Leak", "[HIDDEN] Excess Gas Leak Component"),
 
     # Excess Water Vapor Pressure in Cabin
-    ("Excess Water Vapor Pressure in Cabin", "high Cabin Temperature (L1)"), ("Excess Water Vapor Pressure in Cabin", "high Cabin Temperature (L2)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L1)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L2)"),
-    ("Excess Water Vapor Pressure in Cabin", "low Cabin Temperature (L1)"), ("Excess Water Vapor Pressure in Cabin", "low Cabin Temperature (L2)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L1)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L2)"),
+    ("Excess Water Vapor Pressure in Cabin", "high Cabin Temperature (L1)"), ("Excess Water Vapor Pressure in Cabin", "high Cabin Temperature (L2)"),
+    ("Excess Water Vapor Pressure in Cabin", "high Humidity (L1)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L1) (t-1)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L2)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L2) (t-1)"),
+    ("Excess Water Vapor Pressure in Cabin", "low Cabin Temperature (L1)"), ("Excess Water Vapor Pressure in Cabin", "low Cabin Temperature (L2)"),
+    ("Excess Water Vapor Pressure in Cabin", "low Humidity (L1)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L1) (t-1)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L2)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L2) (t-1)"),
     ("Excess Water Vapor Pressure in Cabin", "[HIDDEN] Excess Water Vapor Pressure in Cabin Component"),
 
     # Fuel Cell #1 and PDU Failure
-    ("Fuel Cell #1 and PDU Failure", "high 2-butanone"), ("Fuel Cell #1 and PDU Failure", "high Acetaldehyde"), 
+    ("Fuel Cell #1 and PDU Failure", "high 2-butanone"), ("Fuel Cell #1 and PDU Failure", "high Acetaldehyde"),
     ("Fuel Cell #1 and PDU Failure", "high Aux Cabin Fan #2"), ("Fuel Cell #1 and PDU Failure", "high Fuel Cell #1 Current"),
-    ("Fuel Cell #1 and PDU Failure", "high Fuel Cell #1 PQM"), ("Fuel Cell #1 and PDU Failure", "high Fuel Cell #1 Stack Out Temp"), 
-    ("Fuel Cell #1 and PDU Failure", "high Fuel Cell #1 Voltage"), ("Fuel Cell #1 and PDU Failure", "high Main Cabin Fan #2"), 
+    ("Fuel Cell #1 and PDU Failure", "high Fuel Cell #1 PQM"), ("Fuel Cell #1 and PDU Failure", "high Fuel Cell #1 Stack Out Temp"),
+    ("Fuel Cell #1 and PDU Failure", "high Fuel Cell #1 Voltage"), ("Fuel Cell #1 and PDU Failure", "high Main Cabin Fan #2"),
     ("Fuel Cell #1 and PDU Failure", "high PDU 4 Bank 1"),
-    ("Fuel Cell #1 and PDU Failure", "low 2-butanone"), ("Fuel Cell #1 and PDU Failure", "low Acetaldehyde"), 
+    ("Fuel Cell #1 and PDU Failure", "low 2-butanone"), ("Fuel Cell #1 and PDU Failure", "low Acetaldehyde"),
     ("Fuel Cell #1 and PDU Failure", "low Aux Cabin Fan #2"), ("Fuel Cell #1 and PDU Failure", "low Fuel Cell #1 Current"),
-    ("Fuel Cell #1 and PDU Failure", "low Fuel Cell #1 PQM"), ("Fuel Cell #1 and PDU Failure", "low Fuel Cell #1 Stack Out Temp"), 
+    ("Fuel Cell #1 and PDU Failure", "low Fuel Cell #1 PQM"), ("Fuel Cell #1 and PDU Failure", "low Fuel Cell #1 Stack Out Temp"),
     ("Fuel Cell #1 and PDU Failure", "low Fuel Cell #1 Voltage"), ("Fuel Cell #1 and PDU Failure", "low Main Cabin Fan #2"),
     ("Fuel Cell #1 and PDU Failure", "low PDU 4 Bank 1"),
     ("Fuel Cell #1 and PDU Failure", "[HIDDEN] Fuel Cell #1 and PDU Failure Component"),
 
     # Fuel Cell #2 and PDU Failure
-    ("Fuel Cell #2 and PDU Failure", "high 2-butanone"), ("Fuel Cell #2 and PDU Failure", "high Acetaldehyde"), 
+    ("Fuel Cell #2 and PDU Failure", "high 2-butanone"), ("Fuel Cell #2 and PDU Failure", "high Acetaldehyde"),
     ("Fuel Cell #2 and PDU Failure", "high Aux Cabin Fan #1"), ("Fuel Cell #2 and PDU Failure", "high Fuel Cell #2 Current"),
     ("Fuel Cell #2 and PDU Failure", "high Fuel Cell #2 PQM"), ("Fuel Cell #2 and PDU Failure", "high Fuel Cell #2 Stack Out Temp"),
-    ("Fuel Cell #2 and PDU Failure", "high Fuel Cell #2 Voltage"), ("Fuel Cell #2 and PDU Failure", "high Main Cabin Fan #1"), 
+    ("Fuel Cell #2 and PDU Failure", "high Fuel Cell #2 Voltage"), ("Fuel Cell #2 and PDU Failure", "high Main Cabin Fan #1"),
     ("Fuel Cell #2 and PDU Failure", "high PDU 5 Bank 1"),
     ("Fuel Cell #2 and PDU Failure", "low 2-butanone"), ("Fuel Cell #2 and PDU Failure", "low Acetaldehyde"),
     ("Fuel Cell #2 and PDU Failure", "low Aux Cabin Fan #1"), ("Fuel Cell #2 and PDU Failure", "low Fuel Cell #2 Current"),
     ("Fuel Cell #2 and PDU Failure", "low Fuel Cell #2 PQM"), ("Fuel Cell #2 and PDU Failure", "low Fuel Cell #2 Stack Out Temp"),
-    ("Fuel Cell #2 and PDU Failure", "low Fuel Cell #2 Voltage"), ("Fuel Cell #2 and PDU Failure", "low Main Cabin Fan #1"), 
+    ("Fuel Cell #2 and PDU Failure", "low Fuel Cell #2 Voltage"), ("Fuel Cell #2 and PDU Failure", "low Main Cabin Fan #1"),
     ("Fuel Cell #2 and PDU Failure", "low PDU 5 Bank 1"),
     ("Fuel Cell #2 and PDU Failure", "[HIDDEN] Fuel Cell #2 and PDU Failure Component"),
 
@@ -94,15 +108,21 @@ network = [
     ("Fuel Cell Failure", "[HIDDEN] Fuel Cell Failure Component"),
 
     # Loss of Pressure
-    ("Loss of Pressure", "high ppN2 (L1)"), ("Loss of Pressure", "high ppN2 (L2)"), ("Loss of Pressure", "high ppO2 (L1)"), ("Loss of Pressure", "high ppO2 (L2)"), 
+    ("Loss of Pressure", "high ppN2 (L1)"), ("Loss of Pressure", "high ppN2 (L2)"),
+    ("Loss of Pressure", "high ppO2 (L1)"), ("Loss of Pressure", "high ppO2 (L1) (t-1)"), ("Loss of Pressure", "high ppO2 (L2)"), ("Loss of Pressure", "high ppO2 (L2) (t-1)"),
     ("Loss of Pressure", "high Pressure (L1)"), ("Loss of Pressure", "high Pressure (L2)"), ("Loss of Pressure", "high Total Cabin Pressure (L1)"), ("Loss of Pressure", "high Total Cabin Pressure (L2)"),
-    ("Loss of Pressure", "low ppN2 (L1)"), ("Loss of Pressure", "low ppN2 (L2)"), ("Loss of Pressure", "low ppO2 (L1)"), ("Loss of Pressure", "low ppO2 (L2)"), 
+    ("Loss of Pressure", "low ppN2 (L1)"), ("Loss of Pressure", "low ppN2 (L2)"),
+    ("Loss of Pressure", "low ppO2 (L1)"), ("Loss of Pressure", "low ppO2 (L1) (t-1)"), ("Loss of Pressure", "low ppO2 (L2)"), ("Loss of Pressure", "low ppO2 (L2) (t-1)"),
     ("Loss of Pressure", "low Pressure (L1)"), ("Loss of Pressure", "low Pressure (L2)"), ("Loss of Pressure", "low Total Cabin Pressure (L1)"), ("Loss of Pressure", "low Total Cabin Pressure (L2)"),
     ("Loss of Pressure", "[HIDDEN] Loss of Pressure Component"),
 
     # Main Cabin Fan Failure
-    ("Main Cabin Fan Failure", "high Cabin Temperature (L1)"), ("Main Cabin Fan Failure", "high Cabin Temperature (L2)"), ("Main Cabin Fan Failure", "high Humidity (L1)"), ("Main Cabin Fan Failure", "high Humidity (L2)"), ("Main Cabin Fan Failure", "high Main Cabin Fan #2"),
-    ("Main Cabin Fan Failure", "low Cabin Temperature (L1)"), ("Main Cabin Fan Failure", "low Cabin Temperature (L2)"), ("Main Cabin Fan Failure", "low Humidity (L1)"), ("Main Cabin Fan Failure", "low Humidity (L2)"), ("Main Cabin Fan Failure", "low Main Cabin Fan #2"),
+    ("Main Cabin Fan Failure", "high Cabin Temperature (L1)"), ("Main Cabin Fan Failure", "high Cabin Temperature (L2)"),
+    ("Main Cabin Fan Failure", "high Humidity (L1)"), ("Main Cabin Fan Failure", "high Humidity (L1) (t-1)"), ("Main Cabin Fan Failure", "high Humidity (L2)"), ("Main Cabin Fan Failure", "high Humidity (L2) (t-1)"),
+    ("Main Cabin Fan Failure", "high Main Cabin Fan #2"),
+    ("Main Cabin Fan Failure", "low Cabin Temperature (L1)"), ("Main Cabin Fan Failure", "low Cabin Temperature (L2)"),
+    ("Main Cabin Fan Failure", "low Humidity (L1)"), ("Main Cabin Fan Failure", "low Humidity (L1) (t-1)"), ("Main Cabin Fan Failure", "low Humidity (L2)"), ("Main Cabin Fan Failure", "low Humidity (L2) (t-1)"),
+    ("Main Cabin Fan Failure", "low Main Cabin Fan #2"),
     ("Main Cabin Fan Failure", "[HIDDEN] Main Cabin Fan Failure Component"),
 
     # MOXIE Antenna Failure
@@ -121,9 +141,9 @@ network = [
     ("MOXIE Fan Failure", "[HIDDEN] MOXIE Fan Failure Component"),
 
     # N2 Tank Burst
-    ("N2 Tank Burst", "high ppN2 (L1)"), ("N2 Tank Burst", "high ppN2 (L2)"), ("N2 Tank Burst", "high Pressure (L1)"), ("N2 Tank Burst", "high Pressure (L2)"), 
+    ("N2 Tank Burst", "high ppN2 (L1)"), ("N2 Tank Burst", "high ppN2 (L2)"), ("N2 Tank Burst", "high Pressure (L1)"), ("N2 Tank Burst", "high Pressure (L2)"),
     ("N2 Tank Burst", "high Total Cabin Pressure (L1)"), ("N2 Tank Burst", "high Total Cabin Pressure (L2)"),
-    ("N2 Tank Burst", "low ppN2 (L1)"), ("N2 Tank Burst", "low ppN2 (L2)"), ("N2 Tank Burst", "low Pressure (L1)"), ("N2 Tank Burst", "low Pressure (L2)"), 
+    ("N2 Tank Burst", "low ppN2 (L1)"), ("N2 Tank Burst", "low ppN2 (L2)"), ("N2 Tank Burst", "low Pressure (L1)"), ("N2 Tank Burst", "low Pressure (L2)"),
     ("N2 Tank Burst", "low Total Cabin Pressure (L1)"), ("N2 Tank Burst", "low Total Cabin Pressure (L2)"),
     ("N2 Tank Burst", "[HIDDEN] N2 Tank Burst Component"),
 
@@ -132,33 +152,41 @@ network = [
     # given that this is likely an incorrect relationship, the structure below only includes the PDU related to a specific failure
     # (i.e., PDU 4 Bank 1 for a PDU 4 Failure and PDU 5 Bank 1 for a PDU 5 Failure)
     ("PDU 4 Failure", "high 2-butanone"), ("PDU 4 Failure", "high Acetaldehyde"), ("PDU 4 Failure", "high Aux Cabin Fan #2"),
-    ("PDU 4 Failure", "high Cabin Temperature (L1)"), ("PDU 4 Failure", "high Cabin Temperature (L2)"), ("PDU 4 Failure", "high Humidity (L1)"), ("PDU 4 Failure", "high Humidity (L2)"),
+    ("PDU 4 Failure", "high Cabin Temperature (L1)"), ("PDU 4 Failure", "high Cabin Temperature (L2)"),
+    ("PDU 4 Failure", "high Humidity (L1)"), ("PDU 4 Failure", "high Humidity (L1) (t-1)"), ("PDU 4 Failure", "high Humidity (L2)"), ("PDU 4 Failure", "high Humidity (L2) (t-1)"),
     ("PDU 4 Failure", "high Main Cabin Fan #2"), ("PDU 4 Failure", "high PDU 4 Bank 1"),
     ("PDU 4 Failure", "low 2-butanone"), ("PDU 4 Failure", "low Acetaldehyde"), ("PDU 4 Failure", "low Aux Cabin Fan #2"),
-    ("PDU 4 Failure", "low Cabin Temperature (L1)"), ("PDU 4 Failure", "low Cabin Temperature (L2)"), ("PDU 4 Failure", "low Humidity (L1)"), ("PDU 4 Failure", "low Humidity (L2)"), 
+    ("PDU 4 Failure", "low Cabin Temperature (L1)"), ("PDU 4 Failure", "low Cabin Temperature (L2)"),
+    ("PDU 4 Failure", "low Humidity (L1)"), ("PDU 4 Failure", "low Humidity (L1) (t-1)"), ("PDU 4 Failure", "low Humidity (L2)"), ("PDU 4 Failure", "low Humidity (L2) (t-1)"),
     ("PDU 4 Failure", "low Main Cabin Fan #2"), ("PDU 4 Failure", "low PDU 4 Bank 1"),
     ("PDU 4 Failure", "[HIDDEN] PDU 4 Failure Component"),
 
     # PDU 5 Failure
     ("PDU 5 Failure", "high 2-butanone"), ("PDU 5 Failure", "high Acetaldehyde"), ("PDU 5 Failure", "high Aux Cabin Fan #2"),
-    ("PDU 5 Failure", "high Cabin Temperature (L1)"), ("PDU 5 Failure", "high Cabin Temperature (L2)"), ("PDU 5 Failure", "high Humidity (L1)"), ("PDU 5 Failure", "high Humidity (L2)"),
+    ("PDU 5 Failure", "high Cabin Temperature (L1)"), ("PDU 5 Failure", "high Cabin Temperature (L2)"),
+    ("PDU 5 Failure", "high Humidity (L1)"), ("PDU 5 Failure", "high Humidity (L1) (t-1)"), ("PDU 5 Failure", "high Humidity (L2)"), ("PDU 5 Failure", "high Humidity (L2) (t-1)"),
     ("PDU 5 Failure", "high Main Cabin Fan #2"), ("PDU 5 Failure", "high PDU 5 Bank 1"),
     ("PDU 5 Failure", "low 2-butanone"), ("PDU 5 Failure", "low Acetaldehyde"), ("PDU 5 Failure", "low Aux Cabin Fan #2"),
-    ("PDU 5 Failure", "low Cabin Temperature (L1)"), ("PDU 5 Failure", "low Cabin Temperature (L2)"), ("PDU 5 Failure", "low Humidity (L1)"), ("PDU 5 Failure", "low Humidity (L2)"), 
+    ("PDU 5 Failure", "low Cabin Temperature (L1)"), ("PDU 5 Failure", "low Cabin Temperature (L2)"),
+    ("PDU 5 Failure", "low Humidity (L1)"), ("PDU 5 Failure", "low Humidity (L1) (t-1)"), ("PDU 5 Failure", "low Humidity (L2)"), ("PDU 5 Failure", "low Humidity (L2) (t-1)"),
     ("PDU 5 Failure", "low Main Cabin Fan #2"), ("PDU 5 Failure", "low PDU 5 Bank 1"),
     ("PDU 5 Failure", "[HIDDEN] PDU 5 Failure Component"),
 
     # Reduced Main Cabin Fan #1 Capacity
-    ("Reduced Main Cabin Fan #1 Capacity", "high 2-butanone"), ("Reduced Main Cabin Fan #1 Capacity", "high HMCTS"), 
+    ("Reduced Main Cabin Fan #1 Capacity", "high 2-butanone"), ("Reduced Main Cabin Fan #1 Capacity", "high HMCTS"),
     ("Reduced Main Cabin Fan #1 Capacity", "high Main Cabin Fan #1"), ("Reduced Main Cabin Fan #1 Capacity", "high n_Butanol"),
-    ("Reduced Main Cabin Fan #1 Capacity", "low 2-butanone"), ("Reduced Main Cabin Fan #1 Capacity", "low HMCTS"), 
+    ("Reduced Main Cabin Fan #1 Capacity", "low 2-butanone"), ("Reduced Main Cabin Fan #1 Capacity", "low HMCTS"),
     ("Reduced Main Cabin Fan #1 Capacity", "low Main Cabin Fan #1"), ("Reduced Main Cabin Fan #1 Capacity", "low n_Butanol"),
     ("Reduced Main Cabin Fan #1 Capacity", "[HIDDEN] Reduced Main Cabin Fan #1 Capacity Component"),
 
     # RWGSR Malfunction
-    ("RWGSR Malfunction", "high H2O (Crew)"), ("RWGSR Malfunction", "high ppCO2 (L1)"), ("RWGSR Malfunction", "high ppCO2 (L2)"), ("RWGSR Malfunction", "high ppO2 (L1)"), ("RWGSR Malfunction", "high ppO2 (L2)"),
-    ("RWGSR Malfunction", "low H2O (Crew)"), ("RWGSR Malfunction", "low ppCO2 (L1)"), ("RWGSR Malfunction", "low ppCO2 (L2)"), ("RWGSR Malfunction", "low ppO2 (L1)"), ("RWGSR Malfunction", "low ppO2 (L2)"),
-    ("RWGSR Malfunction", "[HIDDEN] RWGSR Malfunction Component"), 
+    ("RWGSR Malfunction", "high H2O (Crew)"),
+    ("RWGSR Malfunction", "high ppCO2 (L1)"), ("RWGSR Malfunction", "high ppCO2 (L1) (t-1)"), ("RWGSR Malfunction", "high ppCO2 (L2)"), ("RWGSR Malfunction", "high ppCO2 (L2) (t-1)"),
+    ("RWGSR Malfunction", "high ppO2 (L1)"), ("RWGSR Malfunction", "high ppO2 (L1) (t-1)"), ("RWGSR Malfunction", "high ppO2 (L2)"), ("RWGSR Malfunction", "high ppO2 (L2) (t-1)"),
+    ("RWGSR Malfunction", "low H2O (Crew)"),
+    ("RWGSR Malfunction", "low ppCO2 (L1)"), ("RWGSR Malfunction", "low ppCO2 (L1) (t-1)"), ("RWGSR Malfunction", "low ppCO2 (L2)"), ("RWGSR Malfunction", "low ppCO2 (L2) (t-1)"),
+    ("RWGSR Malfunction", "low ppO2 (L1)"), ("RWGSR Malfunction", "low ppO2 (L1) (t-1)"), ("RWGSR Malfunction", "low ppO2 (L2)"), ("RWGSR Malfunction", "low ppO2 (L2) (t-1)"),
+    ("RWGSR Malfunction", "[HIDDEN] RWGSR Malfunction Component"),
 
     # SPE System Maintenance
     ("SPE System Maintenance", "high H2O (Crew)"),

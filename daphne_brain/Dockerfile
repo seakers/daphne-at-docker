@@ -37,8 +37,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY temp_requirements.txt .
+RUN pip install --no-cache-dir -r temp_requirements.txt
 
 # Copy project files
 COPY . .
@@ -50,10 +50,12 @@ ENV DJANGO_SETTINGS_MODULE=daphne_brain.settings \
     POSTGRES_USER=daphne \
     POSTGRES_PASSWORD=daphnetest \
     POSTGRES_HOST=db \
-    POSTGRES_PORT=5432
+    POSTGRES_PORT=5432\
+    REDIS_HOST=redis \
+    REDIS_PORT=6379 
 
 RUN python3 manage.py collectstatic --clear --noinput
 
-EXPOSE 8000
+EXPOSE 8002
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8002"]

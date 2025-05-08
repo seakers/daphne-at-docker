@@ -5,6 +5,7 @@ import schedule
 import threading
 import AT.global_objects as global_obj
 from queue import Queue
+import os
 
 from auth_API.helpers import get_user_information, get_or_create_user_information
 from daphne_ws.consumers import DaphneConsumer
@@ -34,7 +35,7 @@ class ATConsumer(DaphneConsumer):
 
         # Keep track of everyone that is on
         r = redis.Redis(
-            host='localhost',
+            host=os.environ.get('REDIS_HOST', 'localhost'),
             port=6379,
             db=0,
             socket_timeout=5,
@@ -121,7 +122,7 @@ class ATConsumer(DaphneConsumer):
 
     def disconnect(self, close_code):
         r = redis.Redis(
-            host='localhost',
+            host=os.environ.get('REDIS_HOST', 'localhost'),
             port=6379,
             db=0,
             socket_timeout=5,
@@ -989,7 +990,7 @@ class ATConsumer(DaphneConsumer):
         user_info = get_user_information(self.scope['session'], self.scope['user'])
 
         r = redis.Redis(
-            host='localhost',
+            host=os.environ.get('REDIS_HOST', 'localhost'),
             port=6379,
             db=0,
             socket_timeout=5,

@@ -155,8 +155,8 @@ export function processedPlotData(telemetryDict, selectedVariables) {
     // Parse de jsoned dataframe to a javascript object
     let values = JSON.parse(telemetryDict['values']);
     let info = JSON.parse(telemetryDict['info']);
-    console.log("telemetry values", values);
-    console.log("telemetry info", info);
+    // console.log("telemetry values", values);
+    // console.log("telemetry info", info);
     let selectedVariablesUnits = {};
     for (let index in selectedVariables) {
         let variable = selectedVariables[index];

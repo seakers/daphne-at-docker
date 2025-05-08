@@ -42,8 +42,7 @@
                alt="Loading spinner">
           <p v-else>No diagnosis reports requested.</p>
         </div>
-        <div v-else>
-<!--          <div class="columns" style="margin: 0px; padding: 0px">-->
+        <!-- <div v-else>
             <div class="column" style="margin: 0px; padding: 0px">
               <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Set of symptoms selected for diagnosis:</span>
               <ul>
@@ -72,11 +71,200 @@
             </button>
           </div>
         </div>
+       -->
+
+<!-- ################### MAIN Diagnosis report previous ########################-->
+
+<!-- <div v-else> -->
+  <!-- Most probable anomaly highlighting -->
+  <!-- <div v-if="diagnosisReport['diagnosis_list'].length > 0" class="most-probable-anomaly" 
+       style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
+    <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly:</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 18px; font-weight: bold;">{{ diagnosisReport['diagnosis_list'][0].anomaly }}</span>
+      <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+        Probability: {{ (diagnosisReport['diagnosis_list'][0].probability * 100 ).toFixed(4) }}%
+      </span>
+    </div>
+  </div> -->
+
+  <!-- Top 5 anomalies table -->
+  <!-- <div style="margin-bottom: 20px;">
+    <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies:</span>
+    <div class="table-container" style="margin-top: 10px;">
+      <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
+             style="background: transparent; color: white;">
+        <thead>
+          <tr style="background: #002E2E;">
+            <th style="color: #0AFEFF; width: 60%;">Anomaly</th>
+            <th style="color: #0AFEFF; width: 40%;">Probability</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in diagnosisReport['diagnosis_list']" 
+              style="background: rgba(0,46,46,0.7);">
+            <td style="padding: 8px; vertical-align: middle;">{{ item.anomaly }}</td>
+            <td style="padding: 8px;">
+              <div class="progress" 
+                   style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
+                <div :style="{
+                  width: `${item.probability * 100}%`,
+                  background: getProbabilityColor(item.probability),
+                  height: '100%'
+                }"></div>
+                <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
+                  {{ (item.probability * 100).toFixed(4) }}%
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div> -->
+       
+<!-- ################### MAIN Diagnosis report previous ########################-->
+
+<div v-else>
+  <!-- Diagnosis tabs -->
+  <div class="tabs is-boxed">
+    <ul>
+      <li :class="{'is-active': activeDiagnosticTab === diagnosticHistory.length}">
+        <a @click="activeDiagnosticTab = diagnosticHistory.length">
+          <span>Current Diagnosis</span>
+        </a>
+      </li>
+      <li v-for="(diag, index) in diagnosticHistory" :key="index"
+          :class="{'is-active': activeDiagnosticTab === index}">
+        <a @click="activeDiagnosticTab = index">
+          <span>Previous #{{index + 1}}</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+  
+  <!-- Current diagnosis content -->
+  <div v-if="activeDiagnosticTab === diagnosticHistory.length">
+    <!-- Display current diagnosis from store -->
+    <div v-if="$store.getters.getDiagnosisReport && $store.getters.getDiagnosisReport.diagnosis_list && $store.getters.getDiagnosisReport.diagnosis_list.length > 0">
+      <div class="most-probable-anomaly" style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
+        <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly:</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 18px; font-weight: bold;">{{ $store.getters.getDiagnosisReport.diagnosis_list[0].anomaly }}</span>
+          <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+            Probability: {{ ($store.getters.getDiagnosisReport.diagnosis_list[0].probability * 100).toFixed(2) }}%
+          </span>
+        </div>
+      </div>
+      
+      <!-- Top 5 anomalies with progress bar - Current diagnosis -->
+      <div style="margin-bottom: 20px;">
+        <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies:</span>
+        <div class="table-container" style="margin-top: 10px;">
+          <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
+                 style="background: transparent; color: white;">
+            <thead>
+              <tr style="background: #002E2E;">
+                <th style="color: #0AFEFF; width: 60%;">Anomaly</th>
+                <th style="color: #0AFEFF; width: 40%;">Probability</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in $store.getters.getDiagnosisReport.diagnosis_list.slice(0, 5)" 
+                  style="background: rgba(0,46,46,0.7);">
+                <td style="padding: 8px; vertical-align: middle;">{{ item.anomaly }}</td>
+                <td style="padding: 8px;">
+                  <div class="progress" 
+                       style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
+                    <div :style="{
+                      width: `${item.probability * 100}%`,
+                      background: getProbabilityColor(item.probability),
+                      height: '100%'
+                    }"></div>
+                    <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
+                      {{ (item.probability * 100).toFixed(4) }}%
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div v-else class="notification is-warning">
+      No diagnosis data available. Select symptoms and request a diagnosis.
+    </div>
+  </div>
+  
+  <!-- Historical diagnoses -->
+  <div v-else>
+    <!-- Display historical diagnosis from history array -->
+    <div v-if="diagnosticHistory[activeDiagnosticTab] && diagnosticHistory[activeDiagnosticTab].diagnosis_list && diagnosticHistory[activeDiagnosticTab].diagnosis_list.length > 0">
+      <div class="most-probable-anomaly" style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
+        <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly (Previous #{{activeDiagnosticTab + 1}}):</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 18px; font-weight: bold;">{{ diagnosticHistory[activeDiagnosticTab].diagnosis_list[0].anomaly }}</span>
+          <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+            Probability: {{ (diagnosticHistory[activeDiagnosticTab].diagnosis_list[0].probability * 100).toFixed(2) }}%
+          </span>
+        </div>
+      </div>
+      
+      <!-- Top 5 anomalies with progress bar - Historical diagnosis -->
+      <div style="margin-bottom: 20px;">
+        <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies (Previous #{{activeDiagnosticTab + 1}}):</span>
+        <div class="table-container" style="margin-top: 10px;">
+          <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
+                 style="background: transparent; color: white;">
+            <thead>
+              <tr style="background: #002E2E;">
+                <th style="color: #0AFEFF; width: 60%;">Anomaly</th>
+                <th style="color: #0AFEFF; width: 40%;">Probability</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in diagnosticHistory[activeDiagnosticTab].diagnosis_list.slice(0, 5)" 
+                  style="background: rgba(0,46,46,0.7);">
+                <td style="padding: 8px; vertical-align: middle;">{{ item.anomaly }}</td>
+                <td style="padding: 8px;">
+                  <div class="progress" 
+                       style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
+                    <div :style="{
+                      width: `${item.probability * 100}%`,
+                      background: getProbabilityColor(item.probability),
+                      height: '100%'
+                    }"></div>
+                    <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
+                      {{ (item.probability * 100).toFixed(4) }}%
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add a clear button at the bottom if needed -->
+  <div style="text-align: center; margin-top: 20px;">
+    <button @click="clearSymptoms" class="button is-danger">
+      Clear All Symptoms & Diagnoses
+    </button>
+  </div>
+</div>
+
+       
+
+
       </div>
       <div class="horizontal-divider" style="margin-top: 10px; margin-bottom: 10px"></div>
         <div class="is-content">
           <div class="is-mini-title" style="margin-bottom:5px; font-size: 22px">
-            Astrobee Status
+            Robot Status
           </div>
           
           <div class="box is-main" style="margin-top: 20px; padding: 15px;">
@@ -186,6 +374,12 @@
         </div>
       </div>
     </div>
+    <SymptomSelectionDialog 
+      :is-active="showSymptomDialog" 
+      :symptoms="unconfirmedSymptoms"
+      @proceed="handleSymptomSelection"
+      @cancel="showSymptomDialog = false"
+    />
   </div>
 </template>
 
@@ -193,11 +387,16 @@
 
 import {mapGetters} from 'vuex';
 import { fetchPost } from '../scripts/fetch-helpers';
+import SymptomSelectionDialog from './SymptomSelectionDialog.vue';
+
 
 let loaderImage = require('../images/loader.svg');
 
 export default {
   name: "AnomalyDiagnosisWindow",
+  components: {
+    SymptomSelectionDialog
+  },
 
   data: function () {
     return {
@@ -207,7 +406,22 @@ export default {
       explaining: false,
       allSelected: false,
       astrobeeStatus: null,
-      statusInterval: null
+      statusInterval: null,
+      instructionIdentifier: null,
+      lastInstructionProcessed: false,
+      userResponseListener: null,
+      showSymptomDialog: false,
+      symptomsToConfirm: [],
+      currentSymptomIndex: -1,
+      additionalEvidence: {},
+      additionalEvidenceListener: null,
+      yesNoQuestionListener: null,
+      unconfirmedSymptoms: [],
+      bestEvidence: null,
+      currentTelemetryValues: {},
+      diagnosticHistory: [],
+      activeDiagnosticTab: 0,
+      bestEvidenceListener: null,
     }
   },
 
@@ -219,7 +433,8 @@ export default {
       diagnosisReport: 'getDiagnosisReport',
       selectedAnomaliesList: 'getSelectedAnomaliesList',
       selectedLeftSymptoms: 'getSelectedLeftSymptomsList',
-      selectedRightSymptoms: 'getSelectedRightSymptomsList'
+      selectedRightSymptoms: 'getSelectedRightSymptomsList',
+      telemetryValues: 'getTelemetryValues',
     }),
     checkAll: {
       get: function () {
@@ -238,39 +453,150 @@ export default {
   },
 
   methods: {
-    startAstrobeeStatusPolling() {
+    async startAstrobeeStatusPolling() {
       if (this.statusInterval) {
         clearInterval(this.statusInterval);
       }
       // Set up polling for status updates
-      this.statusInterval = setInterval(async () => {
-        console.log('Polling Astrobee status...');
-        try {
-          const response = await fetchPost('/api/at/astrobee_status');
-          // const response1 = await fetchPost('/api/at/pride_status');
-          // const response2 = await fetchPost('/api/at/yesorno');
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Got Astrobee status:', data);
-            this.astrobeeStatus = data.astrobee_status || "No status available";
-          }
-          // console.log('Polling PRIDE status...', response1);
-          // if (response1.ok) {
-          //   const data1 = await response1.json();
-          //   console.log('Got PRIDE status:', data1);
-          //   this.prideStatus = data1.pride_status || "No status available";
-          // }
-          // console.log('Polling Yes or No status...');
-          // if (response2.ok) {
-          //   const data2 = await response2.json();
-          //   console.log('Got Yes or No status:', data2);
-          //   this.yesOrNo = data2.yesorno || "No status available";
-          // }
-        } catch (error) {
-          console.error('Error getting Astrobee status:', error);
+      console.log('Polling Astrobee status...');
+      try {
+        const response = await fetchPost('/api/at/astrobee_status');
+        // const response1 = await fetchPost('/api/at/get_pride_shared_variables');
+        const instructionResponse = await fetchPost('/api/at/get_current_instruction');
+        // const response2 = await fetchPost('/api/at/yesorno');
+        if (response.ok) {
+          const data = await response.json();
+          this.astrobeeStatus = data.astrobee_status || "No status available";
         }
-      }, 1000); // Poll every 3 seconds
+        console.log('Polling current instruction...', instructionResponse);
+        // if (instructionResponse.ok) {
+        //   const data1 = await instructionResponse.json();
+        //   console.log("the current instruction", data1, data1["instruction_data"])
+        //   console.log("the current instruction text", data1["instruction_data"]["text"])
+        //   if (data1["instruction_data"] && data1["instruction_data"].text) {
+        //     this.astrobeeStatus = data1["instruction_data"].text || "No status available";
+        //   }
+          
+        // }
+
+        if (instructionResponse.ok) {
+          const data = await instructionResponse.json();
+          console.log("Current instruction data:", data["instruction_data"]);
+          
+          if (data["instruction_data"] && data["instruction_data"].text) {
+            const instructionData = data["instruction_data"];
+            const oldStatus = this.astrobeeStatus;
+            this.astrobeeStatus = instructionData.text || "No status available";
+            console.log("Current instruction id:", this.instructionIdentifier, instructionData.instructionIdentifier, this.lastInstructionProcessed);
+            if (instructionData.userResponseType && 
+                instructionData.userResponseType.length > 0 && 
+                instructionData.userResponseType[0] === "real" &&
+                (this.instructionIdentifier != instructionData.instructionIdentifier || 
+                !this.lastInstructionProcessed)) {
+
+                  if (this.instructionIdentifier != instructionData.instructionIdentifier){
+                    this.$store.commit('addDialoguePiece', {
+                      "voice_message": `${instructionData.text} Please provide a numerical value.`,
+                      "visual_message_type": ["text"],
+                      "visual_message": [`${instructionData.text} Please provide a numerical value.`],
+                      "writer": "daphne"
+                    });
+                  }
+              
+              // Update tracking variables to prevent duplicate prompts
+              this.instructionIdentifier = instructionData.instructionIdentifier;
+              console.log("Current instruction identifier is set:", this.instructionIdentifier, instructionData.instructionIdentifier);
+              this.lastInstructionProcessed = false;
+              
+              // Send question to chat
+              
+              
+              // Set up listener for next user response (if not already set)
+              if (!this.userResponseListener) {
+                this.setupUserResponseListener();
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error getting Astrobee status:', error);
+      }
     },
+    setupUserResponseListener() {
+    // Set up store subscription to listen for user messages
+    this.userResponseListener = this.$store.subscribe((mutation, state) => {
+      if (mutation.type === 'addDialoguePiece') {
+        const newMessage = mutation.payload;
+        
+        // Process only if we're waiting for a response and this is a user message
+        if (!this.lastInstructionProcessed && 
+            this.instructionIdentifier !== null &&
+            newMessage.writer === 'user') {
+          
+          this.processUserResponse(newMessage.visual_message[0]);
+        }
+      }
+    });
+  },
+  async processUserResponse(message) {
+    try {
+      // Try to parse the user's message as a number
+      const userValue = parseFloat(message);
+      
+      if (!isNaN(userValue)) {
+        // Valid number response
+        console.log("Processing user response:", userValue);
+        
+        // Mark as processed to avoid duplicate handling
+        this.lastInstructionProcessed = true;
+        
+        // Prepare and send user response to backend
+        const reqData = new FormData();
+        reqData.append('user_response', userValue.toString());
+        reqData.append('instruction_id', this.instructionIdentifier);
+        
+        const response = await fetchPost('/api/at/user_response', reqData);
+        
+        if (response.ok) {
+          console.log("User response sent successfully");
+          
+          // Confirm receipt to user
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": `Thank you, I've recorded your value of ${userValue}.`,
+            "visual_message_type": ["text"],
+            "visual_message": [`Thank you, I've recorded your value of ${userValue}.`],
+            "writer": "daphne"
+          });
+        } else {
+          console.error("Failed to send user response");
+        }
+      } else {
+        // Not a valid number
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": "I need a numerical value. Please try again.",
+          "visual_message_type": ["text"],
+          "visual_message": ["I need a numerical value. Please try again."],
+          "writer": "daphne"
+        });
+        
+        // Keep the instruction as unprocessed so we'll try again
+        this.lastInstructionProcessed = false;
+      }
+    } catch (error) {
+      console.error('Error processing user response:', error);
+    }
+  },
+    getProbabilityColor(probability) {
+    // Return color based on probability value
+    if (probability < 0.1) {
+      return '#00cc00'; // green for very low probabilities
+    } else if (probability < 0.3) {
+      return '#ffcc00'; // yellow for medium probabilities
+    } else {
+      return '#ff3300'; // red for high probabilities
+    }
+  },
+  
     selectAllAnomalies: function() {
       let checked = [];
       if (!this.allSelected) {
@@ -360,6 +686,10 @@ export default {
     clearSymptoms() {
       this.selectedLeftSymptoms.splice(0, this.selectedLeftSymptoms.length);
       this.selectedRightSymptoms.splice(0, this.selectedRightSymptoms.length);
+
+      this.diagnosticHistory = [];
+      this.activeDiagnosticTab = 0;
+
       this.$store.dispatch('clearSelectedSymptoms');
       this.$store.dispatch('clearDiagnosisReport');
       this.explaining = false;
@@ -376,10 +706,33 @@ export default {
       this.explaining = false;
       this.checked = [];
       await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
-      
+      const diagnosisReport = this.$store.getters.getDiagnosisReport;
+      this.unconfirmedSymptoms = diagnosisReport.hidden_components;
+      this.bestEvidence = diagnosisReport.best_evidence;     
+      this.currentTelemetryValues = diagnosisReport.current_telemetry_values
+      this.activeDiagnosticTab = this.diagnosticHistory.length;
+      this.diagnosticHistory.push(JSON.parse(JSON.stringify(diagnosisReport)));
+      console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
+      // console.log("current diagnostic history 1111111", this.diagnosticHistory);
+      // console.log("current diagnostic history 2222222", this.diagnosticHistory[this.activeDiagnosticTab]);
+      // After getting diagnosis report, ask if user has additional evidence
+      setTimeout(() => {
+      if (this.bestEvidence) {
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
+          "visual_message_type": ["text"],
+          "visual_message": [`I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
+          "writer": "daphne",
+          "options": ["Yes", "No"],
+          "optionsCallbackEvent": "bestEvidenceResponse"
+        });
+        
+        // Set up listener for response
+        this.setupBestEvidenceListener();
+      }
+    }, 1000);
 
       // Display Astrobee procedures in chat after diagnosis
-      const diagnosisReport = this.$store.getters.getDiagnosisReport;
       console.log("diagnosos report",diagnosisReport, diagnosisReport.astrobee_procedure_list);
       if (diagnosisReport && diagnosisReport.astrobee_procedure_list && diagnosisReport.astrobee_procedure_list.length > 0) {
         console.log("Adding procedure message to dialogue", diagnosisReport.astrobee_procedure_list);
@@ -399,6 +752,8 @@ export default {
         };
         console.log("Adding procedure message to dialogue: ", procedureMessage);
         this.$store.commit('addDialoguePiece', procedureMessage);
+        console.log("diagnosis report", diagnosisReport);
+        console.log("diagnosis anomaly report", diagnosisReport['diagnosis_list'], diagnosisReport['diagnosis_list'][0]);
         
         // Set flag to display yes/no buttons for procedure selection
         console.log("Setting anomalous procedures detected flag to true");
@@ -406,6 +761,268 @@ export default {
       }
       this.isLoading = false;
     },
+    showSymptomSelectionDialog() {
+    this.showSymptomDialog = true;
+  },
+
+  setupBestEvidenceListener() {
+    // Add event listener for options response
+    if (!this.bestEvidenceListener) {
+      this.$root.$on('bestEvidenceResponse', this.handleBestEvidenceResponse);
+      this.bestEvidenceListener = true;
+    }
+  },
+
+  handleBestEvidenceResponse(response) {
+    if (response === "Yes") {
+      // Show damage assessment slider for best evidence
+      this.showDamageAssessmentSlider();
+    } else {
+      // User doesn't want to provide additional evidence
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": "Alright, I'll work with the current information.",
+        "visual_message_type": ["text"],
+        "visual_message": ["Alright, I'll work with the current information."],
+        "writer": "daphne"
+      });
+    }
+    
+    // Clean up event listener
+    this.$root.$off('bestEvidenceResponse', this.handleBestEvidenceResponse);
+    this.bestEvidenceListener = false;
+  },
+
+  showDamageAssessmentSlider() {
+    this.$store.commit('addDialoguePiece', {
+      "voice_message": `On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`,
+      "visual_message_type": ["slider"],
+      "visual_message": [`On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`],
+      "writer": "daphne",
+      "sliderOptions": {
+        "min": 1,
+        "max": 5,
+        "step": 1,
+        "defaultValue": 3,
+        "callbackEvent": "damageAssessmentResponse"
+      }
+    });
+    
+    // Set up listener for slider response
+    this.$root.$on('damageAssessmentResponse', this.handleDamageAssessmentResponse);
+  },
+
+  handleDamageAssessmentResponse(value) {
+    // Add the assessment to additional evidence
+    this.additionalEvidence[this.bestEvidence] = value
+    
+    // Thank the user and submit the evidence
+    this.$store.commit('addDialoguePiece', {
+      "voice_message": `Thank you for your assessment of ${this.bestEvidence}.`,
+      "visual_message_type": ["text"],
+      "visual_message": [`Thank you for your assessment of ${this.bestEvidence}.`],
+      "writer": "daphne"
+    });
+    
+    // Clean up listener
+    this.$root.$off('damageAssessmentResponse', this.handleDamageAssessmentResponse);
+    
+    // Submit the evidence and update diagnosis
+    this.submitAdditionalEvidence();
+  },
+
+  handleSymptomSelection(selectedSymptoms) {
+    this.showSymptomDialog = false;
+    this.symptomsToConfirm = selectedSymptoms;
+    this.currentSymptomIndex = -1;
+    this.additionalEvidence = {}; // Reset evidence
+    
+    // Start asking about each symptom
+    this.askNextSymptom();
+  },
+  askNextSymptom() {
+  this.currentSymptomIndex++;
+  
+  if (this.currentSymptomIndex < this.symptomsToConfirm.length) {
+    const currentSymptom = this.symptomsToConfirm[this.currentSymptomIndex];
+    
+    // Set up event listener for the response if not already set
+    if (!this.yesNoQuestionListener) {
+      this.$root.$on('symptomEvidenceResponse', this.handleSymptomEvidenceResponse);
+      this.yesNoQuestionListener = true;
+    }
+    
+    // Ask about this symptom with Yes/No buttons
+    this.$store.commit('addDialoguePiece', {
+      "voice_message": `Can you report the status of ${currentSymptom}?`,
+      "visual_message_type": ["text"],
+      "visual_message": [`Can you report the status of ${currentSymptom} ?`],
+      "writer": "daphne",
+      "options": ["Yes", "No"],
+      "optionsCallbackEvent": "symptomEvidenceResponse"
+    });
+  } else {
+    // All done, submit the evidence
+    this.submitAdditionalEvidence();
+  }
+},
+
+handleSymptomEvidenceResponse(response) {
+  const currentSymptom = this.symptomsToConfirm[this.currentSymptomIndex];
+  const isPresent = response === "Yes";
+  
+  // Record the evidence
+  this.additionalEvidence[currentSymptom] = isPresent;
+  
+  // Ask about next symptom
+  this.askNextSymptom();
+},
+
+  setupYesNoQuestionListener() {
+    // Clean up previous listener if exists
+    if (this.yesNoQuestionListener) {
+      this.yesNoQuestionListener();
+    }
+    
+    this.yesNoQuestionListener = this.$store.subscribe((mutation, state) => {
+      if (mutation.type === 'addDialoguePiece') {
+        const newMessage = mutation.payload;
+        
+        // Check if this is a user response to our yes/no question
+        if (newMessage.writer === 'user' && 
+            (newMessage.visual_message[0] === 'Yes' || newMessage.visual_message[0] === 'No')) {
+          
+          // Unsubscribe after processing
+          this.yesNoQuestionListener();
+          this.yesNoQuestionListener = null;
+          
+          const currentSymptom = this.symptomsToConfirm[this.currentSymptomIndex];
+          const isPresent = newMessage.visual_message[0] === 'Yes';
+          
+          // Record the evidence
+          this.additionalEvidence[currentSymptom] = isPresent;
+          
+          // Ask about next symptom
+          this.askNextSymptom();
+        }
+      }
+    });
+  },
+
+  async submitAdditionalEvidence() {
+    try {
+      this.isLoading = true;
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": "Thank you for providing additional evidence. I'm updating the diagnosis...",
+        "visual_message_type": ["text"],
+        "visual_message": ["Thank you for providing additional evidence. I'm updating the diagnosis..."],
+        "writer": "daphne"
+      });
+      
+      // Convert evidence to API format
+
+      // const currentDiagnosisReport = this.$store.getters.getDiagnosisReport;
+      // if (currentDiagnosisReport && currentDiagnosisReport.diagnosis_list) {
+      //   this.diagnosticHistory.push(JSON.parse(JSON.stringify(currentDiagnosisReport)));
+      // }
+      // const evidenceData = {
+      //   additional_evidence: this.additionalEvidence,
+      //   current_telemetry_values: this.currentTelemetryValues,
+      // };
+
+      console.log("Submitting additional evidence:", this.additionalEvidence);
+
+      const requestPayload = {
+      symptoms: this.selectedSymptomsList,
+      additional_evidence: this.additionalEvidence,
+      current_telemetry_values: this.currentTelemetryValues
+    };
+      
+      // Make API call
+
+      await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
+      await this.$store.dispatch('requestDiagnosisWithEvidence', requestPayload);
+      const diagnosisReport = this.$store.getters.getDiagnosisReport;
+      this.unconfirmedSymptoms = diagnosisReport.hidden_components;
+      this.bestEvidence = diagnosisReport.best_evidence;     
+      this.currentTelemetryValues = diagnosisReport.current_telemetry_values
+      
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": "Diagnosis has been updated with your additional evidence!",
+        "visual_message_type": ["text"],
+        "visual_message": ["Diagnosis has been updated with your additional evidence!"],
+        "writer": "daphne"
+      });
+
+      this.activeDiagnosticTab = this.diagnosticHistory.length;
+      this.diagnosticHistory.push(JSON.parse(JSON.stringify(this.diagnosisReport)));
+      console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
+      console.log("current diagnostic history", this.diagnosticHistory);
+
+      setTimeout(() => {
+        if (this.bestEvidence) {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": `I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
+            "visual_message_type": ["text"],
+            "visual_message": [`I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
+            "writer": "daphne",
+            "options": ["Yes", "No"],
+            "optionsCallbackEvent": "bestEvidenceResponse"
+          });
+          
+          // Set up listener for response
+          this.setupBestEvidenceListener();
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error updating diagnosis with additional evidence:', error);
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": "I couldn't update the diagnosis with your additional evidence. Please try again later.",
+        "visual_message_type": ["text"],
+        "visual_message": ["I couldn't update the diagnosis with your additional evidence. Please try again later."],
+        "writer": "daphne"
+      });
+    } finally {
+      this.isLoading = false;
+    }
+  },
+
+  setupAdditionalEvidenceListener() {
+  // Add event listener for options response
+  if (!this.additionalEvidenceListener) {
+    this.$root.$on('additionalEvidenceResponse', this.handleAdditionalEvidenceResponse);
+    this.additionalEvidenceListener = true;
+  }
+  
+  // Show question with Yes/No buttons
+  this.$store.commit('addDialoguePiece', {
+    "voice_message": "Would you like to provide additional evidence to improve the diagnosis?",
+    "visual_message_type": ["text"],
+    "visual_message": ["Would you like to provide additional evidence to improve the diagnosis?"],
+    "writer": "daphne",
+    "options": ["Yes", "No"],
+    "optionsCallbackEvent": "additionalEvidenceResponse"
+  });
+},
+
+handleAdditionalEvidenceResponse(response) {
+  if (response === "Yes") {
+    // Show symptom selection dialog
+    this.showSymptomDialog = true;
+  } else {
+    // User doesn't want to provide additional evidence
+    this.$store.commit('addDialoguePiece', {
+      "voice_message": "Alright, I'll work with the current information.",
+      "visual_message_type": ["text"],
+      "visual_message": ["Alright, I'll work with the current information."],
+      "writer": "daphne"
+    });
+  }
+  
+  // Clean up event listener
+  this.$root.$off('additionalEvidenceResponse', this.handleAdditionalEvidenceResponse);
+  this.additionalEvidenceListener = false;
+},
     async selectAnomaly(anomalyName) {
       this.isAnomalySelected = true;
         if (anomalyName.includes('&')) {
@@ -464,12 +1081,30 @@ export default {
   mounted() {
     // this.startAstrobeeStatusPolling();
     // console.log("Astrobee status polling started");
+    this.startAstrobeeStatusPolling();
+    setInterval(this.startAstrobeeStatusPolling, 1200);
   },
   beforeDestroy() {
     // Clean up interval when component is destroyed
     if (this.statusInterval) {
       clearInterval(this.statusInterval);
     }
+    if (this.userResponseListener) {
+    this.userResponseListener(); // Unsubscribe from store
+    }
+
+  if (this.additionalEvidenceListener) {
+    this.$root.$off('additionalEvidenceResponse', this.handleAdditionalEvidenceResponse);
+  }
+  
+  if (this.yesNoQuestionListener) {
+    this.$root.$off('symptomEvidenceResponse', this.handleSymptomEvidenceResponse);
+  }
+  if (this.bestEvidenceListener) {
+    this.$root.$off('bestEvidenceResponse', this.handleBestEvidenceResponse);
+  }
+  
+  this.$root.$off('damageAssessmentResponse', this.handleDamageAssessmentResponse);
   }
 }
 </script>
