@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   db:
     container_name: daphne-at-db
@@ -12,13 +11,13 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - ./pg_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
     networks:
       - daphne-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      interval: 30s
+      interval: 10s
       timeout: 60s
       retries: 5
       start_period: 80s
@@ -103,6 +102,7 @@ services:
 networks:
   daphne-network:
     driver: bridge
+
 volumes:
   pgdata:
   static_volume:
