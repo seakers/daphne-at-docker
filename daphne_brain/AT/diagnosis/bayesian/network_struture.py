@@ -21,7 +21,7 @@ network = [
     ("Biological Filter Saturation", "[HIDDEN] BFS Component"),
 
     # CDRA Failure (with previous time-step symptoms added)
-    ("CDRA Failure", "high Humidity (L1)"), ("CDRA Failure", "high Humidity (L1) (t-1)"), ("CDRA Failure", "high Humidity (L2)"), ("CDRA Failure", "high Humidity (L2) (t-1)")
+    ("CDRA Failure", "high Humidity (L1)"), ("CDRA Failure", "high Humidity (L1) (t-1)"), ("CDRA Failure", "high Humidity (L2)"), ("CDRA Failure", "high Humidity (L2) (t-1)"),
     ("CDRA Failure", "high ppCO2 (L1)"), ("CDRA Failure", "high ppCO2 (L1) (t-1)"), ("CDRA Failure", "high ppCO2 (L2)"), ("CDRA Failure", "high ppCO2 (L2) (t-1)"),
     ("CDRA Failure", "high ppO2 (L1)"), ("CDRA Failure", "high ppO2 (L1) (t-1)"), ("CDRA Failure", "high ppO2 (L2)"), ("CDRA Failure", "high ppO2 (L2) (t-1)"),
     ("CDRA Failure", "low Humidity (L1)"), ("CDRA Failure", "low Humidity (L1) (t-1)"), ("CDRA Failure", "low Humidity (L2)"), ("CDRA Failure", "low Humidity (L2) (t-1)"),

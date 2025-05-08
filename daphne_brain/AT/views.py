@@ -342,6 +342,7 @@ class RequestDiagnosis(APIView):
         # Retrieve the symptoms list from the request
         symptoms_list = json.loads(request.data['symptomsList'])
         telemetry_values = json.loads(request.data['telemetryValues'])
+        telemetry_values_t1 = json.loads(request.data['telemetryValuest1'])
         addtional_evidence = None
         if 'additionalEvidence' in request.data:
             addtional_evidence = json.loads(request.data['additionalEvidence'])
@@ -350,7 +351,7 @@ class RequestDiagnosis(APIView):
         updated_telemetry_values = {}
         for i in telemetry_values:
             if ("Cabin Temperature" in i or "Humidity" in i or "ppCO2" in i or "ppH2" in i or 
-            "ppO2" in i or "ppN2" in i or "Pressure" in i or "Total Cabin Pressure" in i):
+            "ppO2" in i or "ppN2" in i or "Pressure" in i or "Total Cabin Pressure" in i or "H2O" in i):
                 # print("telemetry x", i)
                 x = i
                 # print("telemetry x" , x, i)
@@ -360,6 +361,19 @@ class RequestDiagnosis(APIView):
                 x = i.split('(')[0].strip()
                 updated_telemetry_values[x] = float(telemetry_values[i])
         telemetry_values = updated_telemetry_values
+        for i in telemetry_values_t1:
+            if ("Cabin Temperature" in i or "Humidity" in i or "ppCO2" in i or "ppH2" in i or 
+            "ppO2" in i or "ppN2" in i or "Pressure" in i or "Total Cabin Pressure" in i or "H2O" in i):
+                # print("telemetry x", i)
+                x = i
+                # print("telemetry x" , x, i)
+                name = i + " (t-1)"
+                telemetry_values[name] = float(telemetry_values_t1[i])
+
+            else:
+                x = i.split('(')[0].strip()
+                name = x + " (t-1)"
+                telemetry_values[name] = float(telemetry_values_t1[i])
     
         print("herrrre----------------------------------")
         print("symptoms list",symptoms_list)
