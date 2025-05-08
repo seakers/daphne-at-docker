@@ -631,6 +631,8 @@ const actions = {
         );
         
         let parsedTelemetryValues = {};
+        let parsedTelemetryValuest1 = {};
+
 
         for (let i in telemetryValuesDict) { 
             let value = telemetryValuesDict[i];
@@ -641,10 +643,15 @@ const actions = {
 
             console.log("telemetry reversed array", reversedArray)
 
-                // Convert the array back into an object
-            console.log("telemetry reversed array i", reversedArray[0])
             parsedTelemetryValues[i] = reversedArray[0][1];
-        
+            if (reversedArray.length > 30){
+                parsedTelemetryValuest1[i] = reversedArray[29][1];
+                console.log("telemetry reversed dict value", reversedArray[29][1])
+            }
+            else{
+                parsedTelemetryValuest1[i] = reversedArray[reversedArray.length-1][1];
+                console.log("telemetry reversed dict value", reversedArray[reversedArray.length-1][1])
+            }        
         }
 
         console.log("parsed telemetry values", parsedTelemetryValues); 
@@ -653,6 +660,7 @@ const actions = {
         console.log("telemetry values", telemetryValues)
         reqData.append('symptomsList',  JSON.stringify(parsedSelectedSymptomsList));
         reqData.append('telemetryValues',  JSON.stringify(parsedTelemetryValues));
+        reqData.append('telemetryValuest1',  JSON.stringify(parsedTelemetryValuest1));
         reqData.append('additionalEvidence',  JSON.stringify(requestPayload['additional_evidence']));
         let response = await fetchPost('/api/at/requestDiagnosis', reqData);
         if (response.ok) {
