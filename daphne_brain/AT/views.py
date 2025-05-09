@@ -159,7 +159,7 @@ class AstrobeeStatus(APIView):
 class GetCurrentInstruction(APIView):
     def post(self, request, format=None):
 
-        url = "https://pride-dev:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
+        url = "https://10.5.0.3:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
         payload = {}
         headers = {
             'Content-Type': 'application/json',
@@ -197,7 +197,7 @@ class GetCurrentInstruction(APIView):
 class GetPrideSharedVariables(APIView):
     def post(self, request, format=None):
 
-        url = "https://pride-dev/api/sharedVariables/telemetry/" + global_procedure_runtime_ID + "?fromSystemRepresentation=Gateway_Robots" 
+        url = "https://10.5.0.3:8000/api/sharedVariables/telemetry/" + global_procedure_runtime_ID + "?fromSystemRepresentation=Gateway_Robots" 
         # url = "https://localhost:8000/api/procedures/" + global_procedure_runtime_ID + "currentInstruction"
         payload = {}
         headers = {
@@ -228,7 +228,7 @@ class StartAstrobeeProcedure(APIView):
 
         # start/open a procedure to send astrobee
         # url = "https://0.0.0.0:8000/api/procedures/available/" + procedure_staticID
-        url = "https://pride-dev:8000/api/procedures/available/" + procedure_staticID
+        url = "https://10.5.0.3:8000/api/procedures/available/" + procedure_staticID
 
         payload = json.dumps({
             "user": "test",
@@ -407,8 +407,8 @@ class RequestDiagnosis(APIView):
         print("done1-----------------------------------")
 
         # Send request to pride to get all the procedures
-        # astrobee_procedure_list = get_astrobee_procedure_list_from_pride()
-        astrobee_procedure_list = None
+        astrobee_procedure_list = get_astrobee_procedure_list_from_pride()
+        # astrobee_procedure_list = None
         print("astrovee procedure list", astrobee_procedure_list)
         print("done2-----------------------------------")
 
