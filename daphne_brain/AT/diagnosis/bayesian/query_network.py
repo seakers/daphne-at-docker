@@ -9,7 +9,6 @@ import time
 
 def query_network(infer, parameter_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
     # Start timing the network query
-    tic = time.time()
     
     # Create state mappings for the high and low parameter variables
     high_state_mapping = {
@@ -116,11 +115,9 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
     for anomaly, probability in anomaly_probabilities.items():
         normalized_probabilities[anomaly] = probability / total_anomaly_probabilities
 
-    toc = time.time()
-    runtime = toc - tic
 
     # Return results and evidence
-    return normalized_probabilities, evidence, runtime
+    return normalized_probabilities, evidence, 0
 
 
 def get_evidence_info(hidden_probabilities_dict):

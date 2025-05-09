@@ -128,21 +128,51 @@
 
 <div v-else>
   <!-- Diagnosis tabs -->
-  <div class="tabs is-boxed">
-    <ul>
+  <div class="tabs-container">
+  <button class="tab-scroll-button left" @click="scrollTabs('left')" v-show="showLeftScroll">
+    <i class="fas fa-chevron-left"></i>
+  </button>
+  
+  <div class="tabs is-boxed tab-wrapper" ref="tabsContainer">
+    <ul class="draggable-tabs">
       <li :class="{'is-active': activeDiagnosticTab === diagnosticHistory.length}">
         <a @click="activeDiagnosticTab = diagnosticHistory.length">
           <span>Current Diagnosis</span>
         </a>
       </li>
-      <li v-for="(diag, index) in diagnosticHistory" :key="index"
-          :class="{'is-active': activeDiagnosticTab === index}">
-        <a @click="activeDiagnosticTab = index">
-          <span>Previous #{{index + 1}}</span>
+      <li v-for="(diag, index) in diagnosticHistory" 
+          :key="index"
+          :class="{'is-active': activeDiagnosticTab === index}"
+          :draggable="true"
+          @dragstart="dragStart($event, index)"
+          @dragover="dragOver($event)"
+          @dragend="dragEnd($event)"
+          @drop="drop($event, index)">
+        <a @click="activeDiagnosticTab = index" :title="getFullEvidenceLabel(diag)">
+          <span class="tab-evidence">
+            <!-- {{ getEvidenceLabel(diag) }} -->
+            <i v-if="diag.is_hypothetical" class="fas fa-question-circle" style="margin-right: 5px;" title="Hypothetical scenario"></i>
+            {{ diag.is_hypothetical ? 'What if: ' + getEvidenceLabel(diag) : getEvidenceLabel(diag) }}
+          </span>
+          <button class="tab-close" @click.stop="closeTab(index)">×</button>
         </a>
       </li>
     </ul>
   </div>
+  
+  <button class="tab-scroll-button right" @click="scrollTabs('right')" v-show="showRightScroll">
+    <i class="fas fa-chevron-right"></i>
+  </button>
+  
+  <!-- Undo tab close button -->
+  <button 
+    class="tab-undo-button" 
+    @click="undoCloseTab" 
+    v-show="closedTabs.length > 0" 
+    title="Undo close tab">
+    <i class="fas fa-undo"></i>
+  </button>
+</div>
   
   <!-- Current diagnosis content -->
   <div v-if="activeDiagnosticTab === diagnosticHistory.length">
@@ -156,6 +186,17 @@
             Probability: {{ ($store.getters.getDiagnosisReport.diagnosis_list[0].probability * 100).toFixed(2) }}%
           </span>
         </div>
+        
+        <!-- Added evidence display -->
+        <div v-if="Object.keys(additionalEvidence).length > 0" 
+            style="margin-top: 10px; padding: 8px; background: rgba(10, 254, 255, 0.1); border-radius: 4px;">
+          <h4 style="color: #0AFEFF; margin-bottom: 5px; font-size: 14px;">Evidence Considered:</h4>
+          <ul style="list-style-type: disc; margin-left: 20px;">
+            <li v-for="(value, key) in additionalEvidence" :key="key" style="margin-bottom: 3px;">
+              {{ key }}: {{ formatEvidenceValue(value) }}
+            </li>
+          </ul>
+        </div>
       </div>
       
       <!-- Top 5 anomalies with progress bar - Current diagnosis -->
@@ -166,14 +207,14 @@
                  style="background: transparent; color: white;">
             <thead>
               <tr style="background: #002E2E;">
-                <th style="color: #0AFEFF; width: 60%;">Anomaly</th>
+                <th style="color: #0AFEFF; width: 60%;">Anomaly (Select an anomaly to open the corresponding procedure)</th>
                 <th style="color: #0AFEFF; width: 40%;">Probability</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in $store.getters.getDiagnosisReport.diagnosis_list.slice(0, 5)" 
                   style="background: rgba(0,46,46,0.7);">
-                <td style="padding: 8px; vertical-align: middle;">{{ item.anomaly }}</td>
+                <td v-on:click.prevent="selectAnomaly(item.anomaly)" style="padding: 8px; cursor: pointer; vertical-align: middle;">{{ item.anomaly }}</td>
                 <td style="padding: 8px;">
                   <div class="progress" 
                        style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
@@ -210,6 +251,20 @@
             Probability: {{ (diagnosticHistory[activeDiagnosticTab].diagnosis_list[0].probability * 100).toFixed(2) }}%
           </span>
         </div>
+
+        <div v-if="diagnosticHistory[activeDiagnosticTab] && 
+          diagnosticHistory[activeDiagnosticTab].additional_evidence && 
+          Object.keys(diagnosticHistory[activeDiagnosticTab].additional_evidence || {}).length > 0" 
+              style="margin-top: 10px; padding: 8px; background: rgba(10, 254, 255, 0.1); border-radius: 4px;">
+            <h4 style="color: #0AFEFF; margin-bottom: 5px; font-size: 14px;">Evidence Considered:</h4>
+            <ul style="list-style-type: disc; margin-left: 20px;">
+              <li v-for="(value, key) in diagnosticHistory[activeDiagnosticTab].additional_evidence || {}" 
+                  :key="key" 
+                  style="margin-bottom: 3px;">
+                {{ key }}: {{ formatEvidenceValue(value) }}
+              </li>
+            </ul>
+          </div>
       </div>
       
       <!-- Top 5 anomalies with progress bar - Historical diagnosis -->
@@ -220,14 +275,14 @@
                  style="background: transparent; color: white;">
             <thead>
               <tr style="background: #002E2E;">
-                <th style="color: #0AFEFF; width: 60%;">Anomaly</th>
+                <th style="color: #0AFEFF; width: 60%;">Anomaly (Select an anomaly to open the corresponding procedure)</th>
                 <th style="color: #0AFEFF; width: 40%;">Probability</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in diagnosticHistory[activeDiagnosticTab].diagnosis_list.slice(0, 5)" 
                   style="background: rgba(0,46,46,0.7);">
-                <td style="padding: 8px; vertical-align: middle;">{{ item.anomaly }}</td>
+                <td v-on:click.prevent="selectAnomaly(item.anomaly)" style="padding: 8px; cursor: pointer; vertical-align: middle;">{{ item.anomaly }}</td>
                 <td style="padding: 8px;">
                   <div class="progress" 
                        style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
@@ -279,7 +334,7 @@
             </div>
           </div>
         </div>
-      <div class="horizontal-divider" style="margin-top: 10px; margin-bottom: 10px"></div>
+      <!-- <div class="horizontal-divider" style="margin-top: 10px; margin-bottom: 10px"></div>
       <div class="is-content">
         <div v-if="diagnosisReport.length === 0 || this.explaining === false">
           <img v-if="isLoading"
@@ -373,6 +428,8 @@
           </div>
         </div>
       </div>
+    -->
+   
     </div>
     <SymptomSelectionDialog 
       :is-active="showSymptomDialog" 
@@ -422,6 +479,12 @@ export default {
       diagnosticHistory: [],
       activeDiagnosticTab: 0,
       bestEvidenceListener: null,
+      showLeftScroll: false,
+      showRightScroll: false,
+      draggedTabIndex: null,
+      draggedTab: null,
+      dragOverIndex: null,
+      closedTabs: [], // Array to store recently closed tabs
     }
   },
 
@@ -453,6 +516,203 @@ export default {
   },
 
   methods: {
+
+    getEvidenceLabel(diagnosisData) {
+  // For debugging
+  if (diagnosisData.is_hypothetical && diagnosisData.hypothetical_evidence) {
+    let str = "";
+    for (const [key, value] of Object.entries(diagnosisData.hypothetical_evidence)) {
+      str += `${key}: ${this.formatEvidenceValue(value)}, `;
+    }
+    // Remove the last comma and space
+    return str.slice(0, -2);
+  }
+  
+  // Existing logic for regular evidence
+  if (diagnosisData.additional_evidence && Object.keys(diagnosisData.additional_evidence).length > 0) {
+    let str = "";
+    for (const [key, value] of Object.entries(diagnosisData.additional_evidence)) {
+      str += `${key}: ${this.formatEvidenceValue(value)}, `;
+    }
+    // Remove the last comma and space  
+    str = str.slice(0, -2);
+    return str;
+  } else {
+    return `Initial Diagnosis`;
+  }
+},
+
+  getFullEvidenceLabel(diagnosisData) {
+    if (diagnosisData.additionalEvidence && Object.keys(diagnosisData.additionalEvidence).length > 0) {
+      let str = "";
+      for (const [key, value] of Object.entries(diagnosisData.additionalEvidence)) {
+        str += `${key}: ${this.formatEvidenceValue(value)}, `;
+      }
+      return str;
+    } else {
+      return `Initial Diagnosis`;
+    }
+  },
+
+    scrollTabs(direction) {
+      const container = this.$refs.tabsContainer;
+      const scrollAmount = 150; // Adjust as needed
+      
+      if (direction === 'left') {
+        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
+      
+      this.updateScrollButtons();
+    },
+    
+    // Format evidence values for display
+  formatEvidenceValue(value) {
+    if (typeof value === 'boolean') {
+      return value ? 'Yes' : 'No';
+    } else if (!isNaN(value)) {
+      return value.toString();
+    } else {
+      return value;
+    }
+  },
+    updateScrollButtons() {
+      const container = this.$refs.tabsContainer;
+      
+      if (container) {
+        this.showLeftScroll = container.scrollLeft > 0;
+        this.showRightScroll = 
+          container.scrollLeft < (container.scrollWidth - container.clientWidth - 5);
+      }
+    },
+    
+    closeTab(index) {
+      // Store the closed tab in the closedTabs array
+      const closedTab = this.diagnosticHistory[index];
+      this.closedTabs.push({
+        tab: JSON.parse(JSON.stringify(closedTab)),
+        originalIndex: index
+      });
+      
+      // Remove the tab from history
+      this.diagnosticHistory.splice(index, 1);
+      
+      // If the closed tab was active or before the active one, adjust the active tab
+      if (index <= this.activeDiagnosticTab && this.activeDiagnosticTab !== this.diagnosticHistory.length) {
+        this.activeDiagnosticTab = Math.max(0, this.activeDiagnosticTab - 1);
+      }
+      
+      // Limit closedTabs history to 10 items
+      if (this.closedTabs.length > 10) {
+        this.closedTabs.shift();
+      }
+    },
+    
+    undoCloseTab() {
+      if (this.closedTabs.length === 0) return;
+      
+      // Get the most recently closed tab
+      const lastClosed = this.closedTabs.pop();
+      
+      // Calculate where to insert the tab
+      let insertIndex = Math.min(lastClosed.originalIndex, this.diagnosticHistory.length);
+      
+      // Add the tab back to the diagnosticHistory array
+      this.diagnosticHistory.splice(insertIndex, 0, lastClosed.tab);
+      
+      // Set it as the active tab
+      this.activeDiagnosticTab = insertIndex;
+      
+      // Show a brief notification
+      this.$store.commit('addDialoguePiece', {
+        "visual_message_type": ["text"],
+        "visual_message": [`Restored previously closed tab.`],
+        "writer": "daphne"
+      });
+    },
+    
+    dragStart(event, index) {
+    this.draggedTabIndex = index;
+    this.draggedTab = this.diagnosticHistory[index];
+    
+    // Create a custom drag image
+    const dragImage = event.target.cloneNode(true);
+    dragImage.style.opacity = '0.7';
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-1000px';
+    document.body.appendChild(dragImage);
+    event.dataTransfer.setDragImage(dragImage, 10, 10);
+    
+    // Set data transfer
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', index);
+    
+    // Add dragging class
+    event.target.classList.add('dragging');
+    
+    // Remove the drag image after a short delay
+    setTimeout(() => {
+      document.body.removeChild(dragImage);
+    }, 0);
+  },
+    
+  dragOver(event) {
+    event.preventDefault();
+    const target = this.findTabElement(event.target);
+    if (!target) return;
+    
+    const tabIndex = parseInt(target.getAttribute('data-index') || -1);
+    if (tabIndex !== -1 && tabIndex !== this.draggedTabIndex) {
+      this.dragOverIndex = tabIndex;
+    }
+  },
+  
+  dragEnd(event) {
+    event.target.classList.remove('dragging');
+    this.draggedTabIndex = null;
+    this.draggedTab = null;
+    this.dragOverIndex = null;
+  },
+  
+  drop(event, index) {
+    event.preventDefault();
+    if (this.draggedTabIndex === null || this.draggedTabIndex === index) return;
+    
+    // Remove tab from old position and insert at new position
+    this.diagnosticHistory.splice(this.draggedTabIndex, 1);
+    this.diagnosticHistory.splice(index, 0, this.draggedTab);
+    
+    // Update active tab if needed
+    if (this.activeDiagnosticTab === this.draggedTabIndex) {
+      this.activeDiagnosticTab = index;
+    } else if (
+      this.activeDiagnosticTab > this.draggedTabIndex && 
+      this.activeDiagnosticTab <= index
+    ) {
+      this.activeDiagnosticTab--;
+    } else if (
+      this.activeDiagnosticTab < this.draggedTabIndex && 
+      this.activeDiagnosticTab >= index
+    ) {
+      this.activeDiagnosticTab++;
+    }
+    
+    this.draggedTabIndex = null;
+    this.draggedTab = null;
+    this.dragOverIndex = null;
+  },
+
+  findTabElement(element) {
+    while (element && !element.classList.contains('draggable-tabs')) {
+      if (element.tagName.toLowerCase() === 'li') {
+        return element;
+      }
+      element = element.parentElement;
+    }
+    return null;
+  },
+
     async startAstrobeeStatusPolling() {
       if (this.statusInterval) {
         clearInterval(this.statusInterval);
@@ -689,6 +949,8 @@ export default {
 
       this.diagnosticHistory = [];
       this.activeDiagnosticTab = 0;
+      this.additionalEvidence = {};
+      this.closedTabs = []; // Clear closed tabs history when clearing all symptoms
 
       this.$store.dispatch('clearSelectedSymptoms');
       this.$store.dispatch('clearDiagnosisReport');
@@ -706,12 +968,15 @@ export default {
       this.explaining = false;
       this.checked = [];
       await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
+
       const diagnosisReport = this.$store.getters.getDiagnosisReport;
+      
       this.unconfirmedSymptoms = diagnosisReport.hidden_components;
       this.bestEvidence = diagnosisReport.best_evidence;     
       this.currentTelemetryValues = diagnosisReport.current_telemetry_values
       this.activeDiagnosticTab = this.diagnosticHistory.length;
-      this.diagnosticHistory.push(JSON.parse(JSON.stringify(diagnosisReport)));
+      
+      this.diagnosticHistory.push(diagnosisReport);
       console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
       // console.log("current diagnostic history 1111111", this.diagnosticHistory);
       // console.log("current diagnostic history 2222222", this.diagnosticHistory[this.activeDiagnosticTab]);
@@ -731,6 +996,15 @@ export default {
         this.setupBestEvidenceListener();
       }
     }, 1000);
+
+    if(this.bestEvidence == null) {
+      this.$store.commit('addDialoguePiece', {
+          "voice_message": `No additional evidence can improve my diagnostic confidence. Please proceed woth the anomaly resolution.`,
+          "visual_message_type": ["text"],
+          "visual_message": [`No additional evidence can improve my diagnostic confidence. Please proceed woth the anomaly resolution.`],
+          "writer": "daphne",
+        });
+    }
 
       // Display Astrobee procedures in chat after diagnosis
       console.log("diagnosos report",diagnosisReport, diagnosisReport.astrobee_procedure_list);
@@ -815,13 +1089,13 @@ export default {
     // Add the assessment to additional evidence
     this.additionalEvidence[this.bestEvidence] = value
     
-    // Thank the user and submit the evidence
-    this.$store.commit('addDialoguePiece', {
-      "voice_message": `Thank you for your assessment of ${this.bestEvidence}.`,
-      "visual_message_type": ["text"],
-      "visual_message": [`Thank you for your assessment of ${this.bestEvidence}.`],
-      "writer": "daphne"
-    });
+    // // Thank the user and submit the evidence
+    // this.$store.commit('addDialoguePiece', {
+    //   "voice_message": `Thank you for your assessment of ${this.bestEvidence}.`,
+    //   "visual_message_type": ["text"],
+    //   "visual_message": [`Thank you for your assessment of ${this.bestEvidence}.`],
+    //   "writer": "daphne"
+    // });
     
     // Clean up listener
     this.$root.$off('damageAssessmentResponse', this.handleDamageAssessmentResponse);
@@ -907,6 +1181,40 @@ handleSymptomEvidenceResponse(response) {
       }
     });
   },
+  handleAddHypotheticalDiagnosis(eventData) {
+    // Get the last message which contains the hypothetical data
+    const dialogueHistory = this.$store.state.daphne.dialogueHistory;
+    const lastMessage = dialogueHistory[dialogueHistory.length - 2];
+    console.log("last message", lastMessage);
+    console.log("last message hypothetical data", lastMessage.hypothetical_data);
+    
+    if (!lastMessage || !lastMessage.hypothetical_data) {
+      console.error("No hypothetical data found in the last message");
+      return;
+    }
+    
+    // Create a new diagnosis report object from the hypothetical data
+    const hypotheticalDiagnosis = {
+      diagnosis_list: lastMessage.hypothetical_data.diagnosis_list,
+      additional_evidence: lastMessage.hypothetical_data.additional_evidence,
+      is_hypothetical: true,
+      hypothetical_evidence: lastMessage.hypothetical_data.additional_evidence
+    };
+    
+    // Add to diagnostic history
+    this.diagnosticHistory.push(hypotheticalDiagnosis);
+    
+    // Switch to the new tab
+    this.activeDiagnosticTab = this.diagnosticHistory.length - 1;
+    
+    // Confirm to the user
+    this.$store.commit('addDialoguePiece', {
+      "voice_message": "I've added this hypothetical scenario to your diagnosis history tabs.",
+      "visual_message_type": ["text"],
+      "visual_message": ["I've added this hypothetical scenario to your diagnosis history tabs. You can switch between tabs to compare different evidence scenarios."],
+      "writer": "daphne"
+    });
+  },
 
   async submitAdditionalEvidence() {
     try {
@@ -939,9 +1247,10 @@ handleSymptomEvidenceResponse(response) {
       
       // Make API call
 
-      await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
+      // await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
       await this.$store.dispatch('requestDiagnosisWithEvidence', requestPayload);
       const diagnosisReport = this.$store.getters.getDiagnosisReport;
+      
       this.unconfirmedSymptoms = diagnosisReport.hidden_components;
       this.bestEvidence = diagnosisReport.best_evidence;     
       this.currentTelemetryValues = diagnosisReport.current_telemetry_values
@@ -954,7 +1263,8 @@ handleSymptomEvidenceResponse(response) {
       });
 
       this.activeDiagnosticTab = this.diagnosticHistory.length;
-      this.diagnosticHistory.push(JSON.parse(JSON.stringify(this.diagnosisReport)));
+
+      this.diagnosticHistory.push(JSON.parse(JSON.stringify(diagnosisReport)));
       console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
       console.log("current diagnostic history", this.diagnosticHistory);
 
@@ -1079,10 +1389,18 @@ handleAdditionalEvidenceResponse(response) {
     },
   },
   mounted() {
-    // this.startAstrobeeStatusPolling();
-    // console.log("Astrobee status polling started");
+    //main
     this.startAstrobeeStatusPolling();
     setInterval(this.startAstrobeeStatusPolling, 1200);
+
+    this.$nextTick(() => {
+      if (this.$refs.tabsContainer) {
+        this.$refs.tabsContainer.addEventListener('scroll', this.updateScrollButtons);
+        window.addEventListener('resize', this.updateScrollButtons);
+        this.updateScrollButtons();
+      }
+    });
+    this.$root.$on('addHypotheticalDiagnosis', this.handleAddHypotheticalDiagnosis);
   },
   beforeDestroy() {
     // Clean up interval when component is destroyed
@@ -1103,8 +1421,22 @@ handleAdditionalEvidenceResponse(response) {
   if (this.bestEvidenceListener) {
     this.$root.$off('bestEvidenceResponse', this.handleBestEvidenceResponse);
   }
-  
+  this.$root.$off('addHypotheticalDiagnosis', this.handleAddHypotheticalDiagnosis);
   this.$root.$off('damageAssessmentResponse', this.handleDamageAssessmentResponse);
+
+  if (this.$refs.tabsContainer) {
+      this.$refs.tabsContainer.removeEventListener('scroll', this.updateScrollButtons);
+      window.removeEventListener('resize', this.updateScrollButtons);
+    }
+
+  },
+
+  watch: {
+    diagnosticHistory() {
+      this.$nextTick(() => {
+        this.updateScrollButtons();
+      });
+    }
   }
 }
 </script>
@@ -1112,6 +1444,17 @@ handleAdditionalEvidenceResponse(response) {
 <style scoped>
 .hover:hover {
   font-weight: bold;
+}
+
+.hypothetical-tab a {
+  background-color: rgba(100, 50, 150, 0.3) !important; /* Purple tint for hypothetical tabs */
+  border-style: dashed !important;
+}
+
+.hypothetical-tab.is-active a {
+  background-color: rgba(100, 50, 150, 0.5) !important; /* Darker purple for active hypothetical tab */
+  border-color: #c4a0ff !important;
+  color: #d0b0ff !important;
 }
 
 .checkmark {
@@ -1186,6 +1529,164 @@ handleAdditionalEvidenceResponse(response) {
 .crosssign_stem2 {
   width: 12px;
   height: 3px;
+}
+
+.tabs-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  margin-bottom: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: 4px;
+}
+
+
+.tab-wrapper {
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  background: transparent;
+}
+.tab-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.draggable-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+}
+
+.draggable-tabs li {
+  cursor: pointer;
+  position: relative;
+  margin-right: 2px;
+}
+
+.draggable-tabs li.dragging {
+  opacity: 0.7;
+  z-index: 10;
+}
+
+.draggable-tabs li a {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  height: 100%;
+  min-width: 120px;
+  border-radius: 4px 4px 0 0;
+  border: 1px solid #333;
+  border-bottom: none;
+  transition: background-color 0.2s, color 0.2s;
+  color: #ccc;
+}
+
+.tab-evidence {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 5px;
+}
+
+.tab-close {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0 0.3rem;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.tab-close {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0 0.3rem;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.tab-close:hover {
+  background-color: rgba(255, 0, 0, 0.2);
+  color: #ff4d4d;
+}
+
+.tab-scroll-button {
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0 5px;
+  color: #0AFEFF;
+  flex-shrink: 0;
+}
+
+.tab-scroll-button:hover {
+  background: rgba(10, 254, 255, 0.2);
+}
+
+/* Style active/inactive tabs */
+.draggable-tabs li.is-active a {
+  background-color: #002E2E !important;
+  color: #0AFEFF !important;
+  border-color: #0AFEFF !important;
+  font-weight: bold;
+  box-shadow: 0 0 4px rgba(10, 254, 255, 0.3);
+}
+
+
+.draggable-tabs li:not(.is-active) a {
+  background-color: rgba(0, 46, 46, 0.5);
+}
+
+.draggable-tabs li:not(.is-active) a:hover {
+  background-color: rgba(0, 46, 46, 0.8);
+  color: #ccc;
+}
+
+/* Add tooltip-like behavior for overflowing tab names */
+.draggable-tabs li a:hover .tab-evidence {
+  position: relative;
+}
+
+.tab-undo-button {
+  background: rgba(10, 254, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 5px;
+  color: #0AFEFF;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.tab-undo-button:hover {
+  background: rgba(10, 254, 255, 0.4);
+  transform: scale(1.1);
+}
+
+.tab-undo-button:active {
+  transform: scale(0.95);
 }
 
 </style>

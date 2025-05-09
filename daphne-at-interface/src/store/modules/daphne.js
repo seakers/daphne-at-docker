@@ -11,6 +11,7 @@ const state = {
     isListening: false,
     isSpeaking: false,
     isUnmute: true,
+    timeCounter:0,
     daphneVoice: 'US English Female'
     ,
     // anomalousSymptomsDetected: false,
@@ -90,8 +91,42 @@ const actions = {
                 "writer": "user"
             });
 
+            let telemetryValues = rootState.daphneat.telemetryValues;
+            console.log("telemetry values", telemetryValues)
+
+
+            let telemetryValuesDict = Object.fromEntries(
+                Object.entries(telemetryValues).map(([key, value]) => [key, { ...value }])
+            );
+            
+            let parsedTelemetryValues = {};
+
+            for (let i in telemetryValuesDict) { 
+                let valueDict = telemetryValuesDict[i];
+                const reversedArray = Object.entries(valueDict)
+                    .reverse() 
+                    .map(([key, value]) => [Number(key), value]);  // Convert keys back to numbers if needed
+
+                parsedTelemetryValues[i] = reversedArray[0][1];
+            
+            }
+
+            console.log("parsedTelemetryValues", parsedTelemetryValues)
+
             let reqData = new FormData();
+            reqData.append('telemetry_values', JSON.stringify(parsedTelemetryValues));
+            reqData.append('addtional_evidence', JSON.stringify(rootState.daphneat.additionalEvidence));
+
             reqData.append('command', state.command);
+            const formattedHistory = state.dialogueHistory
+                .slice(-10) // Get only the last 10 entries
+                .map(item => ({
+                    writer: item.writer,
+                    message: item.visual_message ? 
+                    (Array.isArray(item.visual_message) ? item.visual_message[0] : item.visual_message) : 
+                    (item.voice_message || '')
+                }));
+            reqData.append('dialogue_history', JSON.stringify(formattedHistory));
             let dataResponse = await fetchPost('/api/at/dialogue/command', reqData);
             console.log("COMMAND" + state.command);
 
@@ -175,6 +210,9 @@ const mutations = {
         console.log(newVal)
         state.daphneVoice = newVal
     },
+    setTimeCounter(state, newVal) {
+        state.timeCounter = newVal
+    }
 };
 
 export default {
