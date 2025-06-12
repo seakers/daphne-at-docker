@@ -1,20 +1,62 @@
 # add_cpds.py
 # Author: Joshua Elston
-# Last Edited: 03/27/2025
+# Last Edited: 06/10/2025
 
 # Adds the CPTs computed in noisy_MAX.py as Tabular CPDs to the Bayesian network --> called in the ECLSS_Baysian_Network.py script
 # CPTs for hidden evidence nodes also added here, which are only related to a single anomaly
 
 from AT.diagnosis.bayesian.noisy_MAX import noisy_MAX
+# from noisy_MAX import noisy_MAX
 from pgmpy.factors.discrete import TabularCPD
 from itertools import product
+from math import prod
 from AT.diagnosis.bayesian.dictionaries import subgroup_dict, nap_dict
+# from dictionaries import subgroup_dict, nap_dict
+import time
+
+tic = time.time()
+
+
+def safe_make_cpd(parameter, states, values, evidence, evidence_card):
+    # Determine the number of columns expected based on the product of parent node cardinalities
+    expected_cols = prod(evidence_card) if evidence else 1
+    actual_cols = len(values[0]) if values else 0
+    if actual_cols != expected_cols:
+        print(f'[ERROR]: {parameter}: columns = {actual_cols}')
+        print(f'Expected columns: {expected_cols}, evidence: {evidence}, evidence_card: {evidence_card}')
+    try:
+        return TabularCPD(variable = parameter,
+                      variable_card = states,
+                      values = values,
+                      evidence = evidence,
+                      evidence_card = evidence_card)
+    except Exception as e:
+        print(f"[FAIL] TabularCPD could not be created for {parameter}: {e}")
+        raise
 
 def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_cardinality):
+    print('Creating parameter CPDs...')
     for parameter, anomalies in split_probability_dict.items():
         # Generate a list of parent anomalies for the current parameter
         anomaly_list = list(anomalies.keys())
     
+
+        parent_cards = []
+        for parent in anomaly_list:
+            parent_dict = split_probability_dict[parameter][parent]
+
+            # Similar to in noisy_MAX, create an iterator to check all states of the current parent node
+            iter_key = next(iter(parent_dict), None)
+
+            # First, check if the parent is binary
+            if iter_key in ['False', 'True']:
+                parent_cards.append(len(parent_dict))
+            # If parent is multivariate, adjust accordingly
+            else:
+                prob_dict = parent_dict[iter_key].get('probabilities', {})
+                parent_cards.append(len(prob_dict))
+
+
         # Generate CPTs for the low and high cases
         high_cpt, low_cpt = noisy_MAX(split_probability_dict, parameter, anomaly_list)
 
@@ -33,25 +75,31 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
             low_state_probs = [cpt.get(state, 0) for _, cpt in low_cpt.items()]
             low_values.append(low_state_probs)
 
-        # Create CPDs for each parameter (using TabularCPD)
-        high_cpd = TabularCPD(
-            variable = f'high {parameter}',
-            variable_card = len(high_states),
-            values = high_values,
-            evidence = anomaly_list,
-            evidence_card = [anomaly_cardinality] * len(anomaly_list)
-        )
 
-        low_cpd = TabularCPD(
-            variable = f'low {parameter}',
-            variable_card = len(low_states),
-            values = low_values,
-            evidence = anomaly_list,
-            evidence_card = [anomaly_cardinality] * len(anomaly_list)
-        )
+        high_cpd = safe_make_cpd(f'high {parameter}', len(high_states), high_values, anomaly_list, parent_cards)
+        low_cpd = safe_make_cpd(f'low {parameter}', len(low_states), low_values, anomaly_list, parent_cards)
+
+
+        # # Create CPDs for each parameter (using TabularCPD)
+        # high_cpd = TabularCPD(
+        #     variable = f'high {parameter}',
+        #     variable_card = len(high_states),
+        #     values = high_values,
+        #     evidence = anomaly_list,
+        #     evidence_card = [anomaly_cardinality] * len(anomaly_list)
+        # )
+
+        # low_cpd = TabularCPD(
+        #     variable = f'low {parameter}',
+        #     variable_card = len(low_states),
+        #     values = low_values,
+        #     evidence = anomaly_list,
+        #     evidence_card = [anomaly_cardinality] * len(anomaly_list)
+        # )
 
         model.add_cpds(high_cpd, low_cpd)
 
+    print('Creating [HIDDEN] CPDs...')
     # Add CPDs for the hidden nodes
     for hidden_parameter, anomalies in hidden_probabilities_dict.items():
         for anomaly, data in anomalies.items():
@@ -78,6 +126,7 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
 
             model.add_cpds(hidden_cpd)
 
+    print('Creating subgroup CPDs...')
     # Add CPDs for subgroups conditioned on the status of their related anomalies
     for subgroup, anomalies in subgroup_dict.items():
         num_anomalies = len(anomalies)
@@ -109,6 +158,7 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
 
         model.add_cpds(subgroup_cpd)
 
+    print('Creating NAP CPD...')
     # Add CPD for the No Anomalies Present node conditoned on the state of each of the subgroups
     for nap, subgroups in nap_dict.items():
         num_groups = len(subgroups)
@@ -140,6 +190,9 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
 
         model.add_cpds(nap_cpd)
 
+    # Verify expected parents
+    print("Expected parents:", model.get_parents(f'high 2-butanone (t-1)'))
+
     # Verify that the model is valid after adding the CPDs
     #   - Checks if sum of probabilities for each state is equal to 1 (tol = 0.01)
     #   - Checks if CPDs associated with nodes are consistent with their parents
@@ -147,4 +200,8 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
         print("Model is valid with added CPDs.")
     else:
         print("Model is invalid. Please check the format of the input CPTs.")
-    print()    
+    print()
+
+toc = time.time()
+query_time = toc - tic
+print(f"Add CPDs runtime: {query_time}")

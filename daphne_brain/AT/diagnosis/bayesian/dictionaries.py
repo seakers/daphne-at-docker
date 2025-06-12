@@ -2,7 +2,7 @@
 # Author: Joshua Elston
 # Last Updated: 03/27/2025
 
-# Stores dictionaries with relationships between subgorups and their related anomalies. Additionally stores No Anomalies Present and its relationship to the different subgroups.
+# Stores dictionaries with relationships between subgroups and their related anomalies. Additionally stores No Anomalies Present and its relationship to the different subgroups.
 # Called in add_cpds to compute the CPDs to be added to the Bayesian network.
 
 subgroup_dict = {

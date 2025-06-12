@@ -1,6 +1,6 @@
 # network_struture.py
 # Author: Joshua Elston
-# Last Updated: 05/06/2025
+# Last Updated: 06/10/2025
 
 # Define Bayesian network structure --> called in ECLSS_Bayesian_Network.py
 
@@ -12,47 +12,50 @@
 # 31 hidden nodes, each uniquely related to a specific anomaly, are added with connections to all network anomalies to accurately reflect
 # changes in entropy when querying the network with additional evidence. The addition of these hidden node connections is achieved using
 # the for loop at the bottom of the script
+
+from collections import defaultdict
+
 network = [
     # Biological Filter Saturation
-    ("Biological Filter Saturation", "high ppCO2 (L1)"), ("Biological Filter Saturation", "high ppCO2 (L1) (t-1)"), ("Biological Filter Saturation", "high ppCO2 (L2)"), ("Biological Filter Saturation", "high ppCO2 (L2) (t-1)"),
-    ("Biological Filter Saturation", "high ppO2 (L1)"), ("Biological Filter Saturation", "high ppO2 (L1) (t-1)"), ("Biological Filter Saturation", "high ppO2 (L2)"), ("Biological Filter Saturation", "high ppO2 (L2) (t-1)"),
-    ("Biological Filter Saturation", "low ppCO2 (L1)"), ("Biological Filter Saturation", "low ppCO2 (L1) (t-1)"), ("Biological Filter Saturation", "low ppCO2 (L2)"), ("Biological Filter Saturation", "low ppCO2 (L2) (t-1)"),
-    ("Biological Filter Saturation", "low ppO2 (L1)"), ("Biological Filter Saturation", "low ppO2 (L1) (t-1)"), ("Biological Filter Saturation", "low ppO2 (L2)"), ("Biological Filter Saturation", "low ppO2 (L2) (t-1)"),
+    ("Biological Filter Saturation", "high ppCO2 (L1)"), ("Biological Filter Saturation", "high ppCO2 (L2)"),
+    ("Biological Filter Saturation", "high ppO2 (L1)"), ("Biological Filter Saturation", "high ppO2 (L2)"),
+    ("Biological Filter Saturation", "low ppCO2 (L1)"), ("Biological Filter Saturation", "low ppCO2 (L2)"),
+    ("Biological Filter Saturation", "low ppO2 (L1)"), ("Biological Filter Saturation", "low ppO2 (L2)"),
     ("Biological Filter Saturation", "[HIDDEN] BFS Component"),
 
     # CDRA Failure (with previous time-step symptoms added)
-    ("CDRA Failure", "high Humidity (L1)"), ("CDRA Failure", "high Humidity (L1) (t-1)"), ("CDRA Failure", "high Humidity (L2)"), ("CDRA Failure", "high Humidity (L2) (t-1)"),
-    ("CDRA Failure", "high ppCO2 (L1)"), ("CDRA Failure", "high ppCO2 (L1) (t-1)"), ("CDRA Failure", "high ppCO2 (L2)"), ("CDRA Failure", "high ppCO2 (L2) (t-1)"),
-    ("CDRA Failure", "high ppO2 (L1)"), ("CDRA Failure", "high ppO2 (L1) (t-1)"), ("CDRA Failure", "high ppO2 (L2)"), ("CDRA Failure", "high ppO2 (L2) (t-1)"),
-    ("CDRA Failure", "low Humidity (L1)"), ("CDRA Failure", "low Humidity (L1) (t-1)"), ("CDRA Failure", "low Humidity (L2)"), ("CDRA Failure", "low Humidity (L2) (t-1)"),
-    ("CDRA Failure", "low ppCO2 (L1)"), ("CDRA Failure", "low ppCO2 (L1) (t-1)"), ("CDRA Failure", "low ppCO2 (L2)"), ("CDRA Failure", "low ppCO2 (L2) (t-1)"),
-    ("CDRA Failure", "low ppO2 (L1)"), ("CDRA Failure", "low ppO2 (L1) (t-1)"), ("CDRA Failure", "low ppO2 (L2)"), ("CDRA Failure", "low ppO2 (L2) (t-1)"),
+    ("CDRA Failure", "high Humidity (L1)"), ("CDRA Failure", "high Humidity (L2)"),
+    ("CDRA Failure", "high ppCO2 (L1)"), ("CDRA Failure", "high ppCO2 (L2)"),
+    ("CDRA Failure", "high ppO2 (L1)"), ("CDRA Failure", "high ppO2 (L2)"),
+    ("CDRA Failure", "low Humidity (L1)"), ("CDRA Failure", "low Humidity (L2)"),
+    ("CDRA Failure", "low ppCO2 (L1)"), ("CDRA Failure", "low ppCO2 (L2)"),
+    ("CDRA Failure", "low ppO2 (L1)"), ("CDRA Failure", "low ppO2 (L2)"),
     ("CDRA Failure", "[HIDDEN] CDRA Failure Component"),
 
     # CDRA LiOH Canister Saturation
-    ("CDRA LiOH Canister Saturation", "high ppCO2 (L1)"), ("CDRA LiOH Canister Saturation", "high ppCO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "high ppCO2 (L2)"), ("CDRA LiOH Canister Saturation", "high ppCO2 (L2) (t-1)"),
-    ("CDRA LiOH Canister Saturation", "high ppO2 (L1)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L2)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L2) (t-1)"),
+    ("CDRA LiOH Canister Saturation", "high ppCO2 (L1)"), ("CDRA LiOH Canister Saturation", "high ppCO2 (L2)"),
+    ("CDRA LiOH Canister Saturation", "high ppO2 (L1)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L2)"),
     ("CDRA LiOH Canister Saturation", "high LiOH CO2 Saturation"),
-    ("CDRA LiOH Canister Saturation", "low ppCO2 (L1)"), ("CDRA LiOH Canister Saturation", "low ppCO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "low ppCO2 (L2)"), ("CDRA LiOH Canister Saturation", "low ppCO2 (L2) (t-1)"),
-    ("CDRA LiOH Canister Saturation", "low ppO2 (L1)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L2)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L2) (t-1)"),
+    ("CDRA LiOH Canister Saturation", "low ppCO2 (L1)"), ("CDRA LiOH Canister Saturation", "low ppCO2 (L2)"),
+    ("CDRA LiOH Canister Saturation", "low ppO2 (L1)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L2)"),
     ("CDRA LiOH Canister Saturation", "low LiOH CO2 Saturation"),
     ("CDRA LiOH Canister Saturation", "[HIDDEN] CDRA LiOH Canister Saturation Component"),
 
     # Electrolysis System Failure
     ("Electrolysis System Failure", "high H2O (Crew)"),
-    ("Electrolysis System Failure", "high ppO2 (L1)"), ("Electrolysis System Failure", "high ppO2 (L1) (t-1)"), ("Electrolysis System Failure", "high ppO2 (L2)"), ("Electrolysis System Failure", "high ppO2 (L2) (t-1)"),
+    ("Electrolysis System Failure", "high ppO2 (L1)"), ("Electrolysis System Failure", "high ppO2 (L2)"),
     ("Electrolysis System Failure", "low H2O (Crew)"),
-    ("Electrolysis System Failure", "low ppO2 (L1)"), ("Electrolysis System Failure", "low ppO2 (L1) (t-1)"), ("Electrolysis System Failure", "low ppO2 (L2)"), ("Electrolysis System Failure", "low ppO2 (L2) (t-1)"),
+    ("Electrolysis System Failure", "low ppO2 (L1)"), ("Electrolysis System Failure", "low ppO2 (L2)"),
     ("Electrolysis System Failure", "[HIDDEN] Electrolysis System Failure Component"),
 
     # Emergency O2 System Maintenance
-    ("Emergency O2 System Maintenance", "high ppO2 (L1)"), ("Emergency O2 System Maintenance", "high ppO2 (L1) (t-1)"), ("Emergency O2 System Maintenance", "high ppO2 (L2)"), ("Emergency O2 System Maintenance", "high ppO2 (L2) (t-1)"),
-    ("Emergency O2 System Maintenance", "low ppO2 (L1)"), ("Emergency O2 System Maintenance", "low ppO2 (L1) (t-1)"), ("Emergency O2 System Maintenance", "low ppO2 (L2)"), ("Emergency O2 System Maintenance", "low ppO2 (L2) (t-1)"),
+    ("Emergency O2 System Maintenance", "high ppO2 (L1)"), ("Emergency O2 System Maintenance", "high ppO2 (L2)"),
+    ("Emergency O2 System Maintenance", "low ppO2 (L1)"), ("Emergency O2 System Maintenance", "low ppO2 (L2)"),
     ("Emergency O2 System Maintenance", "[HIDDEN] Emergency O2 System Maintenance Component"),
 
     # Excess CO2 in Cabin
-    ("Excess CO2 in Cabin", "high ppCO2 (L1)"), ("Excess CO2 in Cabin", "high ppCO2 (L1) (t-1)"), ("Excess CO2 in Cabin", "high ppCO2 (L2)"), ("Excess CO2 in Cabin", "high ppCO2 (L2) (t-1)"),
-    ("Excess CO2 in Cabin", "low ppCO2 (L1)"), ("Excess CO2 in Cabin", "low ppCO2 (L1) (t-1)"), ("Excess CO2 in Cabin", "low ppCO2 (L2)"), ("Excess CO2 in Cabin", "low ppCO2 (L2) (t-1)"),
+    ("Excess CO2 in Cabin", "high ppCO2 (L1)"), ("Excess CO2 in Cabin", "high ppCO2 (L2)"),
+    ("Excess CO2 in Cabin", "low ppCO2 (L1)"), ("Excess CO2 in Cabin", "low ppCO2 (L2)"),
     ("Excess CO2 in Cabin", "[HIDDEN] Excess CO2 in Cabin Component"),
 
     # Excess Gas Leak
@@ -62,9 +65,9 @@ network = [
 
     # Excess Water Vapor Pressure in Cabin
     ("Excess Water Vapor Pressure in Cabin", "high Cabin Temperature (L1)"), ("Excess Water Vapor Pressure in Cabin", "high Cabin Temperature (L2)"),
-    ("Excess Water Vapor Pressure in Cabin", "high Humidity (L1)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L1) (t-1)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L2)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L2) (t-1)"),
+    ("Excess Water Vapor Pressure in Cabin", "high Humidity (L1)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L2)"),
     ("Excess Water Vapor Pressure in Cabin", "low Cabin Temperature (L1)"), ("Excess Water Vapor Pressure in Cabin", "low Cabin Temperature (L2)"),
-    ("Excess Water Vapor Pressure in Cabin", "low Humidity (L1)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L1) (t-1)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L2)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L2) (t-1)"),
+    ("Excess Water Vapor Pressure in Cabin", "low Humidity (L1)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L2)"),
     ("Excess Water Vapor Pressure in Cabin", "[HIDDEN] Excess Water Vapor Pressure in Cabin Component"),
 
     # Fuel Cell #1 and PDU Failure
@@ -109,19 +112,21 @@ network = [
 
     # Loss of Pressure
     ("Loss of Pressure", "high ppN2 (L1)"), ("Loss of Pressure", "high ppN2 (L2)"),
-    ("Loss of Pressure", "high ppO2 (L1)"), ("Loss of Pressure", "high ppO2 (L1) (t-1)"), ("Loss of Pressure", "high ppO2 (L2)"), ("Loss of Pressure", "high ppO2 (L2) (t-1)"),
-    ("Loss of Pressure", "high Pressure (L1)"), ("Loss of Pressure", "high Pressure (L2)"), ("Loss of Pressure", "high Total Cabin Pressure (L1)"), ("Loss of Pressure", "high Total Cabin Pressure (L2)"),
+    ("Loss of Pressure", "high ppO2 (L1)"), ("Loss of Pressure", "high ppO2 (L2)"),
+    ("Loss of Pressure", "high Pressure (L1)"), ("Loss of Pressure", "high Pressure (L2)"), 
+    ("Loss of Pressure", "high Total Cabin Pressure (L1)"), ("Loss of Pressure", "high Total Cabin Pressure (L2)"),
     ("Loss of Pressure", "low ppN2 (L1)"), ("Loss of Pressure", "low ppN2 (L2)"),
-    ("Loss of Pressure", "low ppO2 (L1)"), ("Loss of Pressure", "low ppO2 (L1) (t-1)"), ("Loss of Pressure", "low ppO2 (L2)"), ("Loss of Pressure", "low ppO2 (L2) (t-1)"),
-    ("Loss of Pressure", "low Pressure (L1)"), ("Loss of Pressure", "low Pressure (L2)"), ("Loss of Pressure", "low Total Cabin Pressure (L1)"), ("Loss of Pressure", "low Total Cabin Pressure (L2)"),
+    ("Loss of Pressure", "low ppO2 (L1)"), ("Loss of Pressure", "low ppO2 (L2)"),
+    ("Loss of Pressure", "low Pressure (L1)"), ("Loss of Pressure", "low Pressure (L2)"), 
+    ("Loss of Pressure", "low Total Cabin Pressure (L1)"), ("Loss of Pressure", "low Total Cabin Pressure (L2)"),
     ("Loss of Pressure", "[HIDDEN] Loss of Pressure Component"),
 
     # Main Cabin Fan Failure
     ("Main Cabin Fan Failure", "high Cabin Temperature (L1)"), ("Main Cabin Fan Failure", "high Cabin Temperature (L2)"),
-    ("Main Cabin Fan Failure", "high Humidity (L1)"), ("Main Cabin Fan Failure", "high Humidity (L1) (t-1)"), ("Main Cabin Fan Failure", "high Humidity (L2)"), ("Main Cabin Fan Failure", "high Humidity (L2) (t-1)"),
+    ("Main Cabin Fan Failure", "high Humidity (L1)"), ("Main Cabin Fan Failure", "high Humidity (L2)"),
     ("Main Cabin Fan Failure", "high Main Cabin Fan #2"),
     ("Main Cabin Fan Failure", "low Cabin Temperature (L1)"), ("Main Cabin Fan Failure", "low Cabin Temperature (L2)"),
-    ("Main Cabin Fan Failure", "low Humidity (L1)"), ("Main Cabin Fan Failure", "low Humidity (L1) (t-1)"), ("Main Cabin Fan Failure", "low Humidity (L2)"), ("Main Cabin Fan Failure", "low Humidity (L2) (t-1)"),
+    ("Main Cabin Fan Failure", "low Humidity (L1)"), ("Main Cabin Fan Failure", "low Humidity (L2)"),
     ("Main Cabin Fan Failure", "low Main Cabin Fan #2"),
     ("Main Cabin Fan Failure", "[HIDDEN] Main Cabin Fan Failure Component"),
 
@@ -153,22 +158,22 @@ network = [
     # (i.e., PDU 4 Bank 1 for a PDU 4 Failure and PDU 5 Bank 1 for a PDU 5 Failure)
     ("PDU 4 Failure", "high 2-butanone"), ("PDU 4 Failure", "high Acetaldehyde"), ("PDU 4 Failure", "high Aux Cabin Fan #2"),
     ("PDU 4 Failure", "high Cabin Temperature (L1)"), ("PDU 4 Failure", "high Cabin Temperature (L2)"),
-    ("PDU 4 Failure", "high Humidity (L1)"), ("PDU 4 Failure", "high Humidity (L1) (t-1)"), ("PDU 4 Failure", "high Humidity (L2)"), ("PDU 4 Failure", "high Humidity (L2) (t-1)"),
+    ("PDU 4 Failure", "high Humidity (L1)"),("PDU 4 Failure", "high Humidity (L2)"),
     ("PDU 4 Failure", "high Main Cabin Fan #2"), ("PDU 4 Failure", "high PDU 4 Bank 1"),
     ("PDU 4 Failure", "low 2-butanone"), ("PDU 4 Failure", "low Acetaldehyde"), ("PDU 4 Failure", "low Aux Cabin Fan #2"),
     ("PDU 4 Failure", "low Cabin Temperature (L1)"), ("PDU 4 Failure", "low Cabin Temperature (L2)"),
-    ("PDU 4 Failure", "low Humidity (L1)"), ("PDU 4 Failure", "low Humidity (L1) (t-1)"), ("PDU 4 Failure", "low Humidity (L2)"), ("PDU 4 Failure", "low Humidity (L2) (t-1)"),
+    ("PDU 4 Failure", "low Humidity (L1)"),("PDU 4 Failure", "low Humidity (L2)"),
     ("PDU 4 Failure", "low Main Cabin Fan #2"), ("PDU 4 Failure", "low PDU 4 Bank 1"),
     ("PDU 4 Failure", "[HIDDEN] PDU 4 Failure Component"),
 
     # PDU 5 Failure
     ("PDU 5 Failure", "high 2-butanone"), ("PDU 5 Failure", "high Acetaldehyde"), ("PDU 5 Failure", "high Aux Cabin Fan #2"),
     ("PDU 5 Failure", "high Cabin Temperature (L1)"), ("PDU 5 Failure", "high Cabin Temperature (L2)"),
-    ("PDU 5 Failure", "high Humidity (L1)"), ("PDU 5 Failure", "high Humidity (L1) (t-1)"), ("PDU 5 Failure", "high Humidity (L2)"), ("PDU 5 Failure", "high Humidity (L2) (t-1)"),
+    ("PDU 5 Failure", "high Humidity (L1)"),("PDU 5 Failure", "high Humidity (L2)"),
     ("PDU 5 Failure", "high Main Cabin Fan #2"), ("PDU 5 Failure", "high PDU 5 Bank 1"),
     ("PDU 5 Failure", "low 2-butanone"), ("PDU 5 Failure", "low Acetaldehyde"), ("PDU 5 Failure", "low Aux Cabin Fan #2"),
     ("PDU 5 Failure", "low Cabin Temperature (L1)"), ("PDU 5 Failure", "low Cabin Temperature (L2)"),
-    ("PDU 5 Failure", "low Humidity (L1)"), ("PDU 5 Failure", "low Humidity (L1) (t-1)"), ("PDU 5 Failure", "low Humidity (L2)"), ("PDU 5 Failure", "low Humidity (L2) (t-1)"),
+    ("PDU 5 Failure", "low Humidity (L1)"), ("PDU 5 Failure", "low Humidity (L2)"),
     ("PDU 5 Failure", "low Main Cabin Fan #2"), ("PDU 5 Failure", "low PDU 5 Bank 1"),
     ("PDU 5 Failure", "[HIDDEN] PDU 5 Failure Component"),
 
@@ -181,11 +186,11 @@ network = [
 
     # RWGSR Malfunction
     ("RWGSR Malfunction", "high H2O (Crew)"),
-    ("RWGSR Malfunction", "high ppCO2 (L1)"), ("RWGSR Malfunction", "high ppCO2 (L1) (t-1)"), ("RWGSR Malfunction", "high ppCO2 (L2)"), ("RWGSR Malfunction", "high ppCO2 (L2) (t-1)"),
-    ("RWGSR Malfunction", "high ppO2 (L1)"), ("RWGSR Malfunction", "high ppO2 (L1) (t-1)"), ("RWGSR Malfunction", "high ppO2 (L2)"), ("RWGSR Malfunction", "high ppO2 (L2) (t-1)"),
+    ("RWGSR Malfunction", "high ppCO2 (L1)"), ("RWGSR Malfunction", "high ppCO2 (L2)"),
+    ("RWGSR Malfunction", "high ppO2 (L1)"), ("RWGSR Malfunction", "high ppO2 (L2)"),
     ("RWGSR Malfunction", "low H2O (Crew)"),
-    ("RWGSR Malfunction", "low ppCO2 (L1)"), ("RWGSR Malfunction", "low ppCO2 (L1) (t-1)"), ("RWGSR Malfunction", "low ppCO2 (L2)"), ("RWGSR Malfunction", "low ppCO2 (L2) (t-1)"),
-    ("RWGSR Malfunction", "low ppO2 (L1)"), ("RWGSR Malfunction", "low ppO2 (L1) (t-1)"), ("RWGSR Malfunction", "low ppO2 (L2)"), ("RWGSR Malfunction", "low ppO2 (L2) (t-1)"),
+    ("RWGSR Malfunction", "low ppCO2 (L1)"), ("RWGSR Malfunction", "low ppCO2 (L2)"),
+    ("RWGSR Malfunction", "low ppO2 (L1)"), ("RWGSR Malfunction", "low ppO2 (L2)"),
     ("RWGSR Malfunction", "[HIDDEN] RWGSR Malfunction Component"),
 
     # SPE System Maintenance
@@ -235,6 +240,95 @@ network = [
     ("WRS Off-nominal pH Level", "low H2O pH"),
     ("WRS Off-nominal pH Level", "[HIDDEN] Ion Exchange Bed Status")
 ]
+
+network_dict = defaultdict(set)
+for anomaly, parameter in network:
+    network_dict[anomaly].add(parameter)
+
+# Create new edges for all (t-1) parameters to their respective parent anomalies
+new_edges = [] # create an empty list to store new edges
+for anomaly, parameters in network_dict.items():
+    for parameter in parameters:
+        # Only add new edges for telemetry parameters (i.e., not for additional evidence)
+        if parameter.startswith("[HIDDEN]") or "(t-1)" in parameter:
+            continue
+        temporal_parameter = f"{parameter} (t-1)"
+        if temporal_parameter not in parameters:
+            new_edges.append((anomaly, temporal_parameter))
+
+# Merge temporal parameter node edges in network
+network.extend(new_edges)
+network.sort() # sort to keep 'current' and temporal parameters together
+
+# Add connections between temporal variables (e.g., ppO2 (L1) (t-1) and ppO2 (L1)). Note that the previous
+# time step parameter is added first, as the older measurement has an impact on the current reading
+temporal_nodes = [
+    ("high 2-butanone (t-1)", "high 2-butanone"), ("high 2-butanone (t-1)", "low 2-butanone"), 
+    ("low 2-butanone (t-1)", "high 2-butanone"), ("low 2-butanone (t-1)", "low 2-butanone"),
+    ("Acetaldehyde (t-1)", "high Acetaldehyde"), ("Acetaldehyde (t-1)", "low Acetaldehyde"),
+    ("Aux Cabin Fan #1 (t-1)", "high Aux Cabin Fan #1"), ("Aux Cabin Fan #1 (t-1)", "low Aux Cabin Fan #1"), 
+    ("Aux Cabin Fan #2 (t-1)", "high Aux Cabin Fan #2"), ("Aux Cabin Fan #2 (t-1)", "low Aux Cabin Fan #2"),
+    ("Cabin Temperature (L1) (t-1)", "high Cabin Temperature (L1)"), ("Cabin Temperature (L1) (t-1)", "low Cabin Temperature (L1)"),
+    ("Cabin Temperature (L2) (t-1)", "high Cabin Temperature (L2)"), ("Cabin Temperature (L2) (t-1)", "low Cabin Temperature (L2)"),
+    ("Dichloromethane (t-1)", "high Dichloromethane"), ("Dichloromethane (t-1)", "low Dichloromethane"),
+    ("Fuel Cell #1 Current (t-1)", "high Fuel Cell #1 Current"), ("Fuel Cell #1 Current (t-1)", "low Fuel Cell #1 Current"),
+    ("Fuel Cell #1 PQM (t-1)", "high Fuel Cell #1 PQM"), ("Fuel Cell #1 PQM (t-1)", "low Fuel Cell #1 PQM"),
+    ("Fuel Cell #1 Stack Out Temp (t-1)", "high Fuel Cell #1 Stack Out Temp"), ("Fuel Cell #1 Stack Out Temp (t-1)", "low Fuel Cell #1 Stack Out Temp"),
+    ("Fuel Cell #1 Voltage (t-1)", "high Fuel Cell #1 Voltage"), ("Fuel Cell #1 Voltage (t-1)", "low Fuel Cell #1 Voltage"), 
+    ("Fuel Cell #2 Current (t-1)", "high Fuel Cell #2 Current"), ("Fuel Cell #2 Current (t-1)", "low Fuel Cell #2 Current"),
+    ("Fuel Cell #2 PQM (t-1)", "high Fuel Cell #2 PQM"), ("Fuel Cell #2 PQM (t-1)", "low Fuel Cell #2 PQM"), 
+    ("Fuel Cell #2 Stack Out Temp (t-1)", "high Fuel Cell #2 Stack Out Temp"), ("Fuel Cell #2 Stack Out Temp (t-1)", "low Fuel Cell #2 Stack Out Temp"),
+    ("Fuel Cell #2 Voltage (t-1)", "high Fuel Cell #2 Voltage"), ("Fuel Cell #2 Voltage (t-1)", "low Fuel Cell #2 Voltage"), 
+    ("H2O (Crew) (t-1)", "high H2O (Crew)"), ("H2O (Crew) (t-1)", "low H2O (Crew)"),
+    ("H2O pH (t-1)", "high H2O pH"), ("H2O pH (t-1)", "low H2O pH"),
+    ("HMCTS (t-1)", "high HMCTS"), ("HMCTS (t-1)", "low HMCTS"),
+    ("Humidity (L1) (t-1)", "high Humidity (L1)"), ("Humidity (L1) (t-1)", "low Humidity (L1)"),
+    ("Humidity (L2) (t-1)", "high Humidity (L2)"), ("Humidity (L2) (t-1)", "low Humidity (L2)"),
+    ("LiOH CO2 Saturation (t-1)", "high LiOH CO2 Saturation"), ("LiOH CO2 Saturation (t-1)", "low LiOH CO2 Saturation"), 
+    ("Main Cabin Fan #1 (t-1)", "high Main Cabin Fan #1"), ("Main Cabin Fan #1 (t-1)", "low Main Cabin Fan #1"),
+    ("Main Cabin Fan #2 (t-1)", "high Main Cabin Fan #2"), ("Main Cabin Fan #2 (t-1)", "low Main Cabin Fan #2"),
+    ("MOXIE Compressor Temp (t-1)", "high MOXIE Compressor Temp"), ("MOXIE Compressor Temp (t-1)", "low MOXIE Compressor Temp"),
+    ("MOXIE Telemetry Quality (t-1)", "high MOXIE Telemetry Quality"), ("MOXIE Telemetry Quality (t-1)", "low MOXIE Telemetry Quality"),
+    ("n_Butanol (t-1)", "high n_Butanol"), ("n_Butanol (t-1)", "low n_Butanol"),
+    ("PDU 4 Bank 1 (t-1)", "high PDU 4 Bank 1"), ("PDU 4 Bank 1 (t-1)", "low PDU 4 Bank 1"),
+    ("PDU 5 Bank 1 (t-1)", "high PDU 5 Bank 1"), ("PDU 5 Bank 1 (t-1)", "low PDU 5 Bank 1"),
+    ("ppCO2 (L1) (t-1)", "high ppCO2 (L1)"), ("ppCO2 (L1) (t-1)", "low ppCO2 (L1)"), 
+    ("ppCO2 (L2) (t-1)", "high ppCO2 (L2)"), ("ppCO2 (L2) (t-1)", "low ppCO2 (L2)"),
+    ("ppH2 (L1) (t-1)", "high ppH2 (L1)"), ("ppH2 (L1) (t-1)", "low ppH2 (L1)"), 
+    ("ppH2 (L2) (t-1)", "high ppH2 (L2)"), ("ppH2 (L2) (t-1)", "low ppH2 (L2)"),
+    ("ppN2 (L1) (t-1)", "high ppN2 (L1)"), ("ppN2 (L1) (t-1)", "low ppN2 (L1)"),
+    ("ppN2 (L2) (t-1)", "high ppN2 (L2)"), ("ppN2 (L2) (t-1)", "low ppN2 (L2)"),
+    ("ppO2 (L1) (t-1)", "high ppO2 (L1)"), ("ppO2 (L1) (t-1)", "low ppO2 (L1)"),
+    ("ppO2 (L2) (t-1)", "high ppO2 (L2)"), ("ppO2 (L2) (t-1)", "low ppO2 (L2)"),
+    ("Pressure (L1) (t-1)", "high Pressure (L1)"), ("Pressure (L1) (t-1)", "low Pressure (L1)"),
+    ("Pressure (L2) (t-1)", "high Pressure (L2)"), ("Pressure (L2) (t-1)", "low Pressure (L2)"),
+    ("SOXIE Stack Temp (t-1)", "high SOXIE Stack Temp"), ("SOXIE Stack Temp (t-1)", "low SOXIE Stack Temp"), 
+    ("Total Cabin Pressure (L1) (t-1)", "high Total Cabin Pressure (L1)"), ("Total Cabin Pressure (L1) (t-1)", "low Total Cabin Pressure (L1)"),
+    ("Total Cabin Pressure (L2) (t-1)", "high Total Cabin Pressure (L2)"), ("Total Cabin Pressure (L2) (t-1)", "low Total Cabin Pressure (L2)"),
+    ("WRS Delivery Pump (t-1)", "high WRS Delivery Pump"), ("WRS Delivery Pump (t-1)", "low WRS Delivery Pump"),
+    ("WRS Valve Flow (t-1)", "high WRS Valve Flow"), ("WRS Valve Flow (t-1)", "low WRS Valve Flow")
+]
+
+for edge in temporal_nodes:
+    network.append(edge)
+
+# Add connections between spatial variables (e.g., ppO2 (L1) and ppO2 (L2)). Note that these connections
+# are only added one way (from L1 to L2), as these relationships are assumed to be symmetrical (same effect
+# both ways). 
+# NOTE: Confirm that this effect is observed when adding partial telemetry values.
+spatial_nodes = [
+    ("Cabin Temperature (L1)", "high Cabin Temperature (L2)"), ("Cabin Temperature (L1)", "low Cabin Temperature (L2)"),
+    ("Humidity (L1)", "high Humidity (L2)"), ("Humidity (L1)", "low Humidity (L2)"),
+    ("ppCO2 (L1)", "high ppCO2 (L2)"), ("ppCO2 (L1)", "low ppCO2 (L2)"),
+    ("ppH2 (L1)", "high ppH2 (L2)"), ("ppH2 (L1)", "low ppH2 (L2)"),
+    ("ppN2 (L1)", "high ppN2 (L2)"), ("ppN2 (L1)", "low ppN2 (L2)"),
+    ("ppO2 (L1)", "high ppO2 (L2)"), ("ppO2 (L1)", "low ppO2 (L2)"),
+    ("Pressure (L1)", "high Pressure (L2)"), ("Pressure (L1)", "low Pressure (L2)"),
+    ("Total Cabin Pressure (L1)", "high Total Cabin Pressure (L2)"), ("Total Cabin Pressure (L1)", "low Total Cabin Pressure (L2)"),
+]
+
+for edge in spatial_nodes:
+    network.append(edge)
 
 # Add nodes for anomaly subgroups. Breaking the anomalies into smaller subgroups allows the CPT for 'No Anomalies Present'
 # to be computed with less entries.

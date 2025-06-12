@@ -1,6 +1,6 @@
 # noisy_max
 # Author: Joshua Elston
-# Last Edited: 12/13/2024
+# Last Edited: 06/10/2025
 
 # Computes the CPTs for each parameter conditioned on all of its parent anomalies --> called in the add_cpds.py script
 
@@ -31,16 +31,54 @@ def noisy_MAX(split_probability_dict, parameter, anomalies):
             # Calculate C_y_xi for each state
             C_y_xi = 1 # start multiplication with a value of 1
 
+            # print('Anomaly presence items:')
+            # print(anomaly_presence.items())
+
             # Iterate over each anomaly and its True/False state to calculate the cumulative probabilities
-            for anomaly, is_true in anomaly_presence.items():
+            for anomaly, parent_type in anomaly_presence.items():
                 # print(f'Processing anomaly: {anomaly} ({is_true})')
 
                 # Access the group of probabilities for the high or low parameter values for each parent anomaly state (True/False)
-                group_data = split_probability_dict.get(parameter, {}).get(anomaly, {}).get(str(is_true), {}).get(group, {})
+                # group_data = split_probability_dict.get(parameter, {}).get(anomaly, {}).get(str(is_true), {}).get(group, {})
+                # group_data = split_probability_dict.get(parameter, {}).get(anomaly, {}).get(is_true, {}).get(group, {})
+
+
+                print('---------------LOOKUP TRACE---------------')
+                print(f"Parameter: {parameter}")
+                print(f"Parent: {anomaly}")
+                print(f"Parent Type: {parent_type}")
+                print(f"Group Key: {group}")
+                print('------------------------')
+
+                # NEW CODE
+                anomaly_block = split_probability_dict.get(parameter, {}).get(anomaly, {})
+                print(f"anomaly block: {anomaly_block}")
+
+                # Determine how to access the probabilities based on the type of parent being handled (binary or multivariate)
+                if parent_type in ['False', 'True']:
+                    # Binary parent
+                    entry = anomaly_block.get(parent_type, {})
+                    prob_entry = entry.get(group, {})
+                    anomaly_probs = prob_entry.get('probabilities', {})
+                    # print(f'[BINARY] Probabilities: {anomaly_probs}')
+                else:
+                    # Multivariate parent
+                    group_entry = anomaly_block.get(group, {})
+                    probabilities = group_entry.get('probabilities', {})
+                    anomaly_probs = probabilities.get(parent_type, {})
+
+                    print(f"[MULTIVARIATE] Group: {group}")
+                    print(f"[MULTIVARIATE] Probabilities keys (parent states): {list(probabilities.keys())}")
+                    print(f"[MULTIVARIATE] Probabilities: {anomaly_probs}")
                 
-                # From the groups above, extract the probabilities for each parent anomaly state (True/false)
-                anomaly_probs = group_data.get('probabilities', {})
-                # print(f'Parameter Probabilities: {anomaly_probs}')
+
+                # if not anomaly_probs:
+                #     print(f"[WARNING] Missing probabilities for {parameter} given {anomaly} = {parent_type}, group = {group}")
+                #     continue
+                # else:
+                #     print(f"Probabilities present for {parameter} given {anomaly} = {group}")
+
+
 
                 # Initialize the conditional probability that X_i, when taking the value x_i, raises the value 
                 # of Y to y (this will be summed across all states <= current state) 
@@ -66,6 +104,7 @@ def noisy_MAX(split_probability_dict, parameter, anomalies):
         # Initialize a dictionary for the CPT
         p_y_given_x = {}
 
+        # print('------------------Calculuating CPTs------------------')
         # print('Cumulative Probabilities: ', cumulative_probs)
         # print('States being processed: ', states)
 
@@ -79,6 +118,23 @@ def noisy_MAX(split_probability_dict, parameter, anomalies):
                 # print(f'State {state}: Setting p_y_given_x[{state}] = {cumulative_probs[state]} - {cumulative_probs[states[i - 1]]} = {p_y_given_x[state]}')
         # print('Final CPT:', p_y_given_x)
         # print()
+
+        # for key, val in p_y_given_x.items():
+        #     if not isinstance(val, (int, float)):
+        #         print(f"[ERROR] Non-numeric value in CPT: key = {key}, val = {val} (type = {type(val)})")
+        #         raise TypeError(f"CPT value must be numeric but got {type(val)} for key {key}: {val}")
+
+        # try:
+        #     total = sum(p_y_given_x.values())
+        #     print(f"Total of CPT values: {total}")
+        # except TypeError as e:
+        #     print(f"[EXCEPTION] Failed to sum CPT values: {p_y_given_x}")
+        #     raise
+
+        # if total == 0:
+        #     print("[WARNING] Total CPT probability is zero. cumulative rpobs:", cumulative_probs)
+
+        # print("------------------End CPT caluclations (prior to normalization------------------)")
 
         # Normalize probabilities to ensure that they all sum to 1 <-- had previous rounding issues that made this normalization necessary
         def normalize_probabilities(probabilities):
@@ -96,18 +152,47 @@ def noisy_MAX(split_probability_dict, parameter, anomalies):
 
         return p_y_given_x
 
-    # Iterate over all combinations of True/False states for the parent anomalies
-    for presence_combination in product([False, True], repeat = len(anomalies)):
-        # Map each parent anomaly to its True/False state in its current combination
-        anomaly_presence = dict(zip(anomalies, presence_combination))
+    # Create an empty list to store the state spaces for all relevant parent nodes
+    parent_state_spaces = []
+    for anomaly in anomalies:
+        anomaly_dict = split_probability_dict.get(parameter, {}).get(anomaly, {})
+        
+        # Create an iterator to go through anomaly states to identify whether a binary or multivariate parent is being assessed
+        iter_key = next(iter(anomaly_dict), None)
+
+        # First, check if the parent node is binary
+        if iter_key in ['True', 'False']:
+        # if set(anomaly_dict.items()) == {'True', 'False'}:
+            states = list(anomaly_dict.keys())
+            parent_state_spaces.append(states)
+        else:
+            multivariate_states = anomaly_dict[iter_key]
+            prob_dict = multivariate_states.get('probabilities', {})
+            states = list(prob_dict.keys())
+            parent_state_spaces.append(states)
+
+    print(f"Parent state spaces: {parent_state_spaces}")
+
+    # Iterate over all combinations of parent states for a given parameter
+    for combo in product(*parent_state_spaces):
+        anomaly_presence = dict(zip(anomalies, combo))
+
+    # # Iterate over all combinations of True/False states for the parent anomalies
+    # for presence_combination in product([False, True], repeat = len(anomalies)):
+    #     # Map each parent anomaly to its True/False state in its current combination
+    #     anomaly_presence = dict(zip(anomalies, presence_combination))
 
         # Get cumulative probabilities for the high and low group states for each parameter
         cumulative_high = cumulative_probabilities(high_states, f'high {parameter}', anomaly_presence)
         cumulative_low = cumulative_probabilities(low_states, f'low {parameter}', anomaly_presence)
 
+        # # Determine the CPTs for the high and low groups for the current parameter
+        # cpt_high[presence_combination] = calculate_CPTs(cumulative_high, high_states)
+        # cpt_low[presence_combination] = calculate_CPTs(cumulative_low, low_states)
+
         # Determine the CPTs for the high and low groups for the current parameter
-        cpt_high[presence_combination] = calculate_CPTs(cumulative_high, high_states)
-        cpt_low[presence_combination] = calculate_CPTs(cumulative_low, low_states)
+        cpt_high[tuple(combo)] = calculate_CPTs(cumulative_high, high_states)
+        cpt_low[tuple(combo)] = calculate_CPTs(cumulative_low, low_states)
 
         # print("High CPT:")
         # print(cpt_high)

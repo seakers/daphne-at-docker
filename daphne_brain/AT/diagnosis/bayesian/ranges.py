@@ -1,6 +1,6 @@
 # ranges.py
 # Author: Joshua Elston
-# Last Edited: 03/31/2025
+# Last Edited: 06/01/2025
 
 # Stores the measurement_ranges dictionary --> called in probabilities.py
 
@@ -13,6 +13,9 @@
 # NOTE: H2O pH, LiOH CO2 Saturation, and MOXIE Telemetry Quality are all associated with anomalies within Neo4j, but are not
 # included in the HSS on Kazuki's lab machine. They are still reported here to match the KG, but this discrepancy should be
 # resolved in future
+# NOTE: For the addition of parameter ranges for (t-1) variables, a copy of measurement_ranges is made, with all
+# previous time step parameters having the same ranges. This enables quick adaptability if additional parameters
+# are added or name changes are required
 
 # Example bound meanings are shown for ppO2 (L1) (lines 263-267)
 
@@ -159,23 +162,6 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (40, 50, False, True),
         'Exceeds_LowerWarningLimit': (None, 40, False, True)
     },
-
-    # Added Previous Time-Step Variables
-    "Humidity (L1) (t-1)": {
-        'Exceeds_UpperWarningLimit': (70, None, True, False),
-        'Exceeds_UpperCautionLimit': (61, 70, True, False),
-        'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
-        'Exceeds_LowerCautionLimit': (40, 50, False, True),
-        'Exceeds_LowerWarningLimit': (None, 40, False, True)
-    },
-    "Humidity (L2) (t-1)": {
-        'Exceeds_UpperWarningLimit': (70, None, True, False),
-        'Exceeds_UpperCautionLimit': (61, 70, True, False),
-        'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
-        'Exceeds_LowerCautionLimit': (40, 50, False, True),
-        'Exceeds_LowerWarningLimit': (None, 40, False, True)
-    },
-
     # NOTE: LiOH CO2 Saturation appears in Neo4j in relation to the CDRA LiOH Canister Saturation anomaly, but is not mentioned on the HSS machine
     "LiOH CO2 Saturation": {
         'Exceeds_UpperWarningLimit': (80, None, True, False),
@@ -237,93 +223,59 @@ measurement_ranges = {
     "ppCO2 (L1)": {
         'Exceeds_UpperWarningLimit': (6, None, True, False),
         'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
-        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
+        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHg (L1 = L2)
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
     "ppCO2 (L2)": {
         'Exceeds_UpperWarningLimit': (6, None, True, False),
         'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
-        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
+        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHg (L1 = L2)
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
-
-    # Added Previous Time-Step Variables
-    "ppCO2 (L1) (t-1)": {
-        'Exceeds_UpperWarningLimit': (6, None, True, False),
-        'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
-        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
-        'Exceeds_LowerCautionLimit': (-2, -1, False, True),
-        'Exceeds_LowerWarningLimit': (None, -2, False, True)
-    },
-    "ppCO2 (L2) (t-1)": {
-        'Exceeds_UpperWarningLimit': (6, None, True, False),
-        'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
-        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
-        'Exceeds_LowerCautionLimit': (-2, -1, False, True),
-        'Exceeds_LowerWarningLimit': (None, -2, False, True)
-    },
-
     "ppH2 (L1)": {
         'Exceeds_UpperWarningLimit': (0.1, None, True, False),
         'Exceeds_UpperCautionLimit': (0.07, 0.1, True, False),
-        'Nominal': (0.02, 0.07, False, False), # Nominal: 0.04 mmHG (L1 = L2)
+        'Nominal': (0.02, 0.07, False, False), # Nominal: 0.04 mmHg (L1 = L2)
         'Exceeds_LowerCautionLimit': (0.01, 0.02, False, True),
         'Exceeds_LowerWarningLimit': (None, 0.01, False, True)
     },
     "ppH2 (L2)": {
         'Exceeds_UpperWarningLimit': (0.1, None, True, False),
         'Exceeds_UpperCautionLimit': (0.07, 0.1, True, False),
-        'Nominal': (0.02, 0.07, False, False), # Nominal: 0.04 mmHG (L1 = L2)
+        'Nominal': (0.02, 0.07, False, False), # Nominal: 0.04 mmHg (L1 = L2)
         'Exceeds_LowerCautionLimit': (0.01, 0.02, False, True),
         'Exceeds_LowerWarningLimit': (None, 0.01, False, True)
     },
     "ppN2 (L1)": {
         'Exceeds_UpperWarningLimit': (600, None, True, False),
         'Exceeds_UpperCautionLimit': (591, 600, True, False),
-        'Nominal': (480, 591, False, False), # Nominal: 581.75 mmHG
+        'Nominal': (480, 591, False, False), # Nominal: 581.75 mmHg
         'Exceeds_LowerCautionLimit': (220.1, 480, False, True),
         'Exceeds_LowerWarningLimit': (None, 220.1, False, True)
     },
     "ppN2 (L2)": {
         'Exceeds_UpperWarningLimit': (600, None, True, False),
         'Exceeds_UpperCautionLimit': (591, 600, True, False),
-        'Nominal': (480, 591, False, False), # Nominal: 581.84 mmHG
+        'Nominal': (480, 591, False, False), # Nominal: 581.84 mmHg
         'Exceeds_LowerCautionLimit': (220.1, 480, False, True),
         'Exceeds_LowerWarningLimit': (None, 220.1, False, True)
     },
     "ppO2 (L1)": {
         'Exceeds_UpperWarningLimit': (185, None, True, False), # ≥ 185
         'Exceeds_UpperCautionLimit': (175, 185, True, False), # 175 ≤ ppO2 < 185
-        'Nominal': (155, 175, False, False), # 155 < ppO2 < 175 --> Nominal: 163.79 mmHG
+        'Nominal': (155, 175, False, False), # 155 < ppO2 < 175 --> Nominal: 163.79 mmHg
         'Exceeds_LowerCautionLimit': (145, 155, False, True), # 145 < ppO2 ≤ 155
         'Exceeds_LowerWarningLimit': (None, 145, False, True) # ≤ 145
     },
     "ppO2 (L2)": {
         'Exceeds_UpperWarningLimit': (185, None, True, False),
         'Exceeds_UpperCautionLimit': (175, 185, True, False),
-        'Nominal': (155, 175, False, False), # Nominal: 163.81 mmHG
+        'Nominal': (155, 175, False, False), # Nominal: 163.81 mmHg
         'Exceeds_LowerCautionLimit': (145, 155, False, True),
         'Exceeds_LowerWarningLimit': (None, 145, False, True)
     },
-
-    # Added Previous Time-Step Variables
-    "ppO2 (L1) (t-1)": {
-        'Exceeds_UpperWarningLimit': (185, None, True, False), # ≥ 185
-        'Exceeds_UpperCautionLimit': (175, 185, True, False), # 175 ≤ ppO2 < 185
-        'Nominal': (155, 175, False, False), # 155 < ppO2 < 175 --> Nominal: 163.79 mmHG
-        'Exceeds_LowerCautionLimit': (145, 155, False, True), # 145 < ppO2 ≤ 155
-        'Exceeds_LowerWarningLimit': (None, 145, False, True) # ≤ 145
-    },
-    "ppO2 (L2) (t-1)": {
-        'Exceeds_UpperWarningLimit': (185, None, True, False),
-        'Exceeds_UpperCautionLimit': (175, 185, True, False),
-        'Nominal': (155, 175, False, False), # Nominal: 163.81 mmHG
-        'Exceeds_LowerCautionLimit': (145, 155, False, True),
-        'Exceeds_LowerWarningLimit': (None, 145, False, True)
-    },
-
     "Pressure (L1)": {
         'Exceeds_UpperWarningLimit': (1.5, None, True, False),
         'Exceeds_UpperCautionLimit': (1.15, 1.5, True, False),
@@ -375,22 +327,31 @@ measurement_ranges = {
     }
 }
 
+# Duplicate the 'current' parameter ranges to capture the temporal changes with the (t-1) variables
+temporal_ranges = {}
+
+for parameter, ranges in measurement_ranges.items():
+    temporal_ranges[parameter] = ranges
+    temporal_ranges[f"{parameter} (t-1)"] = ranges
+# Reassign values to measurement_ranges dictionary for subsequent reference elsewhere in code
+measurement_ranges = temporal_ranges
+
 ##
-# Function to test that symptom ranges are correctly returned
-def get_measurement_range(symptom, value):
-    # Check if the symptom exists in the dictionary
-    if symptom not in measurement_ranges:
-        return f"Symptom '{symptom}' is not defined."
+# # Function to test that symptom ranges are correctly returned
+# def get_measurement_range(symptom, value):
+#     # Check if the symptom exists in the dictionary
+#     if symptom not in measurement_ranges:
+#         return f"Symptom '{symptom}' is not defined."
     
-    for range_name, (min_val, max_val, min_inclusive, max_inclusive) in measurement_ranges[symptom].items():
-        if (min_inclusive and value >= min_val or not min_inclusive and value > min_val) and \
-           (max_inclusive and (max_val is None or value <= max_val) or not max_inclusive and (max_val is None or value < max_val)):
-            return range_name 
-    return 'Value is outside of defined ranges.'
+#     for range_name, (min_val, max_val, min_inclusive, max_inclusive) in measurement_ranges[symptom].items():
+#         if (min_inclusive and value >= min_val or not min_inclusive and value > min_val) and \
+#            (max_inclusive and (max_val is None or value <= max_val) or not max_inclusive and (max_val is None or value < max_val)):
+#             return range_name 
+#     return 'Value is outside of defined ranges.'
 
 # # Prompt the user for an input to test the ranges
 # try:
-#     symptom_input = input("Enter the symptom you want to test (e.g., 'ppO2'): ").strip()
+#     symptom_input = input("Enter the symptom you want to test (e.g., 'ppO2 (L1) (t-1)'): ").strip()
 #     value_input = float(input(f"Enter the {symptom_input} value: "))
 #     result = get_measurement_range(symptom_input, value_input)
 #     print(f"The {symptom_input} value {value_input} falls into the range: {result}")
