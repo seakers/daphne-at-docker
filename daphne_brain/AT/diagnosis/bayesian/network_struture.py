@@ -1,6 +1,6 @@
 # network_struture.py
 # Author: Joshua Elston
-# Last Updated: 05/06/2025
+# Last Updated: 06/14/2025
 
 # Define Bayesian network structure --> called in ECLSS_Bayesian_Network.py
 
@@ -14,45 +14,65 @@
 # the for loop at the bottom of the script
 network = [
     # Biological Filter Saturation
-    ("Biological Filter Saturation", "high ppCO2 (L1)"), ("Biological Filter Saturation", "high ppCO2 (L1) (t-1)"), ("Biological Filter Saturation", "high ppCO2 (L2)"), ("Biological Filter Saturation", "high ppCO2 (L2) (t-1)"),
-    ("Biological Filter Saturation", "high ppO2 (L1)"), ("Biological Filter Saturation", "high ppO2 (L1) (t-1)"), ("Biological Filter Saturation", "high ppO2 (L2)"), ("Biological Filter Saturation", "high ppO2 (L2) (t-1)"),
-    ("Biological Filter Saturation", "low ppCO2 (L1)"), ("Biological Filter Saturation", "low ppCO2 (L1) (t-1)"), ("Biological Filter Saturation", "low ppCO2 (L2)"), ("Biological Filter Saturation", "low ppCO2 (L2) (t-1)"),
-    ("Biological Filter Saturation", "low ppO2 (L1)"), ("Biological Filter Saturation", "low ppO2 (L1) (t-1)"), ("Biological Filter Saturation", "low ppO2 (L2)"), ("Biological Filter Saturation", "low ppO2 (L2) (t-1)"),
+    ("Biological Filter Saturation", "high ppCO2_IHab (IHab)"), ("Biological Filter Saturation", "high ppCO2_IHab (IHab) (t-1)"), 
+    ("Biological Filter Saturation", "high ppCO2_HALO (HALO)"), ("Biological Filter Saturation", "high ppCO2_HALO (HALO) (t-1)"),
+    ("Biological Filter Saturation", "high ppO2_IHab (IHab)"), ("Biological Filter Saturation", "high ppO2_IHab (IHab) (t-1)"), 
+    ("Biological Filter Saturation", "high ppO2_HALO (HALO)"), ("Biological Filter Saturation", "high ppO2_HALO (HALO) (t-1)"),
+    ("Biological Filter Saturation", "low ppCO2_IHab (IHab)"), ("Biological Filter Saturation", "low ppCO2_IHab (IHab) (t-1)"), 
+    ("Biological Filter Saturation", "low ppCO2_HALO (HALO)"), ("Biological Filter Saturation", "low ppCO2_HALO (HALO) (t-1)"),
+    ("Biological Filter Saturation", "low ppO2_IHab (IHab)"), ("Biological Filter Saturation", "low ppO2_IHab (IHab) (t-1)"), 
+    ("Biological Filter Saturation", "low ppO2_HALO (HALO)"), ("Biological Filter Saturation", "low ppO2_HALO (HALO) (t-1)"),
     ("Biological Filter Saturation", "[HIDDEN] BFS Component"),
 
     # CDRA Failure (with previous time-step symptoms added)
-    ("CDRA Failure", "high Humidity (L1)"), ("CDRA Failure", "high Humidity (L1) (t-1)"), ("CDRA Failure", "high Humidity (L2)"), ("CDRA Failure", "high Humidity (L2) (t-1)"),
-    ("CDRA Failure", "high ppCO2 (L1)"), ("CDRA Failure", "high ppCO2 (L1) (t-1)"), ("CDRA Failure", "high ppCO2 (L2)"), ("CDRA Failure", "high ppCO2 (L2) (t-1)"),
-    ("CDRA Failure", "high ppO2 (L1)"), ("CDRA Failure", "high ppO2 (L1) (t-1)"), ("CDRA Failure", "high ppO2 (L2)"), ("CDRA Failure", "high ppO2 (L2) (t-1)"),
-    ("CDRA Failure", "low Humidity (L1)"), ("CDRA Failure", "low Humidity (L1) (t-1)"), ("CDRA Failure", "low Humidity (L2)"), ("CDRA Failure", "low Humidity (L2) (t-1)"),
-    ("CDRA Failure", "low ppCO2 (L1)"), ("CDRA Failure", "low ppCO2 (L1) (t-1)"), ("CDRA Failure", "low ppCO2 (L2)"), ("CDRA Failure", "low ppCO2 (L2) (t-1)"),
-    ("CDRA Failure", "low ppO2 (L1)"), ("CDRA Failure", "low ppO2 (L1) (t-1)"), ("CDRA Failure", "low ppO2 (L2)"), ("CDRA Failure", "low ppO2 (L2) (t-1)"),
+    ("CDRA Failure", "high Humidity_IHab (IHab)"), ("CDRA Failure", "high Humidity_IHab (IHab) (t-1)"), 
+    ("CDRA Failure", "high Humidity_HALO (HALO)"), ("CDRA Failure", "high Humidity_HALO (HALO) (t-1)"),
+    ("CDRA Failure", "high ppCO2_IHab (IHab)"), ("CDRA Failure", "high ppCO2_IHab (IHab) (t-1)"), 
+    ("CDRA Failure", "high ppCO2_HALO (HALO)"), ("CDRA Failure", "high ppCO2_HALO (HALO) (t-1)"),
+    ("CDRA Failure", "high ppO2_IHab (IHab)"), ("CDRA Failure", "high ppO2_IHab (IHab) (t-1)"), 
+    ("CDRA Failure", "high ppO2_HALO (HALO)"), ("CDRA Failure", "high ppO2_HALO (HALO) (t-1)"),
+    ("CDRA Failure", "low Humidity_IHab (IHab)"), ("CDRA Failure", "low Humidity_IHab (IHab) (t-1)"), 
+    ("CDRA Failure", "low Humidity_HALO (HALO)"), ("CDRA Failure", "low Humidity_HALO (HALO) (t-1)"),
+    ("CDRA Failure", "low ppCO2_IHab (IHab)"), ("CDRA Failure", "low ppCO2_IHab (IHab) (t-1)"), 
+    ("CDRA Failure", "low ppCO2_HALO (HALO)"), ("CDRA Failure", "low ppCO2_HALO (HALO) (t-1)"),
+    ("CDRA Failure", "low ppO2_IHab (IHab)"), ("CDRA Failure", "low ppO2_IHab (IHab) (t-1)"), 
+    ("CDRA Failure", "low ppO2_HALO (HALO)"), ("CDRA Failure", "low ppO2_HALO (HALO) (t-1)"),
     ("CDRA Failure", "[HIDDEN] CDRA Failure Component"),
 
     # CDRA LiOH Canister Saturation
-    ("CDRA LiOH Canister Saturation", "high ppCO2 (L1)"), ("CDRA LiOH Canister Saturation", "high ppCO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "high ppCO2 (L2)"), ("CDRA LiOH Canister Saturation", "high ppCO2 (L2) (t-1)"),
-    ("CDRA LiOH Canister Saturation", "high ppO2 (L1)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L2)"), ("CDRA LiOH Canister Saturation", "high ppO2 (L2) (t-1)"),
+    ("CDRA LiOH Canister Saturation", "high ppCO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation", "high ppCO2_IHab (IHab) (t-1)"), 
+    ("CDRA LiOH Canister Saturation", "high ppCO2_HALO (HALO)"), ("CDRA LiOH Canister Saturation", "high ppCO2_HALO (HALO) (t-1)"),
+    ("CDRA LiOH Canister Saturation", "high ppO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation", "high ppO2_IHab (IHab) (t-1)"), 
+    ("CDRA LiOH Canister Saturation", "high ppO2_HALO (HALO)"), ("CDRA LiOH Canister Saturation", "high ppO2_HALO (HALO) (t-1)"),
     ("CDRA LiOH Canister Saturation", "high LiOH CO2 Saturation"),
-    ("CDRA LiOH Canister Saturation", "low ppCO2 (L1)"), ("CDRA LiOH Canister Saturation", "low ppCO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "low ppCO2 (L2)"), ("CDRA LiOH Canister Saturation", "low ppCO2 (L2) (t-1)"),
-    ("CDRA LiOH Canister Saturation", "low ppO2 (L1)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L1) (t-1)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L2)"), ("CDRA LiOH Canister Saturation", "low ppO2 (L2) (t-1)"),
+    ("CDRA LiOH Canister Saturation", "low ppCO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation", "low ppCO2_IHab (IHab) (t-1)"), 
+    ("CDRA LiOH Canister Saturation", "low ppCO2_HALO (HALO)"), ("CDRA LiOH Canister Saturation", "low ppCO2_HALO (HALO) (t-1)"),
+    ("CDRA LiOH Canister Saturation", "low ppO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation", "low ppO2_IHab (IHab) (t-1)"), 
+    ("CDRA LiOH Canister Saturation", "low ppO2_HALO (HALO)"), ("CDRA LiOH Canister Saturation", "low ppO2_HALO (HALO) (t-1)"),
     ("CDRA LiOH Canister Saturation", "low LiOH CO2 Saturation"),
     ("CDRA LiOH Canister Saturation", "[HIDDEN] CDRA LiOH Canister Saturation Component"),
 
     # Electrolysis System Failure
     ("Electrolysis System Failure", "high H2O (Crew)"),
-    ("Electrolysis System Failure", "high ppO2 (L1)"), ("Electrolysis System Failure", "high ppO2 (L1) (t-1)"), ("Electrolysis System Failure", "high ppO2 (L2)"), ("Electrolysis System Failure", "high ppO2 (L2) (t-1)"),
+    ("Electrolysis System Failure", "high ppO2_IHab (IHab)"), ("Electrolysis System Failure", "high ppO2_IHab (IHab) (t-1)"), 
+    ("Electrolysis System Failure", "high ppO2_HALO (HALO)"), ("Electrolysis System Failure", "high ppO2_HALO (HALO) (t-1)"),
     ("Electrolysis System Failure", "low H2O (Crew)"),
-    ("Electrolysis System Failure", "low ppO2 (L1)"), ("Electrolysis System Failure", "low ppO2 (L1) (t-1)"), ("Electrolysis System Failure", "low ppO2 (L2)"), ("Electrolysis System Failure", "low ppO2 (L2) (t-1)"),
+    ("Electrolysis System Failure", "low ppO2_IHab (IHab)"), ("Electrolysis System Failure", "low ppO2_IHab (IHab) (t-1)"), 
+    ("Electrolysis System Failure", "low ppO2_HALO (HALO)"), ("Electrolysis System Failure", "low ppO2_HALO (HALO) (t-1)"),
     ("Electrolysis System Failure", "[HIDDEN] Electrolysis System Failure Component"),
 
     # Emergency O2 System Maintenance
-    ("Emergency O2 System Maintenance", "high ppO2 (L1)"), ("Emergency O2 System Maintenance", "high ppO2 (L1) (t-1)"), ("Emergency O2 System Maintenance", "high ppO2 (L2)"), ("Emergency O2 System Maintenance", "high ppO2 (L2) (t-1)"),
-    ("Emergency O2 System Maintenance", "low ppO2 (L1)"), ("Emergency O2 System Maintenance", "low ppO2 (L1) (t-1)"), ("Emergency O2 System Maintenance", "low ppO2 (L2)"), ("Emergency O2 System Maintenance", "low ppO2 (L2) (t-1)"),
+    ("Emergency O2 System Maintenance", "high ppO2_IHab (IHab)"), ("Emergency O2 System Maintenance", "high ppO2_IHab (IHab) (t-1)"), 
+    ("Emergency O2 System Maintenance", "high ppO2_HALO (HALO)"), ("Emergency O2 System Maintenance", "high ppO2_HALO (HALO) (t-1)"),
+    ("Emergency O2 System Maintenance", "low ppO2_IHab (IHab)"), ("Emergency O2 System Maintenance", "low ppO2_IHab (IHab) (t-1)"), 
+    ("Emergency O2 System Maintenance", "low ppO2_HALO (HALO)"), ("Emergency O2 System Maintenance", "low ppO2_HALO (HALO) (t-1)"),
     ("Emergency O2 System Maintenance", "[HIDDEN] Emergency O2 System Maintenance Component"),
 
     # Excess CO2 in Cabin
-    ("Excess CO2 in Cabin", "high ppCO2 (L1)"), ("Excess CO2 in Cabin", "high ppCO2 (L1) (t-1)"), ("Excess CO2 in Cabin", "high ppCO2 (L2)"), ("Excess CO2 in Cabin", "high ppCO2 (L2) (t-1)"),
-    ("Excess CO2 in Cabin", "low ppCO2 (L1)"), ("Excess CO2 in Cabin", "low ppCO2 (L1) (t-1)"), ("Excess CO2 in Cabin", "low ppCO2 (L2)"), ("Excess CO2 in Cabin", "low ppCO2 (L2) (t-1)"),
+    ("Excess CO2 in Cabin", "high ppCO2_IHab (IHab)"), ("Excess CO2 in Cabin", "high ppCO2_IHab (IHab) (t-1)"), 
+    ("Excess CO2 in Cabin", "high ppCO2_HALO (HALO)"), ("Excess CO2 in Cabin", "high ppCO2_HALO (HALO) (t-1)"),
+    ("Excess CO2 in Cabin", "low ppCO2_IHab (IHab)"), ("Excess CO2 in Cabin", "low ppCO2_IHab (IHab) (t-1)"), 
+    ("Excess CO2 in Cabin", "low ppCO2_HALO (HALO)"), ("Excess CO2 in Cabin", "low ppCO2_HALO (HALO) (t-1)"),
     ("Excess CO2 in Cabin", "[HIDDEN] Excess CO2 in Cabin Component"),
 
     # Excess Gas Leak
@@ -62,9 +82,11 @@ network = [
 
     # Excess Water Vapor Pressure in Cabin
     ("Excess Water Vapor Pressure in Cabin", "high Cabin Temperature (L1)"), ("Excess Water Vapor Pressure in Cabin", "high Cabin Temperature (L2)"),
-    ("Excess Water Vapor Pressure in Cabin", "high Humidity (L1)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L1) (t-1)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L2)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity (L2) (t-1)"),
+    ("Excess Water Vapor Pressure in Cabin", "high Humidity_IHab (IHab)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity_IHab (IHab) (t-1)"), 
+    ("Excess Water Vapor Pressure in Cabin", "high Humidity_HALO (HALO)"), ("Excess Water Vapor Pressure in Cabin", "high Humidity_HALO (HALO) (t-1)"),
     ("Excess Water Vapor Pressure in Cabin", "low Cabin Temperature (L1)"), ("Excess Water Vapor Pressure in Cabin", "low Cabin Temperature (L2)"),
-    ("Excess Water Vapor Pressure in Cabin", "low Humidity (L1)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L1) (t-1)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L2)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity (L2) (t-1)"),
+    ("Excess Water Vapor Pressure in Cabin", "low Humidity_IHab (IHab)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity_IHab (IHab) (t-1)"), 
+    ("Excess Water Vapor Pressure in Cabin", "low Humidity_HALO (HALO)"), ("Excess Water Vapor Pressure in Cabin", "low Humidity_HALO (HALO) (t-1)"),
     ("Excess Water Vapor Pressure in Cabin", "[HIDDEN] Excess Water Vapor Pressure in Cabin Component"),
 
     # Fuel Cell #1 and PDU Failure
@@ -109,19 +131,27 @@ network = [
 
     # Loss of Pressure
     ("Loss of Pressure", "high ppN2 (L1)"), ("Loss of Pressure", "high ppN2 (L2)"),
-    ("Loss of Pressure", "high ppO2 (L1)"), ("Loss of Pressure", "high ppO2 (L1) (t-1)"), ("Loss of Pressure", "high ppO2 (L2)"), ("Loss of Pressure", "high ppO2 (L2) (t-1)"),
-    ("Loss of Pressure", "high Pressure (L1)"), ("Loss of Pressure", "high Pressure (L2)"), ("Loss of Pressure", "high Total Cabin Pressure (L1)"), ("Loss of Pressure", "high Total Cabin Pressure (L2)"),
+    ("Loss of Pressure", "high ppO2_IHab (IHab)"), ("Loss of Pressure", "high ppO2_IHab (IHab) (t-1)"), 
+    ("Loss of Pressure", "high ppO2_HALO (HALO)"), ("Loss of Pressure", "high ppO2_HALO (HALO) (t-1)"),
+    ("Loss of Pressure", "high Pressure (L1)"), ("Loss of Pressure", "high Pressure (L2)"),
+    ("Loss of Pressure", "high Total_Cabin_Pressure_IHab (IHab)"), ("Loss of Pressure", "high Total_Cabin_Pressure_IHab (IHab) (t-1)"),
+    ("Loss of Pressure", "high Total_Cabin_Pressure_HALO (HALO)"), ("Loss of Pressure", "high Total_Cabin_Pressure_HALO (HALO) (t-1)"),
     ("Loss of Pressure", "low ppN2 (L1)"), ("Loss of Pressure", "low ppN2 (L2)"),
-    ("Loss of Pressure", "low ppO2 (L1)"), ("Loss of Pressure", "low ppO2 (L1) (t-1)"), ("Loss of Pressure", "low ppO2 (L2)"), ("Loss of Pressure", "low ppO2 (L2) (t-1)"),
-    ("Loss of Pressure", "low Pressure (L1)"), ("Loss of Pressure", "low Pressure (L2)"), ("Loss of Pressure", "low Total Cabin Pressure (L1)"), ("Loss of Pressure", "low Total Cabin Pressure (L2)"),
+    ("Loss of Pressure", "low ppO2_IHab (IHab)"), ("Loss of Pressure", "low ppO2_IHab (IHab) (t-1)"), 
+    ("Loss of Pressure", "low ppO2_HALO (HALO)"), ("Loss of Pressure", "low ppO2_HALO (HALO) (t-1)"),
+    ("Loss of Pressure", "low Pressure (L1)"), ("Loss of Pressure", "low Pressure (L2)"), 
+    ("Loss of Pressure", "low Total_Cabin_Pressure_IHab (IHab)"), ("Loss of Pressure", "low Total_Cabin_Pressure_IHab (IHab) (t-1)"),
+    ("Loss of Pressure", "low Total_Cabin_Pressure_HALO (HALO)"), ("Loss of Pressure", "low Total_Cabin_Pressure_HALO (HALO) (t-1)"),
     ("Loss of Pressure", "[HIDDEN] Loss of Pressure Component"),
 
     # Main Cabin Fan Failure
     ("Main Cabin Fan Failure", "high Cabin Temperature (L1)"), ("Main Cabin Fan Failure", "high Cabin Temperature (L2)"),
-    ("Main Cabin Fan Failure", "high Humidity (L1)"), ("Main Cabin Fan Failure", "high Humidity (L1) (t-1)"), ("Main Cabin Fan Failure", "high Humidity (L2)"), ("Main Cabin Fan Failure", "high Humidity (L2) (t-1)"),
+    ("Main Cabin Fan Failure", "high Humidity_IHab (IHab)"), ("Main Cabin Fan Failure", "high Humidity_IHab (IHab) (t-1)"), 
+    ("Main Cabin Fan Failure", "high Humidity_HALO (HALO)"), ("Main Cabin Fan Failure", "high Humidity_HALO (HALO) (t-1)"),
     ("Main Cabin Fan Failure", "high Main Cabin Fan #2"),
     ("Main Cabin Fan Failure", "low Cabin Temperature (L1)"), ("Main Cabin Fan Failure", "low Cabin Temperature (L2)"),
-    ("Main Cabin Fan Failure", "low Humidity (L1)"), ("Main Cabin Fan Failure", "low Humidity (L1) (t-1)"), ("Main Cabin Fan Failure", "low Humidity (L2)"), ("Main Cabin Fan Failure", "low Humidity (L2) (t-1)"),
+    ("Main Cabin Fan Failure", "low Humidity_IHab (IHab)"), ("Main Cabin Fan Failure", "low Humidity_IHab (IHab) (t-1)"), 
+    ("Main Cabin Fan Failure", "low Humidity_HALO (HALO)"), ("Main Cabin Fan Failure", "low Humidity_HALO (HALO) (t-1)"),
     ("Main Cabin Fan Failure", "low Main Cabin Fan #2"),
     ("Main Cabin Fan Failure", "[HIDDEN] Main Cabin Fan Failure Component"),
 
@@ -142,9 +172,11 @@ network = [
 
     # N2 Tank Burst
     ("N2 Tank Burst", "high ppN2 (L1)"), ("N2 Tank Burst", "high ppN2 (L2)"), ("N2 Tank Burst", "high Pressure (L1)"), ("N2 Tank Burst", "high Pressure (L2)"),
-    ("N2 Tank Burst", "high Total Cabin Pressure (L1)"), ("N2 Tank Burst", "high Total Cabin Pressure (L2)"),
+    ("N2 Tank Burst", "high Total_Cabin_Pressure_IHab (IHab)"), ("N2 Tank Burst", "high Total_Cabin_Pressure_IHab (IHab) (t-1)"),
+    ("N2 Tank Burst", "high Total_Cabin_Pressure_HALO (HALO)"), ("N2 Tank Burst", "high Total_Cabin_Pressure_HALO (HALO) (t-1)"),
     ("N2 Tank Burst", "low ppN2 (L1)"), ("N2 Tank Burst", "low ppN2 (L2)"), ("N2 Tank Burst", "low Pressure (L1)"), ("N2 Tank Burst", "low Pressure (L2)"),
-    ("N2 Tank Burst", "low Total Cabin Pressure (L1)"), ("N2 Tank Burst", "low Total Cabin Pressure (L2)"),
+    ("N2 Tank Burst", "low Total_Cabin_Pressure_IHab (IHab)"), ("N2 Tank Burst", "low Total_Cabin_Pressure_IHab (IHab) (t-1)"),
+    ("N2 Tank Burst", "low Total_Cabin_Pressure_HALO (HALO)"), ("N2 Tank Burst", "low Total_Cabin_Pressure_HALO (HALO) (t-1)"),
     ("N2 Tank Burst", "[HIDDEN] N2 Tank Burst Component"),
 
     # PDU 4 Failure
@@ -153,22 +185,26 @@ network = [
     # (i.e., PDU 4 Bank 1 for a PDU 4 Failure and PDU 5 Bank 1 for a PDU 5 Failure)
     ("PDU 4 Failure", "high 2-butanone"), ("PDU 4 Failure", "high Acetaldehyde"), ("PDU 4 Failure", "high Aux Cabin Fan #2"),
     ("PDU 4 Failure", "high Cabin Temperature (L1)"), ("PDU 4 Failure", "high Cabin Temperature (L2)"),
-    ("PDU 4 Failure", "high Humidity (L1)"), ("PDU 4 Failure", "high Humidity (L1) (t-1)"), ("PDU 4 Failure", "high Humidity (L2)"), ("PDU 4 Failure", "high Humidity (L2) (t-1)"),
+    ("PDU 4 Failure", "high Humidity_IHab (IHab)"), ("PDU 4 Failure", "high Humidity_IHab (IHab) (t-1)"), 
+    ("PDU 4 Failure", "high Humidity_HALO (HALO)"), ("PDU 4 Failure", "high Humidity_HALO (HALO) (t-1)"),
     ("PDU 4 Failure", "high Main Cabin Fan #2"), ("PDU 4 Failure", "high PDU 4 Bank 1"),
     ("PDU 4 Failure", "low 2-butanone"), ("PDU 4 Failure", "low Acetaldehyde"), ("PDU 4 Failure", "low Aux Cabin Fan #2"),
     ("PDU 4 Failure", "low Cabin Temperature (L1)"), ("PDU 4 Failure", "low Cabin Temperature (L2)"),
-    ("PDU 4 Failure", "low Humidity (L1)"), ("PDU 4 Failure", "low Humidity (L1) (t-1)"), ("PDU 4 Failure", "low Humidity (L2)"), ("PDU 4 Failure", "low Humidity (L2) (t-1)"),
+    ("PDU 4 Failure", "low Humidity_IHab (IHab)"), ("PDU 4 Failure", "low Humidity_IHab (IHab) (t-1)"), 
+    ("PDU 4 Failure", "low Humidity_HALO (HALO)"), ("PDU 4 Failure", "low Humidity_HALO (HALO) (t-1)"),
     ("PDU 4 Failure", "low Main Cabin Fan #2"), ("PDU 4 Failure", "low PDU 4 Bank 1"),
     ("PDU 4 Failure", "[HIDDEN] PDU 4 Failure Component"),
 
     # PDU 5 Failure
     ("PDU 5 Failure", "high 2-butanone"), ("PDU 5 Failure", "high Acetaldehyde"), ("PDU 5 Failure", "high Aux Cabin Fan #2"),
     ("PDU 5 Failure", "high Cabin Temperature (L1)"), ("PDU 5 Failure", "high Cabin Temperature (L2)"),
-    ("PDU 5 Failure", "high Humidity (L1)"), ("PDU 5 Failure", "high Humidity (L1) (t-1)"), ("PDU 5 Failure", "high Humidity (L2)"), ("PDU 5 Failure", "high Humidity (L2) (t-1)"),
+    ("PDU 5 Failure", "high Humidity_IHab (IHab)"), ("PDU 5 Failure", "high Humidity_IHab (IHab) (t-1)"), 
+    ("PDU 5 Failure", "high Humidity_HALO (HALO)"), ("PDU 5 Failure", "high Humidity_HALO (HALO) (t-1)"),
     ("PDU 5 Failure", "high Main Cabin Fan #2"), ("PDU 5 Failure", "high PDU 5 Bank 1"),
     ("PDU 5 Failure", "low 2-butanone"), ("PDU 5 Failure", "low Acetaldehyde"), ("PDU 5 Failure", "low Aux Cabin Fan #2"),
     ("PDU 5 Failure", "low Cabin Temperature (L1)"), ("PDU 5 Failure", "low Cabin Temperature (L2)"),
-    ("PDU 5 Failure", "low Humidity (L1)"), ("PDU 5 Failure", "low Humidity (L1) (t-1)"), ("PDU 5 Failure", "low Humidity (L2)"), ("PDU 5 Failure", "low Humidity (L2) (t-1)"),
+    ("PDU 5 Failure", "low Humidity_IHab (IHab)"), ("PDU 5 Failure", "low Humidity_IHab (IHab) (t-1)"), 
+    ("PDU 5 Failure", "low Humidity_HALO (HALO)"), ("PDU 5 Failure", "low Humidity_HALO (HALO) (t-1)"),
     ("PDU 5 Failure", "low Main Cabin Fan #2"), ("PDU 5 Failure", "low PDU 5 Bank 1"),
     ("PDU 5 Failure", "[HIDDEN] PDU 5 Failure Component"),
 
@@ -181,11 +217,15 @@ network = [
 
     # RWGSR Malfunction
     ("RWGSR Malfunction", "high H2O (Crew)"),
-    ("RWGSR Malfunction", "high ppCO2 (L1)"), ("RWGSR Malfunction", "high ppCO2 (L1) (t-1)"), ("RWGSR Malfunction", "high ppCO2 (L2)"), ("RWGSR Malfunction", "high ppCO2 (L2) (t-1)"),
-    ("RWGSR Malfunction", "high ppO2 (L1)"), ("RWGSR Malfunction", "high ppO2 (L1) (t-1)"), ("RWGSR Malfunction", "high ppO2 (L2)"), ("RWGSR Malfunction", "high ppO2 (L2) (t-1)"),
+    ("RWGSR Malfunction", "high ppCO2_IHab (IHab)"), ("RWGSR Malfunction", "high ppCO2_IHab (IHab) (t-1)"), 
+    ("RWGSR Malfunction", "high ppCO2_HALO (HALO)"), ("RWGSR Malfunction", "high ppCO2_HALO (HALO) (t-1)"),
+    ("RWGSR Malfunction", "high ppO2_IHab (IHab)"), ("RWGSR Malfunction", "high ppO2_IHab (IHab) (t-1)"), 
+    ("RWGSR Malfunction", "high ppO2_HALO (HALO)"), ("RWGSR Malfunction", "high ppO2_HALO (HALO) (t-1)"),
     ("RWGSR Malfunction", "low H2O (Crew)"),
-    ("RWGSR Malfunction", "low ppCO2 (L1)"), ("RWGSR Malfunction", "low ppCO2 (L1) (t-1)"), ("RWGSR Malfunction", "low ppCO2 (L2)"), ("RWGSR Malfunction", "low ppCO2 (L2) (t-1)"),
-    ("RWGSR Malfunction", "low ppO2 (L1)"), ("RWGSR Malfunction", "low ppO2 (L1) (t-1)"), ("RWGSR Malfunction", "low ppO2 (L2)"), ("RWGSR Malfunction", "low ppO2 (L2) (t-1)"),
+    ("RWGSR Malfunction", "low ppCO2_IHab (IHab)"), ("RWGSR Malfunction", "low ppCO2_IHab (IHab) (t-1)"), 
+    ("RWGSR Malfunction", "low ppCO2_HALO (HALO)"), ("RWGSR Malfunction", "low ppCO2_HALO (HALO) (t-1)"),
+    ("RWGSR Malfunction", "low ppO2_IHab (IHab)"), ("RWGSR Malfunction", "low ppO2_IHab (IHab) (t-1)"), 
+    ("RWGSR Malfunction", "low ppO2_HALO (HALO)"), ("RWGSR Malfunction", "low ppO2_HALO (HALO) (t-1)"),
     ("RWGSR Malfunction", "[HIDDEN] RWGSR Malfunction Component"),
 
     # SPE System Maintenance

@@ -1,6 +1,6 @@
 # ranges.py
 # Author: Joshua Elston
-# Last Edited: 03/31/2025
+# Last Edited: 06/14/2025
 
 # Stores the measurement_ranges dictionary --> called in probabilities.py
 
@@ -145,14 +145,14 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
-    "Humidity (L1)": {
+    "Humidity_IHab (IHab)": {
         'Exceeds_UpperWarningLimit': (70, None, True, False),
         'Exceeds_UpperCautionLimit': (61, 70, True, False),
         'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
         'Exceeds_LowerCautionLimit': (40, 50, False, True),
         'Exceeds_LowerWarningLimit': (None, 40, False, True)
     },
-    "Humidity (L2)": {
+    "Humidity_HALO (HALO)": {
         'Exceeds_UpperWarningLimit': (70, None, True, False),
         'Exceeds_UpperCautionLimit': (61, 70, True, False),
         'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
@@ -161,14 +161,14 @@ measurement_ranges = {
     },
 
     # Added Previous Time-Step Variables
-    "Humidity (L1) (t-1)": {
+    "Humidity_IHab (IHab) (t-1)": {
         'Exceeds_UpperWarningLimit': (70, None, True, False),
         'Exceeds_UpperCautionLimit': (61, 70, True, False),
         'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
         'Exceeds_LowerCautionLimit': (40, 50, False, True),
         'Exceeds_LowerWarningLimit': (None, 40, False, True)
     },
-    "Humidity (L2) (t-1)": {
+    "Humidity_HALO (HALO) (t-1)": {
         'Exceeds_UpperWarningLimit': (70, None, True, False),
         'Exceeds_UpperCautionLimit': (61, 70, True, False),
         'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
@@ -234,14 +234,14 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (2, 5, False, True),
         'Exceeds_LowerWarningLimit': (None, 2, False, True)
     },
-    "ppCO2 (L1)": {
+    "ppCO2_IHab (IHab)": {
         'Exceeds_UpperWarningLimit': (6, None, True, False),
         'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
         'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
-    "ppCO2 (L2)": {
+    "ppCO2_HALO (HALO)": {
         'Exceeds_UpperWarningLimit': (6, None, True, False),
         'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
         'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
@@ -250,14 +250,14 @@ measurement_ranges = {
     },
 
     # Added Previous Time-Step Variables
-    "ppCO2 (L1) (t-1)": {
+    "ppCO2_IHab (IHab) (t-1)": {
         'Exceeds_UpperWarningLimit': (6, None, True, False),
         'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
         'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
-    "ppCO2 (L2) (t-1)": {
+    "ppCO2_HALO (HALO) (t-1)": {
         'Exceeds_UpperWarningLimit': (6, None, True, False),
         'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
         'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHG (L1 = L2)
@@ -293,14 +293,14 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (220.1, 480, False, True),
         'Exceeds_LowerWarningLimit': (None, 220.1, False, True)
     },
-    "ppO2 (L1)": {
+    "ppO2_IHab (IHab)": {
         'Exceeds_UpperWarningLimit': (185, None, True, False), # ≥ 185
         'Exceeds_UpperCautionLimit': (175, 185, True, False), # 175 ≤ ppO2 < 185
         'Nominal': (155, 175, False, False), # 155 < ppO2 < 175 --> Nominal: 163.79 mmHG
         'Exceeds_LowerCautionLimit': (145, 155, False, True), # 145 < ppO2 ≤ 155
         'Exceeds_LowerWarningLimit': (None, 145, False, True) # ≤ 145
     },
-    "ppO2 (L2)": {
+    "ppO2_HALO (HALO)": {
         'Exceeds_UpperWarningLimit': (185, None, True, False),
         'Exceeds_UpperCautionLimit': (175, 185, True, False),
         'Nominal': (155, 175, False, False), # Nominal: 163.81 mmHG
@@ -309,14 +309,14 @@ measurement_ranges = {
     },
 
     # Added Previous Time-Step Variables
-    "ppO2 (L1) (t-1)": {
+    "ppO2_IHab (IHab) (t-1)": {
         'Exceeds_UpperWarningLimit': (185, None, True, False), # ≥ 185
         'Exceeds_UpperCautionLimit': (175, 185, True, False), # 175 ≤ ppO2 < 185
         'Nominal': (155, 175, False, False), # 155 < ppO2 < 175 --> Nominal: 163.79 mmHG
         'Exceeds_LowerCautionLimit': (145, 155, False, True), # 145 < ppO2 ≤ 155
         'Exceeds_LowerWarningLimit': (None, 145, False, True) # ≤ 145
     },
-    "ppO2 (L2) (t-1)": {
+    "ppO2_HALO (HALO) (t-1)": {
         'Exceeds_UpperWarningLimit': (185, None, True, False),
         'Exceeds_UpperCautionLimit': (175, 185, True, False),
         'Nominal': (155, 175, False, False), # Nominal: 163.81 mmHG
@@ -345,20 +345,37 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (1292, 1333, False, True),
         'Exceeds_LowerWarningLimit': (None, 1292, False, True)
     },
-    "Total Cabin Pressure (L1)": {
+    "Total_Cabin_Pressure_IHab (IHab)": {
         'Exceeds_UpperWarningLimit': (15.2, None, True, False),
         'Exceeds_UpperCautionLimit': (14.9, 15.2, True, False),
         'Nominal': (14.55, 14.9, False, False), # Nominal: 14.7 psi (L1 = L2)
         'Exceeds_LowerCautionLimit': (12.7, 14.55, False, True),
         'Exceeds_LowerWarningLimit': (None, 12.7, False, True)
     },
-    "Total Cabin Pressure (L2)": {
+    "Total_Cabin_Pressure_HALO (HALO)": {
         'Exceeds_UpperWarningLimit': (15.2, None, True, False),
         'Exceeds_UpperCautionLimit': (14.9, 15.2, True, False),
         'Nominal': (14.55, 14.9, False, False), # Nominal: 14.7 psi (L1 = L2)
         'Exceeds_LowerCautionLimit': (12.7, 14.55, False, True),
         'Exceeds_LowerWarningLimit': (None, 12.7, False, True)
     },
+
+    # Added Previous Time-Step Variables
+    "Total_Cabin_Pressure_IHab (IHab) (t-1)": {
+        'Exceeds_UpperWarningLimit': (15.2, None, True, False),
+        'Exceeds_UpperCautionLimit': (14.9, 15.2, True, False),
+        'Nominal': (14.55, 14.9, False, False), # Nominal: 14.7 psi (L1 = L2)
+        'Exceeds_LowerCautionLimit': (12.7, 14.55, False, True),
+        'Exceeds_LowerWarningLimit': (None, 12.7, False, True)
+    },
+    "Total_Cabin_Pressure_HALO (HALO) (t-1)": {
+        'Exceeds_UpperWarningLimit': (15.2, None, True, False),
+        'Exceeds_UpperCautionLimit': (14.9, 15.2, True, False),
+        'Nominal': (14.55, 14.9, False, False), # Nominal: 14.7 psi (L1 = L2)
+        'Exceeds_LowerCautionLimit': (12.7, 14.55, False, True),
+        'Exceeds_LowerWarningLimit': (None, 12.7, False, True)
+    },
+
     "WRS Delivery Pump": {
         'Exceeds_UpperWarningLimit': (3, None, True, False),
         'Exceeds_UpperCautionLimit': (2.8, 3, True, False),

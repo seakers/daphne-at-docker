@@ -1,6 +1,6 @@
 # probabilities.py
 # Author: Joshua Elston
-# Last Edited: 3/31/2025
+# Last Edited: 06/14/2025
 
 # Stores the probabilities dictionary --> called in the ECLSS_Baysian_Network.py script
 # Updated to include parameters that are measured separately on L1 and L2
@@ -1137,7 +1137,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["HMCTS"]
         },
     },
-    "Humidity (L1)": {
+    "Humidity_IHab (IHab)": {
         "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -1155,7 +1155,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L1)"]
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab)"]
         },
         "Excess Water Vapor Pressure in Cabin": {
             'probabilities': {
@@ -1174,7 +1174,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L1)"]
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab)"]
         },
         "Main Cabin Fan Failure": {
             'probabilities': {
@@ -1193,7 +1193,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L1)"]
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab)"]
         },
         "PDU 4 Failure": {
             'probabilities': {
@@ -1212,7 +1212,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L1)"]
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab)"]
         },
         "PDU 5 Failure": {
             'probabilities': {
@@ -1231,12 +1231,12 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L1)"]
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab)"]
         },
     },
 
     # Previous Time-Step Variable Added
-    "Humidity (L1) (t-1)": {
+    "Humidity_IHab (IHab) (t-1)": {
         "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -1254,7 +1254,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L1) (t-1)"]
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab) (t-1)"]
         },
         "Excess Water Vapor Pressure in Cabin": {
             'probabilities': {
@@ -1273,7 +1273,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L1) (t-1)"]
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab) (t-1)"]
         },
         "Main Cabin Fan Failure": {
             'probabilities': {
@@ -1292,7 +1292,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L1) (t-1)"]
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab) (t-1)"]
         },
         "PDU 4 Failure": {
             'probabilities': {
@@ -1311,7 +1311,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L1) (t-1)"]
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab) (t-1)"]
         },
         "PDU 5 Failure": {
             'probabilities': {
@@ -1330,11 +1330,11 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L1) (t-1)"]
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab) (t-1)"]
         },
     },
 
-    "Humidity (L2)": {
+    "Humidity_HALO (HALO)": {
         "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -1352,7 +1352,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L2)"]
+            'value_ranges': measurement_ranges["Humidity_HALO (HALO)"]
         },
         "Excess Water Vapor Pressure in Cabin": {
             'probabilities': {
@@ -1371,7 +1371,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L2)"]
+            'value_ranges': measurement_ranges["Humidity_HALO (HALO)"]
         },
         "Main Cabin Fan Failure": {
             'probabilities': {
@@ -1390,7 +1390,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L2)"]
+            'value_ranges': measurement_ranges["Humidity_HALO (HALO)"]
         },
         "PDU 4 Failure": {
             'probabilities': {
@@ -1409,7 +1409,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L2)"]
+            'value_ranges': measurement_ranges["Humidity_HALO (HALO)"]
         },
         "PDU 5 Failure": {
             'probabilities': {
@@ -1428,12 +1428,12 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L2)"]
+            'value_ranges': measurement_ranges["Humidity_HALO (HALO)"]
         },
     },
 
     # Previous Time-Step Variable Added
-    "Humidity (L2) (t-1)": {
+    "Humidity_HALO (HALO) (t-1)": {
         "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -1451,7 +1451,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L2) (t-1)"]
+            'value_ranges': measurement_ranges["Humidity_HALO (HALO) (t-1)"]
         },
         "Excess Water Vapor Pressure in Cabin": {
             'probabilities': {
@@ -1470,7 +1470,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L2) (t-1)"]
+            'value_ranges': measurement_ranges["Humidity_HALO (HALO) (t-1)"]
         },
         "Main Cabin Fan Failure": {
             'probabilities': {
@@ -1489,7 +1489,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L2) (t-1)"]
+            'value_ranges': measurement_ranges["Humidity_HALO (HALO) (t-1)"]
         },
         "PDU 4 Failure": {
             'probabilities': {
@@ -1508,7 +1508,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L2) (t-1)"]
+            'value_ranges': measurement_ranges["Humidity_HALO (HALO) (t-1)"]
         },
         "PDU 5 Failure": {
             'probabilities': {
@@ -1527,7 +1527,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Humidity (L2) (t-1)"]
+            'value_ranges': measurement_ranges["Humidity_HALO (HALO) (t-1)"]
         },
     },
 
@@ -1851,7 +1851,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["PDU 5 Bank 1"]
         },
     },
-    "ppCO2 (L1)": {
+    "ppCO2_IHab (IHab)": {
         "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -1869,7 +1869,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L1)"]
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
         },
         "CDRA Failure": {
             'probabilities': {
@@ -1888,7 +1888,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L1)"]
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
         },
         "CDRA LiOH Canister Saturation": {
             'probabilities': {
@@ -1907,7 +1907,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L1)"]
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
         },
         "Excess CO2 in Cabin": {
             'probabilities': {
@@ -1926,7 +1926,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L1)"]
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
         },
         "RWGSR Malfunction": {
             'probabilities': {
@@ -1945,12 +1945,12 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L1)"]
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
         },
     },
 
     # Previous Time-Step Variable Added
-    "ppCO2 (L1) (t-1)": {
+    "ppCO2_IHab (IHab) (t-1)": {
         "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -1968,7 +1968,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab) (t-1)"]
         },
         "CDRA Failure": {
             'probabilities': {
@@ -1987,7 +1987,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab) (t-1)"]
         },
         "CDRA LiOH Canister Saturation": {
             'probabilities': {
@@ -2006,7 +2006,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab) (t-1)"]
         },
         "Excess CO2 in Cabin": {
             'probabilities': {
@@ -2025,7 +2025,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab) (t-1)"]
         },
         "RWGSR Malfunction": {
             'probabilities': {
@@ -2044,11 +2044,11 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab) (t-1)"]
         },
     },
 
-    "ppCO2 (L2)": {
+    "ppCO2_HALO (HALO)": {
         "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -2066,7 +2066,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L2)"]
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
         },
         "CDRA Failure": {
             'probabilities': {
@@ -2085,7 +2085,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L2)"]
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
         },
         "CDRA LiOH Canister Saturation": {
             'probabilities': {
@@ -2104,7 +2104,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L2)"]
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
         },
         "Excess CO2 in Cabin": {
             'probabilities': {
@@ -2123,7 +2123,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L2)"]
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
         },
         "RWGSR Malfunction": {
             'probabilities': {
@@ -2142,12 +2142,12 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L2)"]
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
         },
     },
 
     # Previous Time-Step Variable Added
-    "ppCO2 (L2) (t-1)": {
+    "ppCO2_HALO (HALO) (t-1)": {
         "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -2165,7 +2165,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO) (t-1)"]
         },
         "CDRA Failure": {
             'probabilities': {
@@ -2184,7 +2184,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO) (t-1)"]
         },
         "CDRA LiOH Canister Saturation": {
             'probabilities': {
@@ -2203,7 +2203,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO) (t-1)"]
         },
         "Excess CO2 in Cabin": {
             'probabilities': {
@@ -2222,7 +2222,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO) (t-1)"]
         },
         "RWGSR Malfunction": {
             'probabilities': {
@@ -2241,7 +2241,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppCO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO) (t-1)"]
         },
     },
 
@@ -2367,7 +2367,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppN2 (L2)"]
         },
     },
-    "ppO2 (L1)": {
+    "ppO2_IHab (IHab)": {
         "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -2385,7 +2385,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
         },
         "CDRA Failure": {
             'probabilities': {
@@ -2404,7 +2404,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
         },
         "CDRA LiOH Canister Saturation": {
             'probabilities': {
@@ -2423,7 +2423,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
         },
         "Electrolysis System Failure": {
             'probabilities': {
@@ -2442,7 +2442,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
         },
         "Emergency O2 System Maintenance": {
             'probabilities': {
@@ -2461,7 +2461,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
         },
         "Loss of Pressure": {
             'probabilities': {
@@ -2480,7 +2480,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
         },
         "RWGSR Malfunction": {
             'probabilities': {
@@ -2499,12 +2499,12 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
         },
     },
 
     # Previous Time-Step Variable Added
-    "ppO2 (L1) (t-1)": {
+    "ppO2_IHab (IHab) (t-1)": {
         "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -2522,7 +2522,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab) (t-1)"]
         },
         "CDRA Failure": {
             'probabilities': {
@@ -2541,7 +2541,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab) (t-1)"]
         },
         "CDRA LiOH Canister Saturation": {
             'probabilities': {
@@ -2560,7 +2560,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab) (t-1)"]
         },
         "Electrolysis System Failure": {
             'probabilities': {
@@ -2579,7 +2579,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab) (t-1)"]
         },
         "Emergency O2 System Maintenance": {
             'probabilities': {
@@ -2598,7 +2598,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab) (t-1)"]
         },
         "Loss of Pressure": {
             'probabilities': {
@@ -2617,7 +2617,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab) (t-1)"]
         },
         "RWGSR Malfunction": {
             'probabilities': {
@@ -2636,11 +2636,11 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L1) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab) (t-1)"]
         },
     },
 
-    "ppO2 (L2)": {
+    "ppO2_HALO (HALO)": {
         "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -2658,7 +2658,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
         },
         "CDRA Failure": {
             'probabilities': {
@@ -2677,7 +2677,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
         },
         "CDRA LiOH Canister Saturation": {
             'probabilities': {
@@ -2696,7 +2696,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
         },
         "Electrolysis System Failure": {
             'probabilities': {
@@ -2715,7 +2715,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
         },
         "Emergency O2 System Maintenance": {
             'probabilities': {
@@ -2734,7 +2734,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
         },
         "Loss of Pressure": {
             'probabilities': {
@@ -2753,7 +2753,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
         },
         "RWGSR Malfunction": {
             'probabilities': {
@@ -2772,12 +2772,12 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
         },
     },
 
     # Previous Time-Step Variable Added
-    "ppO2 (L2) (t-1)": {
+    "ppO2_HALO (HALO) (t-1)": {
         "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -2795,7 +2795,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO) (t-1)"]
         },
         "CDRA Failure": {
             'probabilities': {
@@ -2814,7 +2814,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO) (t-1)"]
         },
         "CDRA LiOH Canister Saturation": {
             'probabilities': {
@@ -2833,7 +2833,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO) (t-1)"]
         },
         "Electrolysis System Failure": {
             'probabilities': {
@@ -2852,7 +2852,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO) (t-1)"]
         },
         "Emergency O2 System Maintenance": {
             'probabilities': {
@@ -2871,7 +2871,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO) (t-1)"]
         },
         "Loss of Pressure": {
             'probabilities': {
@@ -2890,7 +2890,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO) (t-1)"]
         },
         "RWGSR Malfunction": {
             'probabilities': {
@@ -2909,7 +2909,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppO2 (L2) (t-1)"]
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO) (t-1)"]
         },
     },
 
@@ -3033,7 +3033,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["SOXIE Stack Temp"]
         },
     },
-    "Total Cabin Pressure (L1)": {
+    "Total_Cabin_Pressure_IHab (IHab)": {
         "Loss of Pressure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -3051,7 +3051,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Total Cabin Pressure (L1)"]
+            'value_ranges': measurement_ranges["Total_Cabin_Pressure_IHab (IHab)"]
         },
         "N2 Tank Burst": {
             'probabilities': {
@@ -3070,10 +3070,12 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Total Cabin Pressure (L1)"]
+            'value_ranges': measurement_ranges["Total_Cabin_Pressure_IHab (IHab)"]
         },
     },
-    "Total Cabin Pressure (L2)": {
+
+    # Previous Time-Step Variable Added
+    "Total_Cabin_Pressure_IHab (IHab) (t-1)": {
         "Loss of Pressure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -3091,7 +3093,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Total Cabin Pressure (L2)"]
+            'value_ranges': measurement_ranges["Total_Cabin_Pressure_IHab (IHab) (t-1)"]
         },
         "N2 Tank Burst": {
             'probabilities': {
@@ -3110,9 +3112,93 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["Total Cabin Pressure (L2)"]
+            'value_ranges': measurement_ranges["Total_Cabin_Pressure_IHab (IHab) (t-1)"]
         },
     },
+
+    "Total_Cabin_Pressure_HALO (HALO)": {
+        "Loss of Pressure": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.00001,
+                    'Exceeds_UpperCautionLimit': 0.0001,
+                    'Nominal': 0.02989,
+                    'Exceeds_LowerCautionLimit': 0.82,
+                    'Exceeds_LowerWarningLimit': 0.15
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["Total_Cabin_Pressure_HALO (HALO)"]
+        },
+        "N2 Tank Burst": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.19,
+                    'Exceeds_UpperCautionLimit': 0.79,
+                    'Nominal': 0.01989,
+                    'Exceeds_LowerCautionLimit': 0.0001,
+                    'Exceeds_LowerWarningLimit': 0.00001
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["Total_Cabin_Pressure_HALO (HALO)"]
+        },
+    },
+
+    # Added Previous Time-Step Variable
+    "Total_Cabin_Pressure_HALO (HALO) (t-1)": {
+        "Loss of Pressure": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.00001,
+                    'Exceeds_UpperCautionLimit': 0.0001,
+                    'Nominal': 0.02989,
+                    'Exceeds_LowerCautionLimit': 0.82,
+                    'Exceeds_LowerWarningLimit': 0.15
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["Total_Cabin_Pressure_HALO (HALO) (t-1)"]
+        },
+        "N2 Tank Burst": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.19,
+                    'Exceeds_UpperCautionLimit': 0.79,
+                    'Nominal': 0.01989,
+                    'Exceeds_LowerCautionLimit': 0.0001,
+                    'Exceeds_LowerWarningLimit': 0.00001
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["Total_Cabin_Pressure_HALO (HALO) (t-1)"]
+        },
+    },
+
     "WRS Delivery Pump": {
         "WRS Failure": {
             'probabilities': {
