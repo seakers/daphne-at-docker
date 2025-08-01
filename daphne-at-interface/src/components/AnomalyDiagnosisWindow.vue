@@ -999,9 +999,9 @@ export default {
 
     if(this.bestEvidence == null) {
       this.$store.commit('addDialoguePiece', {
-          "voice_message": `No additional evidence can improve my diagnostic confidence. Please proceed woth the anomaly resolution.`,
+          "voice_message": `No additional evidence can improve my diagnostic confidence. Please proceed with the anomaly resolution.`,
           "visual_message_type": ["text"],
-          "visual_message": [`No additional evidence can improve my diagnostic confidence. Please proceed woth the anomaly resolution.`],
+          "visual_message": [`No additional evidence can improve my diagnostic confidence. Please proceed with the anomaly resolution.`],
           "writer": "daphne",
         });
     }
