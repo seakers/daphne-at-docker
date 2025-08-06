@@ -158,6 +158,7 @@ def handle_eclss_update(sEclss_to_hub, hub_to_sEclss, ser_to_sEclss):
                 counter += 1
                 if counter % print_freq == 0:
                     print('The ECLSS sensor data handler is healthy.')
+                    #print(sensor_data)
 
         time.sleep(check_delay)
 

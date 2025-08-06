@@ -356,7 +356,31 @@ class HeraFeed(APIView):
                 "error": f"Server error: {str(e)}"
             }, status=500)
 
+class RequestKGDiagnosis(APIView):
+    def post(self, request):
+        try:
+            # Retrieve the symptoms list from the request
+            symptoms_list = json.loads(request.data['symptomsList'])
 
+            # Query the neo4j graph (do not delete first line until second one is tested)
+            # diagnosis_list = diagnose_symptoms_by_subset_of_anomaly(parsed_symptoms_list)
+            diagnosis_list = diagnose_symptoms_by_intersection_with_anomaly(symptoms_list)
+
+            # Build the diagnosis report and send it to the frontend
+            diagnosis_report = {'symptoms_list': symptoms_list, 'diagnosis_list': diagnosis_list}
+            print("diagnosis report", diagnosis_report)
+
+            return Response(diagnosis_report)
+            
+        except Exception as e:
+            print(f"Error in RequestKGDiagnosis: {e}")
+            # Return a graceful error response
+            return Response({
+                'error': 'Unable to perform knowledge graph diagnosis at this time. Please try again later.',
+                'details': str(e),
+                'symptoms_list': symptoms_list if 'symptoms_list' in locals() else [],
+                'diagnosis_list': []
+            }, status=500)
 
 class RequestDiagnosis(APIView):
     def post(self, request):

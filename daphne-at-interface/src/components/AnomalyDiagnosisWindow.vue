@@ -23,6 +23,10 @@
           <div class="column is-2" style="margin: 0px; padding: 0px">
             <button class="button theme-buttons"
                     style="width: 52%; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E"
+                    id="request_diagnosis" v-on:click.prevent="requestKGDiagnosis">KG-Diagnose
+            </button>
+            <button class="button theme-buttons"
+                    style="width: 52%; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E"
                     id="request_diagnosis" v-on:click.prevent="requestDiagnosis">Diagnose
             </button>
             <button class="button theme-buttons"
@@ -32,7 +36,9 @@
           </div>
         </div>
       </div>
+
       <div class="horizontal-divider" style="margin-top: 10px; margin-bottom: 10px"></div>
+      
       <div class="is-content">
         <div v-if="diagnosisReport.length === 0">
           <img v-if="isLoading"
@@ -42,299 +48,304 @@
                alt="Loading spinner">
           <p v-else>No diagnosis reports requested.</p>
         </div>
-        <!-- <div v-else>
-            <div class="column" style="margin: 0px; padding: 0px">
-              <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Set of symptoms selected for diagnosis:</span>
-              <ul>
-                <li class="hover" v-for="symptom in diagnosisReport['symptoms_list']" v-on:click="recoverSymptomsList()"
-                    style="cursor: pointer">
-                  {{ symptom['detection_text'] }}
-                </li>
-              </ul>
-            </div>
-            <div class="column" style="margin-top: 20px; padding: 0px">
-              <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Could be caused by anomalies:</span><br />
-              <span><input type='checkbox' v-model="allSelected" v-on:click="selectAllAnomalies()"> Select All </span>
-              <ul v-for="anomaly in diagnosisReport['diagnosis_list']">
-                <li>
-                  <input type="checkbox" class='checkall' v-model="checked" :value="anomaly"
-                         style="border-color: #0AFEFF; color: #0AFEFF; background: #002E2E;">
-                  {{ anomaly['name'] }} <span :style="{'color': 0.66<anomaly['score']<1?(anomaly['score']<0.33 ? 'green' : 'yellow'):'red'}">({{anomaly['text_score']}}) </span>
-                </li>
-              </ul>
-            </div>
+
+        <!-- ################### KG Diagnosis report hypothesis list ########################-->
+        <div v-else>
+          <div class="column" style="margin: 0px; padding: 0px">
+            <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Set of symptoms selected for diagnosis:</span>
+            <ul>
+              <li class="hover" v-for="symptom in diagnosisReport['symptoms_list']" v-on:click="recoverSymptomsList()"
+                  style="cursor: pointer">
+                {{ symptom['detection_text'] }}
+              </li>
+            </ul>
+          </div>
+          <div class="column" style="margin-top: 20px; padding: 0px">
+            <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Could be caused by anomalies:</span><br />
+            <span><input type='checkbox' v-model="allSelected" v-on:click="selectAllAnomalies()"> Select All </span>
+            <ul v-for="anomaly in diagnosisReport['diagnosis_list']">
+              <li>
+                <input type="checkbox" class='checkall' v-model="checked" :value="anomaly"
+                        style="border-color: #0AFEFF; color: #0AFEFF; background: #002E2E;">
+                {{ anomaly['name'] }} <span :style="{'color': 0.66<anomaly['score']<1?(anomaly['score']<0.33 ? 'green' : 'yellow'):'red'}">({{anomaly['text_score']}}) </span>
+              </li>
+            </ul>
+          </div>
           <div style="text-align: center; margin-top: 30px">
-            <p id="alert" style="display: none; color: red">Please select an anomaly to investigate.</p>
+            <p v-if="showAlert" style="color: red">Please select an anomaly to investigate.</p>
             <button class="button" type="submit" onclick="errorMessage()"
                     style="width: 30%; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E;"
                     v-on:click.prevent="showExplanations">Show explanations
             </button>
           </div>
         </div>
-       -->
 
-<!-- ################### MAIN Diagnosis report previous ########################-->
+        <!-- ################### Bayesian Diagnosis report previous ########################-->
 
-<!-- <div v-else> -->
-  <!-- Most probable anomaly highlighting -->
-  <!-- <div v-if="diagnosisReport['diagnosis_list'].length > 0" class="most-probable-anomaly" 
-       style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
-    <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly:</h3>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-size: 18px; font-weight: bold;">{{ diagnosisReport['diagnosis_list'][0].anomaly }}</span>
-      <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
-        Probability: {{ (diagnosisReport['diagnosis_list'][0].probability * 100 ).toFixed(4) }}%
-      </span>
-    </div>
-  </div> -->
+        <!-- <div v-else> -->
+          <!-- Most probable anomaly highlighting -->
+          <!-- <div v-if="diagnosisReport['diagnosis_list'].length > 0" class="most-probable-anomaly" 
+              style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
+            <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly:</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 18px; font-weight: bold;">{{ diagnosisReport['diagnosis_list'][0].anomaly }}</span>
+              <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+                Probability: {{ (diagnosisReport['diagnosis_list'][0].probability * 100 ).toFixed(4) }}%
+              </span>
+            </div>
+          </div> -->
 
-  <!-- Top 5 anomalies table -->
-  <!-- <div style="margin-bottom: 20px;">
-    <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies:</span>
-    <div class="table-container" style="margin-top: 10px;">
-      <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
-             style="background: transparent; color: white;">
-        <thead>
-          <tr style="background: #002E2E;">
-            <th style="color: #0AFEFF; width: 60%;">Anomaly</th>
-            <th style="color: #0AFEFF; width: 40%;">Probability</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in diagnosisReport['diagnosis_list']" 
-              style="background: rgba(0,46,46,0.7);">
-            <td style="padding: 8px; vertical-align: middle;">{{ item.anomaly }}</td>
-            <td style="padding: 8px;">
-              <div class="progress" 
-                   style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
-                <div :style="{
-                  width: `${item.probability * 100}%`,
-                  background: getProbabilityColor(item.probability),
-                  height: '100%'
-                }"></div>
-                <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
-                  {{ (item.probability * 100).toFixed(4) }}%
-                </div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div> -->
-       
-<!-- ################### MAIN Diagnosis report previous ########################-->
-
-<div v-else>
-  <!-- Diagnosis tabs -->
-  <div class="tabs-container">
-  <button class="tab-scroll-button left" @click="scrollTabs('left')" v-show="showLeftScroll">
-    <i class="fas fa-chevron-left"></i>
-  </button>
-  
-  <div class="tabs is-boxed tab-wrapper" ref="tabsContainer">
-    <ul class="draggable-tabs">
-      <li :class="{'is-active': activeDiagnosticTab === diagnosticHistory.length}">
-        <a @click="activeDiagnosticTab = diagnosticHistory.length">
-          <span>Current Diagnosis</span>
-        </a>
-      </li>
-      <li v-for="(diag, index) in diagnosticHistory" 
-          :key="index"
-          :class="{'is-active': activeDiagnosticTab === index}"
-          :draggable="true"
-          @dragstart="dragStart($event, index)"
-          @dragover="dragOver($event)"
-          @dragend="dragEnd($event)"
-          @drop="drop($event, index)">
-        <a @click="activeDiagnosticTab = index" :title="getFullEvidenceLabel(diag)">
-          <span class="tab-evidence">
-            <!-- {{ getEvidenceLabel(diag) }} -->
-            <i v-if="diag.is_hypothetical" class="fas fa-question-circle" style="margin-right: 5px;" title="Hypothetical scenario"></i>
-            {{ diag.is_hypothetical ? 'What if: ' + getEvidenceLabel(diag) : getEvidenceLabel(diag) }}
-          </span>
-          <button class="tab-close" @click.stop="closeTab(index)">×</button>
-        </a>
-      </li>
-    </ul>
-  </div>
-  
-  <button class="tab-scroll-button right" @click="scrollTabs('right')" v-show="showRightScroll">
-    <i class="fas fa-chevron-right"></i>
-  </button>
-  
-  <!-- Undo tab close button -->
-  <button 
-    class="tab-undo-button" 
-    @click="undoCloseTab" 
-    v-show="closedTabs.length > 0" 
-    title="Undo close tab">
-    <i class="fas fa-undo"></i>
-  </button>
-</div>
-  
-  <!-- Current diagnosis content -->
-  <div v-if="activeDiagnosticTab === diagnosticHistory.length">
-    <!-- Display current diagnosis from store -->
-    <div v-if="$store.getters.getDiagnosisReport && $store.getters.getDiagnosisReport.diagnosis_list && $store.getters.getDiagnosisReport.diagnosis_list.length > 0">
-      <div class="most-probable-anomaly" style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
-        <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly:</h3>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 18px; font-weight: bold;">{{ $store.getters.getDiagnosisReport.diagnosis_list[0].anomaly }}</span>
-          <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
-            Probability: {{ ($store.getters.getDiagnosisReport.diagnosis_list[0].probability * 100).toFixed(2) }}%
-          </span>
-        </div>
-        
-        <!-- Added evidence display -->
-        <div v-if="Object.keys(additionalEvidence).length > 0" 
-            style="margin-top: 10px; padding: 8px; background: rgba(10, 254, 255, 0.1); border-radius: 4px;">
-          <h4 style="color: #0AFEFF; margin-bottom: 5px; font-size: 14px;">Evidence Considered:</h4>
-          <ul style="list-style-type: disc; margin-left: 20px;">
-            <li v-for="(value, key) in additionalEvidence" :key="key" style="margin-bottom: 3px;">
-              {{ key }}: {{ formatEvidenceValue(value) }}
-            </li>
-          </ul>
-        </div>
-      </div>
-      
-      <!-- Top 5 anomalies with progress bar - Current diagnosis -->
-      <div style="margin-bottom: 20px;">
-        <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies:</span>
-        <div class="table-container" style="margin-top: 10px;">
-          <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
-                 style="background: transparent; color: white;">
-            <thead>
-              <tr style="background: #002E2E;">
-                <th style="color: #0AFEFF; width: 60%;">Anomaly (Select an anomaly to open the corresponding procedure)</th>
-                <th style="color: #0AFEFF; width: 40%;">Probability</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in $store.getters.getDiagnosisReport.diagnosis_list.slice(0, 5)" 
-                  style="background: rgba(0,46,46,0.7);">
-                <td v-on:click.prevent="selectAnomaly(item.anomaly)" style="padding: 8px; cursor: pointer; vertical-align: middle;">{{ item.anomaly }}</td>
-                <td style="padding: 8px;">
-                  <div class="progress" 
-                       style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
-                    <div :style="{
-                      width: `${item.probability * 100}%`,
-                      background: getProbabilityColor(item.probability),
-                      height: '100%'
-                    }"></div>
-                    <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
-                      {{ (item.probability * 100).toFixed(4) }}%
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div v-else class="notification is-warning">
-      No diagnosis data available. Select symptoms and request a diagnosis.
-    </div>
-  </div>
-  
-  <!-- Historical diagnoses -->
-  <div v-else>
-    <!-- Display historical diagnosis from history array -->
-    <div v-if="diagnosticHistory[activeDiagnosticTab] && diagnosticHistory[activeDiagnosticTab].diagnosis_list && diagnosticHistory[activeDiagnosticTab].diagnosis_list.length > 0">
-      <div class="most-probable-anomaly" style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
-        <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly (Previous #{{activeDiagnosticTab + 1}}):</h3>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 18px; font-weight: bold;">{{ diagnosticHistory[activeDiagnosticTab].diagnosis_list[0].anomaly }}</span>
-          <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
-            Probability: {{ (diagnosticHistory[activeDiagnosticTab].diagnosis_list[0].probability * 100).toFixed(2) }}%
-          </span>
-        </div>
-
-        <div v-if="diagnosticHistory[activeDiagnosticTab] && 
-          diagnosticHistory[activeDiagnosticTab].additional_evidence && 
-          Object.keys(diagnosticHistory[activeDiagnosticTab].additional_evidence || {}).length > 0" 
-              style="margin-top: 10px; padding: 8px; background: rgba(10, 254, 255, 0.1); border-radius: 4px;">
-            <h4 style="color: #0AFEFF; margin-bottom: 5px; font-size: 14px;">Evidence Considered:</h4>
-            <ul style="list-style-type: disc; margin-left: 20px;">
-              <li v-for="(value, key) in diagnosticHistory[activeDiagnosticTab].additional_evidence || {}" 
-                  :key="key" 
-                  style="margin-bottom: 3px;">
-                {{ key }}: {{ formatEvidenceValue(value) }}
-              </li>
-            </ul>
+          <!-- Top 5 anomalies table -->
+          <!-- <div style="margin-bottom: 20px;">
+            <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies:</span>
+            <div class="table-container" style="margin-top: 10px;">
+              <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
+                    style="background: transparent; color: white;">
+                <thead>
+                  <tr style="background: #002E2E;">
+                    <th style="color: #0AFEFF; width: 60%;">Anomaly</th>
+                    <th style="color: #0AFEFF; width: 40%;">Probability</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in diagnosisReport['diagnosis_list']" 
+                      style="background: rgba(0,46,46,0.7);">
+                    <td style="padding: 8px; vertical-align: middle;">{{ item.anomaly }}</td>
+                    <td style="padding: 8px;">
+                      <div class="progress" 
+                          style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
+                        <div :style="{
+                          width: `${item.probability * 100}%`,
+                          background: getProbabilityColor(item.probability),
+                          height: '100%'
+                        }"></div>
+                        <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
+                          {{ (item.probability * 100).toFixed(4) }}%
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-      </div>
-      
-      <!-- Top 5 anomalies with progress bar - Historical diagnosis -->
-      <div style="margin-bottom: 20px;">
-        <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies (Previous #{{activeDiagnosticTab + 1}}):</span>
-        <div class="table-container" style="margin-top: 10px;">
-          <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
-                 style="background: transparent; color: white;">
-            <thead>
-              <tr style="background: #002E2E;">
-                <th style="color: #0AFEFF; width: 60%;">Anomaly (Select an anomaly to open the corresponding procedure)</th>
-                <th style="color: #0AFEFF; width: 40%;">Probability</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in diagnosticHistory[activeDiagnosticTab].diagnosis_list.slice(0, 5)" 
-                  style="background: rgba(0,46,46,0.7);">
-                <td v-on:click.prevent="selectAnomaly(item.anomaly)" style="padding: 8px; cursor: pointer; vertical-align: middle;">{{ item.anomaly }}</td>
-                <td style="padding: 8px;">
-                  <div class="progress" 
-                       style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
-                    <div :style="{
-                      width: `${item.probability * 100}%`,
-                      background: getProbabilityColor(item.probability),
-                      height: '100%'
-                    }"></div>
-                    <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
-                      {{ (item.probability * 100).toFixed(4) }}%
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Add a clear button at the bottom if needed -->
-  <div style="text-align: center; margin-top: 20px;">
-    <button @click="clearSymptoms" class="button is-danger">
-      Clear All Symptoms & Diagnoses
-    </button>
-  </div>
-</div>
+        </div> -->
+              
+        <!-- ################### Bayesian Diagnosis report interactive ########################-->
 
-       
-
-
-      </div>
-      <div class="horizontal-divider" style="margin-top: 10px; margin-bottom: 10px"></div>
-        <div class="is-content">
-          <div class="is-mini-title" style="margin-bottom:5px; font-size: 22px">
-            Robot Status
+        <div v-else>
+          <!-- Diagnosis tabs -->
+          <div class="tabs-container">
+            <button class="tab-scroll-button left" @click="scrollTabs('left')" v-show="showLeftScroll">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+          
+            <div class="tabs is-boxed tab-wrapper" ref="tabsContainer">
+              <ul class="draggable-tabs">
+                <li :class="{'is-active': activeDiagnosticTab === diagnosticHistory.length}">
+                  <a @click="activeDiagnosticTab = diagnosticHistory.length">
+                    <span>Current Diagnosis</span>
+                  </a>
+                </li>
+                <li v-for="(diag, index) in diagnosticHistory" 
+                    :key="index"
+                    :class="{'is-active': activeDiagnosticTab === index}"
+                    :draggable="true"
+                    @dragstart="dragStart($event, index)"
+                    @dragover="dragOver($event)"
+                    @dragend="dragEnd($event)"
+                    @drop="drop($event, index)">
+                  <a @click="activeDiagnosticTab = index" :title="getFullEvidenceLabel(diag)">
+                    <span class="tab-evidence">
+                      <!-- {{ getEvidenceLabel(diag) }} -->
+                      <i v-if="diag.is_hypothetical" class="fas fa-question-circle" style="margin-right: 5px;" title="Hypothetical scenario"></i>
+                      {{ diag.is_hypothetical ? 'What if: ' + getEvidenceLabel(diag) : getEvidenceLabel(diag) }}
+                    </span>
+                    <button class="tab-close" @click.stop="closeTab(index)">×</button>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          
+            <button class="tab-scroll-button right" @click="scrollTabs('right')" v-show="showRightScroll">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          
+            <!-- Undo tab close button -->
+            <button 
+              class="tab-undo-button" 
+              @click="undoCloseTab" 
+              v-show="closedTabs.length > 0" 
+              title="Undo close tab">
+              <i class="fas fa-undo"></i>
+            </button>
           </div>
           
-          <div class="box is-main" style="margin-top: 20px; padding: 15px;">
-            <div v-if="astrobeeStatus">
-              <p style="font-size: 18px; margin-bottom: 15px; color: #0AFEFF;">Current Status:</p>
-              <p style="font-size: 16px; text-align: center; padding: 10px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
-                {{ astrobeeStatus }}
-              </p>
+          <!-- Current diagnosis content -->
+          <div v-if="activeDiagnosticTab === diagnosticHistory.length">
+            <!-- Display current diagnosis from store -->
+            <div v-if="$store.getters.getDiagnosisReport && $store.getters.getDiagnosisReport.diagnosis_list && $store.getters.getDiagnosisReport.diagnosis_list.length > 0">
+              <div class="most-probable-anomaly" style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
+                <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly:</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 18px; font-weight: bold;">{{ $store.getters.getDiagnosisReport.diagnosis_list[0].anomaly }}</span>
+                  <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+                    Probability: {{ ($store.getters.getDiagnosisReport.diagnosis_list[0].probability * 100).toFixed(2) }}%
+                  </span>
+                </div>
+                
+                <!-- Added evidence display -->
+                <div v-if="Object.keys(additionalEvidence).length > 0" 
+                    style="margin-top: 10px; padding: 8px; background: rgba(10, 254, 255, 0.1); border-radius: 4px;">
+                  <h4 style="color: #0AFEFF; margin-bottom: 5px; font-size: 14px;">Evidence Considered:</h4>
+                  <ul style="list-style-type: disc; margin-left: 20px;">
+                    <li v-for="(value, key) in additionalEvidence" :key="key" style="margin-bottom: 3px;">
+                      {{ key }}: {{ formatEvidenceValue(value) }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              <!-- Top 5 anomalies with progress bar - Current diagnosis -->
+              <div style="margin-bottom: 20px;">
+                <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies:</span>
+                <div class="table-container" style="margin-top: 10px;">
+                  <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
+                        style="background: transparent; color: white;">
+                    <thead>
+                      <tr style="background: #002E2E;">
+                        <th style="color: #0AFEFF; width: 60%;">Anomaly (Select an anomaly to open the corresponding procedure)</th>
+                        <th style="color: #0AFEFF; width: 40%;">Probability</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in $store.getters.getDiagnosisReport.diagnosis_list.slice(0, 5)" 
+                          style="background: rgba(0,46,46,0.7);">
+                        <td v-on:click.prevent="selectAnomaly(item.anomaly)" style="padding: 8px; cursor: pointer; vertical-align: middle;">{{ item.anomaly }}</td>
+                        <td style="padding: 8px;">
+                          <div class="progress" 
+                              style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
+                            <div :style="{
+                              width: `${item.probability * 100}%`,
+                              background: getProbabilityColor(item.probability),
+                              height: '100%'
+                            }"></div>
+                            <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
+                              {{ (item.probability * 100).toFixed(4) }}%
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-            <div v-else>
-              <p style="text-align: center;">No active Astrobee procedures running.</p>
+            <div v-else class="notification is-warning">
+              No diagnosis data available. Select symptoms and request a diagnosis.
             </div>
           </div>
+          
+          <!-- Historical diagnoses -->
+          <div v-else>
+            <!-- Display historical diagnosis from history array -->
+            <div v-if="diagnosticHistory[activeDiagnosticTab] && diagnosticHistory[activeDiagnosticTab].diagnosis_list && diagnosticHistory[activeDiagnosticTab].diagnosis_list.length > 0">
+              <div class="most-probable-anomaly" style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
+                <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly (Previous #{{activeDiagnosticTab + 1}}):</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 18px; font-weight: bold;">{{ diagnosticHistory[activeDiagnosticTab].diagnosis_list[0].anomaly }}</span>
+                  <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+                    Probability: {{ (diagnosticHistory[activeDiagnosticTab].diagnosis_list[0].probability * 100).toFixed(2) }}%
+                  </span>
+                </div>
+
+                <div v-if="diagnosticHistory[activeDiagnosticTab] && 
+                  diagnosticHistory[activeDiagnosticTab].additional_evidence && 
+                  Object.keys(diagnosticHistory[activeDiagnosticTab].additional_evidence || {}).length > 0" 
+                      style="margin-top: 10px; padding: 8px; background: rgba(10, 254, 255, 0.1); border-radius: 4px;">
+                    <h4 style="color: #0AFEFF; margin-bottom: 5px; font-size: 14px;">Evidence Considered:</h4>
+                    <ul style="list-style-type: disc; margin-left: 20px;">
+                      <li v-for="(value, key) in diagnosticHistory[activeDiagnosticTab].additional_evidence || {}" 
+                          :key="key" 
+                          style="margin-bottom: 3px;">
+                        {{ key }}: {{ formatEvidenceValue(value) }}
+                      </li>
+                    </ul>
+                  </div>
+              </div>
+              
+              <!-- Top 5 anomalies with progress bar - Historical diagnosis -->
+              <div style="margin-bottom: 20px;">
+                <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies (Previous #{{activeDiagnosticTab + 1}}):</span>
+                <div class="table-container" style="margin-top: 10px;">
+                  <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
+                        style="background: transparent; color: white;">
+                    <thead>
+                      <tr style="background: #002E2E;">
+                        <th style="color: #0AFEFF; width: 60%;">Anomaly (Select an anomaly to open the corresponding procedure)</th>
+                        <th style="color: #0AFEFF; width: 40%;">Probability</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in diagnosticHistory[activeDiagnosticTab].diagnosis_list.slice(0, 5)" 
+                          style="background: rgba(0,46,46,0.7);">
+                        <td v-on:click.prevent="selectAnomaly(item.anomaly)" style="padding: 8px; cursor: pointer; vertical-align: middle;">{{ item.anomaly }}</td>
+                        <td style="padding: 8px;">
+                          <div class="progress" 
+                              style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
+                            <div :style="{
+                              width: `${item.probability * 100}%`,
+                              background: getProbabilityColor(item.probability),
+                              height: '100%'
+                            }"></div>
+                            <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
+                              {{ (item.probability * 100).toFixed(4) }}%
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Add a clear button at the bottom if needed -->
+          <div style="text-align: center; margin-top: 20px;">
+            <button @click="clearSymptoms" class="button is-danger">
+              Clear All Symptoms & Diagnoses
+            </button>
+          </div>
         </div>
-      <!-- <div class="horizontal-divider" style="margin-top: 10px; margin-bottom: 10px"></div>
+
+      </div>
+
+      <div class="horizontal-divider" style="margin-top: 10px; margin-bottom: 10px"></div>
+
+      <!-- ################### Robot Procedure Report ########################-->
+      <div class="is-content">
+        <div class="is-mini-title" style="margin-bottom:5px; font-size: 22px">
+          Robot Status
+        </div>
+        
+        <div class="box is-main" style="margin-top: 20px; padding: 15px;">
+          <div v-if="astrobeeStatus">
+            <p style="font-size: 18px; margin-bottom: 15px; color: #0AFEFF;">Current Status:</p>
+            <p style="font-size: 16px; text-align: center; padding: 10px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
+              {{ astrobeeStatus }}
+            </p>
+          </div>
+          <div v-else>
+            <p style="text-align: center;">No active Astrobee procedures running.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ################### KG Diagnosis report hypothesis comparison table ########################-->
+
+      <div class="horizontal-divider" style="margin-top: 10px; margin-bottom: 10px"></div>
+    
       <div class="is-content">
         <div v-if="diagnosisReport.length === 0 || this.explaining === false">
           <img v-if="isLoading"
@@ -428,16 +439,16 @@
           </div>
         </div>
       </div>
-    -->
+    <!---->
    
     </div>
-    <SymptomSelectionDialog 
-      :is-active="showSymptomDialog" 
-      :symptoms="unconfirmedSymptoms"
-      @proceed="handleSymptomSelection"
-      @cancel="showSymptomDialog = false"
-    />
-  </div>
+      <SymptomSelectionDialog 
+        :is-active="showSymptomDialog" 
+        :symptoms="unconfirmedSymptoms"
+        @proceed="handleSymptomSelection"
+        @cancel="showSymptomDialog = false"
+      />
+    </div>
 </template>
 
 <script>
@@ -460,6 +471,7 @@ export default {
       isLoading: false,
       isAnomalySelected: false,
       checked: [],
+      showAlert: false,
       explaining: false,
       allSelected: false,
       astrobeeStatus: null,
@@ -962,6 +974,14 @@ export default {
       this.explaining = false;
       this.checked = [];
     },
+    async requestKGDiagnosis() {
+      this.allSelected = false;
+      this.isLoading = true;
+      this.explaining = false;
+      this.checked = [];
+      await this.$store.dispatch('requestKGDiagnosis', this.selectedSymptomsList);
+      this.isLoading = false;
+    },
     async requestDiagnosis() {
       this.allSelected = false;
       this.isLoading = true;
@@ -1360,23 +1380,23 @@ handleAdditionalEvidenceResponse(response) {
       this.$root.$emit('diagnosisTutorialIndividual');
     },
     showExplanations() {
-      this.explaining = false;
       this.isLoading = true;
+      console.log('Checked anomalies:', this.checked); // <-- Add this line
       if (this.checked.length === 0) {
         this.isLoading = false;
-        document.getElementById('alert').style.display = "block";
-        document.getElementById('explanations').style.display = "none";
+        this.showAlert = true;
+        this.explaining = false;
+        print("Please select anomalies for investigation.");
       } else {
-        document.getElementById('alert').style.display = "none";
+        this.showAlert = false;
+        this.isLoading = false;
+        this.explaining = true;
+        console.log('Showing explanations for anomalies:', this.checked);
       }
-      this.isLoading = false;
-      this.explaining = true;
-      document.getElementById('explanations').style.display = "block";
     },
     clearExplanations() {
       this.explaining = false;
       this.checked = [];
-      document.getElementById('explanations').style.display = "none";
     },
     tickOrCross(anomaly, symptom) {
       let ticksOrCross = 'cross'

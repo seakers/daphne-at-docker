@@ -81,14 +81,24 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
         if (index + 1) < len(parsed_symptoms_list):
             clause = clause + ' OR '
         query = query + clause
-    query = query + ' RETURN DISTINCT a.Title'
-    print("Querying the neo4j database...")
+    query = query + ' RETURN DISTINCT a.Title;'
+    print("Querying the neo4j database with the following query:")
+    print(query)
 
-    # Query the database and parse the result (which is a list of the anomalies which symptoms have non empty
-    # intersection with the requested symptoms)
-    result = session.run(query)
-    diagnosis = [node[0] for node in result]
-    print("Query successful.")
+    try:
+        # Query the database and parse the result (which is a list of the anomalies which symptoms have non empty
+        # intersection with the requested symptoms)
+        result = session.run(query)
+        print("Query successful with the following result:")
+        diagnosis = [node[0] for node in result]
+        print(diagnosis)
+    except Exception as e:
+        print("Query failed with the following error:")
+        print(e)
+    finally:
+        # Properly close the session and driver
+        session.close()
+        driver.close()
 
     parsed_input_symptoms = []
     for symptom in parsed_symptoms_list:
@@ -97,7 +107,11 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
     parsed_symptoms_of_each_anomaly = {}
     for anomaly in diagnosis:
         # Retrieve symptoms of anomaly
+        print("Retrieving symptoms of anomaly:")
+        print(anomaly)
         anomaly_symptoms = retrieve_symptoms_from_anomaly(anomaly)
+        print("Anomaly symptoms:")
+        print(anomaly_symptoms)
         parsed_symptom_of_anomaly = []
         symptom_of_anomaly = []
 
@@ -118,7 +132,44 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
 
         # Append the resulting object to the dictionary
         parsed_symptoms_of_each_anomaly[anomaly] = parsed_symptom_of_anomaly
+    print(parsed_symptoms_of_each_anomaly)
 
+    # Start-Creating pairs of parsed anomalies
+
+    temp_pair_dict = {}
+    for key1 in parsed_symptoms_of_each_anomaly.keys():
+        for key2 in parsed_symptoms_of_each_anomaly.keys():
+            if key1 != key2:
+                values = parsed_symptoms_of_each_anomaly[key1] + parsed_symptoms_of_each_anomaly[key2]
+                values = [item for index, item in enumerate(values) if item not in values[:index]]
+                print("VALUES", values)
+                paired_key = (key1, key2)
+                temp_pair_dict[paired_key] = values
+
+    # print("TEMP_PAIR_DICT: ", temp_pair_dict)
+
+    parsed_symptoms_of_each_anomaly.update(temp_pair_dict)
+
+    # print("parsed_symptom_of_each_anomaly", parsed_symptoms_of_each_anomaly)
+
+    # adding pairs of anomalies to diagnosis as they don't exist in knowledge graph
+    temp_diagnosis = []
+    anomaly_pretty_name = []
+
+    for i in range(len(diagnosis)):
+        for j in range(i + 1, len(diagnosis)):
+            pair = (diagnosis[i], diagnosis[j])
+            anomaly_pretty_name.append({pair, diagnosis[i] + ' & ' + diagnosis[j]})
+            # pair.append(diagnosis[i])
+            # pair.append(diagnosis[j])
+            temp_diagnosis.append(pair)
+
+    diagnosis.extend(temp_diagnosis)
+    # print("DIAGNOSIS: ", diagnosis)
+
+    # Creating pairs of parsed anomalies-End
+
+    
     def compare_parsed(anomaly_symptom, parsed_input_symptom):
         measurements_are_equal = (anomaly_symptom['measurement'] == parsed_input_symptom['measurement'])
         relationships_are_equal = (anomaly_symptom['relationship'] == parsed_input_symptom['relationship'])
@@ -194,22 +245,69 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
     # Cast list to top 7 items
     top_n_diagnosis = []
     size_limit = min(7, len(ordered_diagnosis))
-    for i in range(0, size_limit):
+    # Adding in different arrays based on score to list in ordered fashion
+    # very_likely = []
+    # likely = []
+    # somewhat_likely = []
+    for i in range(0, len(ordered_diagnosis)):
         anomaly = ordered_diagnosis[i]
         score = scored_diagnosis[anomaly]
-        text_score = ""
-        if score != 0:
-            if score < 0.33:
-                text_score = "Somewhat likely"
-            elif score < 0.66:
-                text_score = "Likely"
-            else:
-                text_score = "Very likely"
 
-            top_n_diagnosis.append({'name': anomaly, 'score': score, 'text_score': text_score})
+        anomaly_name = ''
+        if type(anomaly) is tuple:
+            anomaly_name = anomaly[0] + ' & ' + anomaly[1]
+        else:
+            anomaly_name = anomaly
+
+        text_score = ""
+        # level = 0
+        if score != 0:
+            if score < 0.12:
+                text_score = "Extremely Unlikely : 0-0.11"
+                # level = 1
+                # somewhat_likely.append({'name': anomaly, 'score': score, 'text_score': text_score})
+            elif 0.23 > score >= 0.12:
+                text_score = "Highly Unlikely : 0.12-0.22"
+                # level = 2
+                # likely.append({'name': anomaly, 'score': score, 'text_score': text_score})
+            elif 0.34 > score >= 0.23:
+                text_score = "Unlikely : 0.23-0.33"
+                # level = 3
+            elif 0.45 > score >= 0.34:
+                text_score = "Moderately Unlikely : 0.34-0.44"
+                # level = 4
+            elif 0.56 > score >= 0.45:
+                text_score = "Equally Likely and Unlikely : 0.45-0.55"
+                # level = 5
+            elif 0.67 > score >= 0.56:
+                text_score = "Moderately Likely : 0.56-0.66"
+                # level = 6
+            elif 0.78 > score >= 0.67:
+                text_score = "Likely : 0.67-0.77"
+                # level = 7
+            elif 0.89 > score >= 0.78:
+                text_score = "Highly Likely : 0.78-0.88"
+                # level = 8
+            else:
+                text_score = "Extremely Likely : 0.89-1.0"
+                # level = 9
+
+                # very_likely.append({'name': anomaly, 'score': score, 'text_score': text_score})
+            if i < size_limit or top_n_diagnosis[-1]['score'] == score:
+                top_n_diagnosis.append({'name': anomaly_name, 'score': score, 'text_score': text_score,
+                                        'cardinality': cardinality_for_each_anomaly[anomaly],
+                                        'containsRequestedSymptoms': anomalyContainsRequestedSymptoms[
+                                            anomaly], 'signature': signature[anomaly],
+                                        'missing_symptoms': missing_anomaly_symptoms[anomaly], })
+
+    sorted_top_n_diagnosis = sorted(top_n_diagnosis, key=lambda x: (-x['score'], len(x['name'])))
+
 
     # Return result
     final_diagnosis = top_n_diagnosis
+    # pair of anomaly changes end
+    # Return result
+    final_diagnosis = sorted_top_n_diagnosis
 
     return final_diagnosis
 
@@ -429,55 +527,81 @@ def retrieve_affected_subsystems_from_anomaly(anomaly_name):
 
 def retrieve_symptoms_from_anomaly(anomaly_name):
     # Setup neo4j database connection
+    
+    print("Connecting to the neo4j database...")
     driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
     session = driver.session()
+    print("Connected to the neo4j database.")
 
     # Build and send the query to obtain the affected measurements that exceed the upper caution limit
     query_UpperCautionLimit = "MATCH (a:Anomaly)-[r:Exceeds_UpperCautionLimit]-(m:Measurement) WHERE a.Title='" + anomaly_name + \
-                              "' RETURN DISTINCT m.Name, m.ParameterGroup"
+                              "' RETURN DISTINCT m.Name, m.ParameterGroup;"
+    # print("Querying the neo4j database with the following query:")
+    # print(query_UpperCautionLimit)
     result_UpperCautionLimit = session.run(query_UpperCautionLimit)
-
-    # Build and send the query to obtain the affected measurements that exceed the lower caution limit
-    query_LowerCautionLimit = "MATCH (a:Anomaly)-[r:Exceeds_LowerCautionLimit]-(m:Measurement) WHERE a.Title='" + \
-                              anomaly_name + \
-                              "' RETURN DISTINCT m.Name, m.ParameterGroup"
-    result_LowerCautionLimit = session.run(query_LowerCautionLimit)
-
-    # Build and send the query to obtain the affected measurements that exceed the upper warning limit
-    query_UpperWarningLimit = "MATCH (a:Anomaly)-[r:Exceeds_UpperWarningLimit]-(m:Measurement) WHERE a.Title='" + \
-                              anomaly_name + \
-                              "' RETURN DISTINCT m.Name, m.ParameterGroup"
-    result_UpperWarningLimit = session.run(query_UpperWarningLimit)
-
-    # Build and send the query to obtain the affected measurements that exceed the lower warning limit
-    query_LowerWarningLimit = "MATCH (a:Anomaly)-[r:Exceeds_LowerWarningLimit]-(m:Measurement) WHERE a.Title='" + \
-                              anomaly_name + \
-                              "' RETURN DISTINCT m.Name, m.ParameterGroup"
-    result_LowerWarningLimit = session.run(query_LowerWarningLimit)
+    print("Query result:")
 
     # Parse the result
     symptoms_list_UpperCautionLimit = []
     for item in result_UpperCautionLimit:
         measurement_name = item[0] + ' (' + item[1] + ')'
         symptoms_list_UpperCautionLimit.append(measurement_name)
+    print(symptoms_list_UpperCautionLimit)
+
+
+    # Build and send the query to obtain the affected measurements that exceed the lower caution limit
+    query_LowerCautionLimit = "MATCH (a:Anomaly)-[r:Exceeds_LowerCautionLimit]-(m:Measurement) WHERE a.Title='" + \
+                              anomaly_name + \
+                              "' RETURN DISTINCT m.Name, m.ParameterGroup;"
+    # print("Querying the neo4j database with the following query:")
+    # print(query_LowerCautionLimit)
+    result_LowerCautionLimit = session.run(query_LowerCautionLimit)
+    print("Query result:")
 
     # Parse the result
     symptoms_list_LowerCautionLimit = []
     for item in result_LowerCautionLimit:
         measurement_name = item[0] + ' (' + item[1] + ')'
         symptoms_list_LowerCautionLimit.append(measurement_name)
+    print(symptoms_list_LowerCautionLimit)
+
+
+    # Build and send the query to obtain the affected measurements that exceed the upper warning limit
+    query_UpperWarningLimit = "MATCH (a:Anomaly)-[r:Exceeds_UpperWarningLimit]-(m:Measurement) WHERE a.Title='" + \
+                              anomaly_name + \
+                              "' RETURN DISTINCT m.Name, m.ParameterGroup;"
+    # print("Querying the neo4j database with the following query:")
+    # print(query_UpperWarningLimit)
+    result_UpperWarningLimit = session.run(query_UpperWarningLimit)
+    print("Query result:")
 
     # Parse the result
     symptoms_list_UpperWarningLimit = []
     for item in result_UpperWarningLimit:
         measurement_name = item[0] + ' (' + item[1] + ')'
         symptoms_list_UpperWarningLimit.append(measurement_name)
+    print(symptoms_list_UpperWarningLimit)
+
+
+    # Build and send the query to obtain the affected measurements that exceed the lower warning limit
+    query_LowerWarningLimit = "MATCH (a:Anomaly)-[r:Exceeds_LowerWarningLimit]-(m:Measurement) WHERE a.Title='" + \
+                              anomaly_name + \
+                              "' RETURN DISTINCT m.Name, m.ParameterGroup;"
+    # print("Querying the neo4j database with the following query:")
+    # print(query_LowerWarningLimit)
+    result_LowerWarningLimit = session.run(query_LowerWarningLimit)
+    print("Query result:")
 
     # Parse the result
     symptoms_list_LowerWarningLimit = []
     for item in result_LowerWarningLimit:
         measurement_name = item[0] + ' (' + item[1] + ')'
         symptoms_list_LowerWarningLimit.append(measurement_name)
+    print(symptoms_list_LowerWarningLimit)
+    
+    session.close()
+    driver.close()
+
 
     # Build the output (making the relationship explicit)
     symptoms_list = []
@@ -493,7 +617,8 @@ def retrieve_symptoms_from_anomaly(anomaly_name):
     for measurement in symptoms_list_UpperWarningLimit:
         symptom = {'measurement': measurement, 'relationship': 'Upper Warning Limit'}
         symptoms_list.append(symptom)
-
+    # print(symptoms_list)
+    
     return symptoms_list
 
 
