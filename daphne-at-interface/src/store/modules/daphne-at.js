@@ -507,6 +507,71 @@ const actions = {
             console.log('Error requesting a diagnosis report.')
         }
     },
+
+    async requestPhysicsDiagnosis({state, commit}, selectedSymptomsList) {
+        // Clean the current diagnosis report
+        commit('mutateDiagnosisReport', []);
+
+        const now = new Date();
+        let formattedDate = now.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',  // e.g., October
+            day: 'numeric', // e.g., 15
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+            hour12: true    // Use 12-hour format with AM/PM
+          });
+
+          console.log("formatttttttttttt", formattedDate)
+        commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
+
+        console.log("mutateeeeeeeee updateeeeeeeeee", now, "55555555555555");
+    
+
+        // Update the last selected symptoms list
+        let lastSelectedSymptomsList = JSON.parse(JSON.stringify(state.selectedSymptomsList));
+        commit('mutateLastSelectedSymptomsList', lastSelectedSymptomsList);
+
+        // Clean the selected symptoms list
+        //commit('mutateSelectedSymptomsList', []);
+
+        // Make a local copy of the couple of state variables to be used
+        let info = JSON.parse(JSON.stringify(state.telemetryInfo));
+        let parsedSelectedSymptomsList = JSON.parse(JSON.stringify(selectedSymptomsList));
+
+        // Parse the selected symptoms list. Such list contains the names of each measurement with the level add-on
+        // (for example, "ppN2 (L1)". To query the knowledge graph, such add-on should be removed (amazing).
+
+        for (let index in parsedSelectedSymptomsList) {
+            let displayName = parsedSelectedSymptomsList[index]['measurement'];
+            let kgName = info[displayName]['kg_name'];
+            parsedSelectedSymptomsList[index]['measurement'] = kgName;
+            parsedSelectedSymptomsList[index]['display_name'] = displayName;
+        }
+
+        // Make the diagnosis request to the backend
+        let reqData = new FormData();
+        reqData.append('symptomsList',  JSON.stringify(parsedSelectedSymptomsList));
+        let response = await fetchPost('/api/at/requestKGDiagnosis', reqData);
+        if (response.ok) {
+            let diagnosis_report = await response.json();
+            commit('mutateDiagnosisReport', diagnosis_report);
+            const now = new Date();
+            let formattedDate = now.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',  // e.g., October
+                day: 'numeric', // e.g., 15
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                hour12: true    // Use 12-hour format with AM/PM
+              });
+        commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
+        } else {
+            console.log('Error requesting a diagnosis report.')
+        }
+    },
     async requestDiagnosis({state, commit}, selectedSymptomsList) {
         // Clean the current diagnosis report
         commit('mutateDiagnosisReport', []);

@@ -12,7 +12,7 @@
           No anomalous symptoms selected.
         </div>
         <div v-else class="columns" style="margin: 0px; padding: 0px">
-          <div class="column is-10" style="margin: 0px; padding: 0px">
+          <div class="column is-7" style="margin: 0px; padding: 0px">
             <ul>
               <li class="hover" v-on:click="deselectSymptom(symptom)" v-for="symptom in selectedSymptomsList"
                   style="cursor: pointer">
@@ -20,26 +20,127 @@
               </li>
             </ul>
           </div>
-          <div class="column is-2" style="margin: 0px; padding: 0px">
-            <button class="button theme-buttons"
-                    style="width: 52%; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E"
-                    id="request_diagnosis" v-on:click.prevent="requestKGDiagnosis">KG-Diagnose
-            </button>
-            <button class="button theme-buttons"
-                    style="width: 52%; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E"
-                    id="request_diagnosis" v-on:click.prevent="requestDiagnosis">Diagnose
-            </button>
-            <button class="button theme-buttons"
-                    style="width: 38%; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E"
-                    id="clear_symptoms" v-on:click.prevent="clearSymptoms">Clear
-            </button>
+          <div class="column is-5" style="margin: 0px; padding: 0px">
+            <div class="button-row" style="display: flex; gap: 10px; margin: 0px; padding: 0px;">
+              <button class="button theme-buttons"
+                      style="flex: 1; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E"
+                      id="request_diagnosis" v-on:click.prevent="requestKGDiagnosis">KG
+              </button>
+              <button class="button theme-buttons"
+                      style="flex: 1; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E"
+                      id="request_diagnosis" v-on:click.prevent="requestDiagnosis">Bayesian
+              </button>
+              <button class="button theme-buttons"
+                      style="flex: 1; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E"
+                      id="request_diagnosis" v-on:click.prevent="requestPhysicsDiagnosis">Physics
+              </button>
+              <button class="button theme-buttons"
+                      style="flex: 1; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E"
+                      id="clear_symptoms" v-on:click.prevent="clearSymptoms">Clear
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="horizontal-divider" style="margin-top: 10px; margin-bottom: 10px"></div>
-      
+
+        <!-- ################### KG Diagnosis report hypothesis list ########################-->
       <div class="is-content">
+        <!-- Simple, independent tab UI -->
+        <div class="tabs-container" style="margin-bottom: 20px;">
+          <div class="tabs is-boxed tab-wrapper">
+            <ul class="draggable-tabs">
+              <li v-for="(tab, index) in simpleTabs"
+                  :key="index"
+                  :class="{ 'is-active': activeSimpleTab === index }">
+                <a @click="activeSimpleTab = index">
+                  <span>{{ tab.label }}</span>
+                  <button class="tab-close" @click.stop="closeSimpleTab(index)">×</button>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div v-if="simpleTabs[activeSimpleTab]">
+          <div class="physics-diagnosis-report">
+            <!-- Title Section -->
+            <div class="physics-title-section">
+              <div>
+                <span style="color:#0AFEFF;">Most Probable Anomaly:</span>
+                <span style="font-weight:bold; color:white; margin-left:10px;">{{ physicsDiagnosisData.mostProbableAnomaly }}</span>
+              </div>
+              <div style="margin-left:auto; color:#0AFEFF;">
+                Probability: <span style="font-weight:bold; color:white;">{{ physicsDiagnosisData.probability }}</span>
+              </div>
+            </div>
+            <!-- Content Section -->
+            <div class="physics-content-section">
+              <!-- Left: Table -->
+              <div class="physics-table-section">
+                <div style="color:#0AFEFF; margin-bottom:8px;">Top 5 Component Anomalies:</div>
+                <table class="physics-table">
+                  <thead>
+                    <tr>
+                      <th>Component Anomaly</th>
+                      <th>Similarity Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="anomaly in physicsDiagnosisData.componentAnomalies" 
+                        :key="anomaly.name"
+                        :style="anomaly.isHighlighted ? 'background:#c0392b; color:white; font-weight:bold;' : ''">
+                      <td>{{ anomaly.name }}</td>
+                      <td>{{ anomaly.score }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                
+                <!-- Explanation Button -->
+                <div style="text-align: center; margin-top: 15px;">
+                  <button class="button theme-buttons"
+                          style="border-color: #0AFEFF; color: #0AFEFF; background: #002E2E; padding: 8px 16px; font-size: 14px;"
+                          v-on:click.prevent="togglePhysicsExplanation">
+                    {{ showPhysicsExplanation ? 'Hide Explanation' : 'Explanation' }}
+                  </button>
+                </div>
+              </div>
+              <!-- Right: System Configuration Image -->
+              <div class="physics-image-section">
+                <img src="assets/img/CDRA.png" alt="System Configuration" style="max-width:100%; border-radius:6px;"/>
+              </div>
+            </div>
+            
+            <!-- Divider -->
+            <div v-if="showPhysicsExplanation" class="horizontal-divider" style="margin-top: 20px; margin-bottom: 20px; height: 1px; background: #0AFEFF; opacity: 0.3;"></div>
+            
+            <!-- Telemetry Comparison Graph -->
+            <div v-if="showPhysicsExplanation" class="physics-explanation-section" style="margin-top: 20px; text-align: center;">
+              <div style="color:#0AFEFF; margin-bottom:15px; font-size: 16px; font-weight: bold;">
+                Telemetry Trend Comparison
+              </div>
+              <div class="telemetry-graph-container" style="background: #001e1e; border-radius: 6px; padding: 20px; min-height: 300px; display: inline-block; max-width: 90%;">
+                <canvas ref="telemetryGraph" width="800" height="300"></canvas>
+              </div>
+              <div style="margin-top: 15px; color: #ccc; font-size: 14px;">
+                <div style="display: flex; justify-content: center; gap: 30px;">
+                  <div style="display: flex; align-items: center;">
+                    <div style="width: 20px; height: 3px; background: #0AFEFF; margin-right: 8px;"></div>
+                    <span>Actual Telemetry</span>
+                  </div>
+                  <div style="display: flex; align-items: center;">
+                    <div style="width: 20px; height: 3px; background: #ff6b6b; margin-right: 8px;"></div>
+                    <span>Simulated ({{ physicsDiagnosisData.mostProbableAnomaly }})</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="button" @click="addSimpleTab('New Tab', 'This is a new independent tab.')" style="margin-top: 10px;">
+          Add Simple Tab
+        </button>
+
         <div v-if="diagnosisReport.length === 0">
           <img v-if="isLoading"
                src="assets/img/loader.svg"
@@ -79,6 +180,9 @@
             </button>
           </div>
         </div>
+
+        <!-- ################### Physics-based Diagnosis report ########################-->
+
 
         <!-- ################### Bayesian Diagnosis report previous ########################-->
 
@@ -459,6 +563,7 @@ import SymptomSelectionDialog from './SymptomSelectionDialog.vue';
 
 
 let loaderImage = require('../images/loader.svg');
+let CDRAImage = require('../images/CDRA.png');
 
 export default {
   name: "AnomalyDiagnosisWindow",
@@ -497,6 +602,20 @@ export default {
       draggedTab: null,
       dragOverIndex: null,
       closedTabs: [], // Array to store recently closed tabs
+      showPhysicsTab: false,
+      simpleTabs: [],
+      activeSimpleTab: 0,
+      physicsDiagnosisData: {
+        mostProbableAnomaly: '',
+        probability: '',
+        componentAnomalies: []
+      },
+      showPhysicsExplanation: false,
+      telemetryGraphData: {
+        actual: [],
+        simulated: [],
+        timeLabels: []
+      },
     }
   },
 
@@ -530,41 +649,41 @@ export default {
   methods: {
 
     getEvidenceLabel(diagnosisData) {
-  // For debugging
-  if (diagnosisData.is_hypothetical && diagnosisData.hypothetical_evidence) {
-    let str = "";
-    for (const [key, value] of Object.entries(diagnosisData.hypothetical_evidence)) {
-      str += `${key}: ${this.formatEvidenceValue(value)}, `;
-    }
-    // Remove the last comma and space
-    return str.slice(0, -2);
-  }
-  
-  // Existing logic for regular evidence
-  if (diagnosisData.additional_evidence && Object.keys(diagnosisData.additional_evidence).length > 0) {
-    let str = "";
-    for (const [key, value] of Object.entries(diagnosisData.additional_evidence)) {
-      str += `${key}: ${this.formatEvidenceValue(value)}, `;
-    }
-    // Remove the last comma and space  
-    str = str.slice(0, -2);
-    return str;
-  } else {
-    return `Initial Diagnosis`;
-  }
-},
-
-  getFullEvidenceLabel(diagnosisData) {
-    if (diagnosisData.additionalEvidence && Object.keys(diagnosisData.additionalEvidence).length > 0) {
-      let str = "";
-      for (const [key, value] of Object.entries(diagnosisData.additionalEvidence)) {
-        str += `${key}: ${this.formatEvidenceValue(value)}, `;
+      // For debugging
+      if (diagnosisData.is_hypothetical && diagnosisData.hypothetical_evidence) {
+        let str = "";
+        for (const [key, value] of Object.entries(diagnosisData.hypothetical_evidence)) {
+          str += `${key}: ${this.formatEvidenceValue(value)}, `;
+        }
+        // Remove the last comma and space
+        return str.slice(0, -2);
       }
-      return str;
-    } else {
-      return `Initial Diagnosis`;
-    }
-  },
+  
+      // Existing logic for regular evidence
+      if (diagnosisData.additional_evidence && Object.keys(diagnosisData.additional_evidence).length > 0) {
+        let str = "";
+        for (const [key, value] of Object.entries(diagnosisData.additional_evidence)) {
+          str += `${key}: ${this.formatEvidenceValue(value)}, `;
+        }
+        // Remove the last comma and space  
+        str = str.slice(0, -2);
+        return str;
+      } else {
+        return `Initial Diagnosis`;
+      }
+    },
+
+    getFullEvidenceLabel(diagnosisData) {
+      if (diagnosisData.additionalEvidence && Object.keys(diagnosisData.additionalEvidence).length > 0) {
+        let str = "";
+        for (const [key, value] of Object.entries(diagnosisData.additionalEvidence)) {
+          str += `${key}: ${this.formatEvidenceValue(value)}, `;
+        }
+        return str;
+      } else {
+        return `Initial Diagnosis`;
+      }
+    },
 
     scrollTabs(direction) {
       const container = this.$refs.tabsContainer;
@@ -580,15 +699,16 @@ export default {
     },
     
     // Format evidence values for display
-  formatEvidenceValue(value) {
-    if (typeof value === 'boolean') {
-      return value ? 'Yes' : 'No';
-    } else if (!isNaN(value)) {
-      return value.toString();
-    } else {
-      return value;
-    }
-  },
+    formatEvidenceValue(value) {
+      if (typeof value === 'boolean') {
+        return value ? 'Yes' : 'No';
+      } else if (!isNaN(value)) {
+        return value.toString();
+      } else {
+        return value;
+      }
+    },
+
     updateScrollButtons() {
       const container = this.$refs.tabsContainer;
       
@@ -645,85 +765,85 @@ export default {
     },
     
     dragStart(event, index) {
-    this.draggedTabIndex = index;
-    this.draggedTab = this.diagnosticHistory[index];
+      this.draggedTabIndex = index;
+      this.draggedTab = this.diagnosticHistory[index];
+      
+      // Create a custom drag image
+      const dragImage = event.target.cloneNode(true);
+      dragImage.style.opacity = '0.7';
+      dragImage.style.position = 'absolute';
+      dragImage.style.top = '-1000px';
+      document.body.appendChild(dragImage);
+      event.dataTransfer.setDragImage(dragImage, 10, 10);
+      
+      // Set data transfer
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', index);
+      
+      // Add dragging class
+      event.target.classList.add('dragging');
+      
+      // Remove the drag image after a short delay
+      setTimeout(() => {
+        document.body.removeChild(dragImage);
+      }, 0);
+    },
     
-    // Create a custom drag image
-    const dragImage = event.target.cloneNode(true);
-    dragImage.style.opacity = '0.7';
-    dragImage.style.position = 'absolute';
-    dragImage.style.top = '-1000px';
-    document.body.appendChild(dragImage);
-    event.dataTransfer.setDragImage(dragImage, 10, 10);
-    
-    // Set data transfer
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', index);
-    
-    // Add dragging class
-    event.target.classList.add('dragging');
-    
-    // Remove the drag image after a short delay
-    setTimeout(() => {
-      document.body.removeChild(dragImage);
-    }, 0);
-  },
-    
-  dragOver(event) {
-    event.preventDefault();
-    const target = this.findTabElement(event.target);
-    if (!target) return;
-    
-    const tabIndex = parseInt(target.getAttribute('data-index') || -1);
-    if (tabIndex !== -1 && tabIndex !== this.draggedTabIndex) {
-      this.dragOverIndex = tabIndex;
-    }
-  },
-  
-  dragEnd(event) {
-    event.target.classList.remove('dragging');
-    this.draggedTabIndex = null;
-    this.draggedTab = null;
-    this.dragOverIndex = null;
-  },
-  
-  drop(event, index) {
-    event.preventDefault();
-    if (this.draggedTabIndex === null || this.draggedTabIndex === index) return;
-    
-    // Remove tab from old position and insert at new position
-    this.diagnosticHistory.splice(this.draggedTabIndex, 1);
-    this.diagnosticHistory.splice(index, 0, this.draggedTab);
-    
-    // Update active tab if needed
-    if (this.activeDiagnosticTab === this.draggedTabIndex) {
-      this.activeDiagnosticTab = index;
-    } else if (
-      this.activeDiagnosticTab > this.draggedTabIndex && 
-      this.activeDiagnosticTab <= index
-    ) {
-      this.activeDiagnosticTab--;
-    } else if (
-      this.activeDiagnosticTab < this.draggedTabIndex && 
-      this.activeDiagnosticTab >= index
-    ) {
-      this.activeDiagnosticTab++;
-    }
-    
-    this.draggedTabIndex = null;
-    this.draggedTab = null;
-    this.dragOverIndex = null;
-  },
-
-  findTabElement(element) {
-    while (element && !element.classList.contains('draggable-tabs')) {
-      if (element.tagName.toLowerCase() === 'li') {
-        return element;
+    dragOver(event) {
+      event.preventDefault();
+      const target = this.findTabElement(event.target);
+      if (!target) return;
+      
+      const tabIndex = parseInt(target.getAttribute('data-index') || -1);
+      if (tabIndex !== -1 && tabIndex !== this.draggedTabIndex) {
+        this.dragOverIndex = tabIndex;
       }
-      element = element.parentElement;
-    }
-    return null;
-  },
+    },
+  
+    dragEnd(event) {
+      event.target.classList.remove('dragging');
+      this.draggedTabIndex = null;
+      this.draggedTab = null;
+      this.dragOverIndex = null;
+    },
+  
+    drop(event, index) {
+      event.preventDefault();
+      if (this.draggedTabIndex === null || this.draggedTabIndex === index) return;
+      
+      // Remove tab from old position and insert at new position
+      this.diagnosticHistory.splice(this.draggedTabIndex, 1);
+      this.diagnosticHistory.splice(index, 0, this.draggedTab);
+      
+      // Update active tab if needed
+      if (this.activeDiagnosticTab === this.draggedTabIndex) {
+        this.activeDiagnosticTab = index;
+      } else if (
+        this.activeDiagnosticTab > this.draggedTabIndex && 
+        this.activeDiagnosticTab <= index
+      ) {
+        this.activeDiagnosticTab--;
+      } else if (
+        this.activeDiagnosticTab < this.draggedTabIndex && 
+        this.activeDiagnosticTab >= index
+      ) {
+        this.activeDiagnosticTab++;
+      }
+      
+      this.draggedTabIndex = null;
+      this.draggedTab = null;
+      this.dragOverIndex = null;
+    },
+
+    findTabElement(element) {
+      while (element && !element.classList.contains('draggable-tabs')) {
+        if (element.tagName.toLowerCase() === 'li') {
+          return element;
+        }
+        element = element.parentElement;
+      }
+      return null;
+    },
 
     async startAstrobeeStatusPolling() {
       if (this.statusInterval) {
@@ -794,80 +914,83 @@ export default {
         console.error('Error getting Astrobee status:', error);
       }
     },
+    
     setupUserResponseListener() {
-    // Set up store subscription to listen for user messages
-    this.userResponseListener = this.$store.subscribe((mutation, state) => {
-      if (mutation.type === 'addDialoguePiece') {
-        const newMessage = mutation.payload;
-        
-        // Process only if we're waiting for a response and this is a user message
-        if (!this.lastInstructionProcessed && 
-            this.instructionIdentifier !== null &&
-            newMessage.writer === 'user') {
+      // Set up store subscription to listen for user messages
+      this.userResponseListener = this.$store.subscribe((mutation, state) => {
+        if (mutation.type === 'addDialoguePiece') {
+          const newMessage = mutation.payload;
           
-          this.processUserResponse(newMessage.visual_message[0]);
+          // Process only if we're waiting for a response and this is a user message
+          if (!this.lastInstructionProcessed && 
+              this.instructionIdentifier !== null &&
+              newMessage.writer === 'user') {
+            
+            this.processUserResponse(newMessage.visual_message[0]);
+          }
         }
-      }
-    });
-  },
-  async processUserResponse(message) {
-    try {
-      // Try to parse the user's message as a number
-      const userValue = parseFloat(message);
-      
-      if (!isNaN(userValue)) {
-        // Valid number response
-        console.log("Processing user response:", userValue);
+      });
+    },
+
+    async processUserResponse(message) {
+      try {
+        // Try to parse the user's message as a number
+        const userValue = parseFloat(message);
         
-        // Mark as processed to avoid duplicate handling
-        this.lastInstructionProcessed = true;
-        
-        // Prepare and send user response to backend
-        const reqData = new FormData();
-        reqData.append('user_response', userValue.toString());
-        reqData.append('instruction_id', this.instructionIdentifier);
-        
-        const response = await fetchPost('/api/at/user_response', reqData);
-        
-        if (response.ok) {
-          console.log("User response sent successfully");
+        if (!isNaN(userValue)) {
+          // Valid number response
+          console.log("Processing user response:", userValue);
           
-          // Confirm receipt to user
+          // Mark as processed to avoid duplicate handling
+          this.lastInstructionProcessed = true;
+          
+          // Prepare and send user response to backend
+          const reqData = new FormData();
+          reqData.append('user_response', userValue.toString());
+          reqData.append('instruction_id', this.instructionIdentifier);
+          
+          const response = await fetchPost('/api/at/user_response', reqData);
+          
+          if (response.ok) {
+            console.log("User response sent successfully");
+            
+            // Confirm receipt to user
+            this.$store.commit('addDialoguePiece', {
+              "voice_message": `Thank you, I've recorded your value of ${userValue}.`,
+              "visual_message_type": ["text"],
+              "visual_message": [`Thank you, I've recorded your value of ${userValue}.`],
+              "writer": "daphne"
+            });
+          } else {
+            console.error("Failed to send user response");
+          }
+        } else {
+          // Not a valid number
           this.$store.commit('addDialoguePiece', {
-            "voice_message": `Thank you, I've recorded your value of ${userValue}.`,
+            "voice_message": "I need a numerical value. Please try again.",
             "visual_message_type": ["text"],
-            "visual_message": [`Thank you, I've recorded your value of ${userValue}.`],
+            "visual_message": ["I need a numerical value. Please try again."],
             "writer": "daphne"
           });
-        } else {
-          console.error("Failed to send user response");
+          
+          // Keep the instruction as unprocessed so we'll try again
+          this.lastInstructionProcessed = false;
         }
-      } else {
-        // Not a valid number
-        this.$store.commit('addDialoguePiece', {
-          "voice_message": "I need a numerical value. Please try again.",
-          "visual_message_type": ["text"],
-          "visual_message": ["I need a numerical value. Please try again."],
-          "writer": "daphne"
-        });
-        
-        // Keep the instruction as unprocessed so we'll try again
-        this.lastInstructionProcessed = false;
+      } catch (error) {
+        console.error('Error processing user response:', error);
       }
-    } catch (error) {
-      console.error('Error processing user response:', error);
-    }
-  },
+    },
+
     getProbabilityColor(probability) {
-    // Return color based on probability value
-    if (probability < 0.1) {
-      return '#00cc00'; // green for very low probabilities
-    } else if (probability < 0.3) {
-      return '#ffcc00'; // yellow for medium probabilities
-    } else {
-      return '#ff3300'; // red for high probabilities
-    }
-  },
+      // Return color based on probability value
+      if (probability < 0.1) {
+        return '#00cc00'; // green for very low probabilities
+      } else if (probability < 0.3) {
+        return '#ffcc00'; // yellow for medium probabilities
+      } else {
+        return '#ff3300'; // red for high probabilities
+      }
+    },
   
     selectAllAnomalies: function() {
       let checked = [];
@@ -883,6 +1006,7 @@ export default {
         this.clearExplanations();
       }
     },
+
     showSignature(anomaly) {
       const sign = 'The signature of the anomaly ' + anomaly['name'] + ' is: ';
       let text = sign + '<ul>';
@@ -902,6 +1026,7 @@ export default {
         });
       }
     },
+
     showMissingSymptoms(anomaly) {
       const missing = 'The symptoms of the anomaly ' + anomaly['name'] + ' that are not present in this table are: ';
       let text = missing + '<ul>';
@@ -921,6 +1046,7 @@ export default {
         });
       }
     },
+
     errorMessage() {
       if (isNaN(document.getElementById("number").value)) {
         // Changing content and color of content
@@ -930,8 +1056,8 @@ export default {
         error.textContent = ""
       }
     },
-    deselectSymptom(symptom) {
 
+    deselectSymptom(symptom) {
       for (let i = 0; i < this.selectedLeftSymptoms.length; i++) {
         console.log(typeof this.selectedLeftSymptoms, typeof symptom)
         // Check if the symptom property of the current object is equal to the value you're looking for
@@ -952,9 +1078,9 @@ export default {
           break;
         }
       }
-
       this.$store.dispatch('removeSelectedSymptom', symptom);
     },
+
     clearSymptoms() {
       this.selectedLeftSymptoms.splice(0, this.selectedLeftSymptoms.length);
       this.selectedRightSymptoms.splice(0, this.selectedRightSymptoms.length);
@@ -969,11 +1095,13 @@ export default {
       this.explaining = false;
       this.checked = [];
     },
+
     clearFullDiagnosisReport() {
       this.$store.dispatch('clearDiagnosisReport');
       this.explaining = false;
       this.checked = [];
     },
+
     async requestKGDiagnosis() {
       this.allSelected = false;
       this.isLoading = true;
@@ -982,6 +1110,215 @@ export default {
       await this.$store.dispatch('requestKGDiagnosis', this.selectedSymptomsList);
       this.isLoading = false;
     },
+
+    async requestPhysicsDiagnosis() {
+      this.allSelected = false;
+      this.isLoading = true;
+      this.explaining = false;
+      this.checked = [];
+      this.showPhysicsTab = true;
+
+      // Generate physics diagnosis data
+      this.physicsDiagnosisData = {
+        mostProbableAnomaly: 'CDRA Failure',
+        probability: '88.73%',
+        componentAnomalies: [
+          { name: 'CO₂ Scrubber Valve Leak', score: '0.986', isHighlighted: true },
+          { name: 'Fan Bearing Wear', score: '0.942', isHighlighted: false },
+          { name: 'Absorption Bed Saturated', score: '0.871', isHighlighted: false },
+          { name: 'Heater Coil Failure', score: '0.790', isHighlighted: false },
+          { name: 'Pressure Sensor Drift', score: '0.732', isHighlighted: false }
+        ]
+      };
+
+      // Add a simple tab with physics diagnosis content
+      this.simpleTabs.push({
+        label: "Physics Diagnosis",
+        content: "Physics diagnosis result goes here."
+      });
+      this.activeSimpleTab = this.simpleTabs.length - 1;
+      this.isLoading = false;
+    },
+
+    togglePhysicsExplanation() {
+      this.showPhysicsExplanation = !this.showPhysicsExplanation;
+      if (this.showPhysicsExplanation) {
+        this.generateTelemetryGraph();
+      }
+    },
+
+    generateTelemetryGraph() {
+      this.$nextTick(() => {
+        const canvas = this.$refs.telemetryGraph;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+
+        // Generate sample telemetry data
+        const timePoints = 20;
+        const actualData = [];
+        const simulatedData = [];
+        const timeLabels = [];
+
+        // Generate actual telemetry (slightly noisy)
+        for (let i = 0; i < timePoints; i++) {
+          const baseValue = 50 + Math.sin(i * 0.3) * 20;
+          const noise = (Math.random() - 0.5) * 5;
+          actualData.push(baseValue + noise);
+          timeLabels.push(`T${i + 1}`);
+        }
+
+        // Generate simulated data based on the most probable anomaly
+        const anomalyEffect = this.getAnomalyEffect();
+        for (let i = 0; i < timePoints; i++) {
+          const baseValue = 50 + Math.sin(i * 0.3) * 20;
+          const anomalyInfluence = Math.max(0, (i - 5) / 10) * anomalyEffect;
+          const noise = (Math.random() - 0.5) * 3;
+          simulatedData.push(baseValue + anomalyInfluence + noise);
+        }
+
+        // Store data for potential future use
+        this.telemetryGraphData = {
+          actual: actualData,
+          simulated: simulatedData,
+          timeLabels: timeLabels
+        };
+
+        // Draw grid
+        this.drawGrid(ctx, width, height);
+
+        // Draw axes
+        this.drawAxes(ctx, width, height);
+
+        // Draw data lines
+        this.drawDataLine(ctx, actualData, width, height, '#0AFEFF', 'Actual');
+        this.drawDataLine(ctx, simulatedData, width, height, '#ff6b6b', 'Simulated');
+
+        // Draw legend
+        this.drawLegend(ctx, width, height);
+      });
+    },
+
+    getAnomalyEffect() {
+      // Different anomalies have different effects on telemetry
+      const anomalyName = this.physicsDiagnosisData.mostProbableAnomaly;
+      if (anomalyName.includes('Valve Leak')) return 15;
+      if (anomalyName.includes('Bearing Wear')) return 10;
+      if (anomalyName.includes('Bed Saturated')) return 20;
+      if (anomalyName.includes('Coil Failure')) return 25;
+      if (anomalyName.includes('Sensor Drift')) return 8;
+      return 12; // Default effect
+    },
+
+    drawGrid(ctx, width, height) {
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1;
+
+      // Vertical grid lines
+      for (let x = 0; x <= width; x += width / 10) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+
+      // Horizontal grid lines
+      for (let y = 0; y <= height; y += height / 6) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+    },
+
+    drawAxes(ctx, width, height) {
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 2;
+      ctx.fillStyle = '#ccc';
+      ctx.font = '12px Arial';
+
+      // Y-axis
+      ctx.beginPath();
+      ctx.moveTo(50, 0);
+      ctx.lineTo(50, height - 30);
+      ctx.stroke();
+
+      // X-axis
+      ctx.beginPath();
+      ctx.moveTo(50, height - 30);
+      ctx.lineTo(width - 20, height - 30);
+      ctx.stroke();
+
+      // Y-axis labels
+      for (let i = 0; i <= 6; i++) {
+        const y = height - 30 - (i * (height - 30) / 6);
+        const value = 80 - (i * 10);
+        ctx.fillText(value.toString(), 10, y + 4);
+      }
+
+      // X-axis labels (time points)
+      const timeLabels = this.telemetryGraphData.timeLabels;
+      for (let i = 0; i < timeLabels.length; i += 2) {
+        const x = 50 + (i * (width - 70) / (timeLabels.length - 1));
+        ctx.fillText(timeLabels[i], x - 10, height - 10);
+      }
+    },
+
+    drawDataLine(ctx, data, width, height, color, label) {
+      if (!data || data.length === 0) return;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.fillStyle = color;
+
+      const padding = 50;
+      const graphWidth = width - padding - 20;
+      const graphHeight = height - padding - 30;
+
+      ctx.beginPath();
+      data.forEach((value, index) => {
+        const x = padding + (index * graphWidth / (data.length - 1));
+        const y = height - 30 - ((value - 20) * graphHeight / 60);
+        
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.stroke();
+
+      // Draw data points
+      data.forEach((value, index) => {
+        const x = padding + (index * graphWidth / (data.length - 1));
+        const y = height - 30 - ((value - 20) * graphHeight / 60);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+    },
+
+    drawLegend(ctx, width, height) {
+      ctx.fillStyle = '#ccc';
+      ctx.font = '14px Arial';
+      
+      // Legend background
+      ctx.fillStyle = 'rgba(0, 30, 30, 0.8)';
+      ctx.fillRect(width - 200, 20, 180, 60);
+      
+      // Legend text
+      ctx.fillStyle = '#0AFEFF';
+      ctx.fillText('Actual Telemetry', width - 190, 40);
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillText('Simulated Telemetry', width - 190, 60);
+    },
+
     async requestDiagnosis() {
       this.allSelected = false;
       this.isLoading = true;
@@ -1055,304 +1392,308 @@ export default {
       }
       this.isLoading = false;
     },
+
     showSymptomSelectionDialog() {
-    this.showSymptomDialog = true;
-  },
+      this.showSymptomDialog = true;
+    },
 
-  setupBestEvidenceListener() {
-    // Add event listener for options response
-    if (!this.bestEvidenceListener) {
-      this.$root.$on('bestEvidenceResponse', this.handleBestEvidenceResponse);
-      this.bestEvidenceListener = true;
-    }
-  },
-
-  handleBestEvidenceResponse(response) {
-    if (response === "Yes") {
-      // Show damage assessment slider for best evidence
-      this.showDamageAssessmentSlider();
-    } else {
-      // User doesn't want to provide additional evidence
-      this.$store.commit('addDialoguePiece', {
-        "voice_message": "Alright, I'll work with the current information.",
-        "visual_message_type": ["text"],
-        "visual_message": ["Alright, I'll work with the current information."],
-        "writer": "daphne"
-      });
-    }
-    
-    // Clean up event listener
-    this.$root.$off('bestEvidenceResponse', this.handleBestEvidenceResponse);
-    this.bestEvidenceListener = false;
-  },
-
-  showDamageAssessmentSlider() {
-    this.$store.commit('addDialoguePiece', {
-      "voice_message": `On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`,
-      "visual_message_type": ["slider"],
-      "visual_message": [`On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`],
-      "writer": "daphne",
-      "sliderOptions": {
-        "min": 1,
-        "max": 5,
-        "step": 1,
-        "defaultValue": 3,
-        "callbackEvent": "damageAssessmentResponse"
+    setupBestEvidenceListener() {
+      // Add event listener for options response
+      if (!this.bestEvidenceListener) {
+        this.$root.$on('bestEvidenceResponse', this.handleBestEvidenceResponse);
+        this.bestEvidenceListener = true;
       }
-    });
-    
-    // Set up listener for slider response
-    this.$root.$on('damageAssessmentResponse', this.handleDamageAssessmentResponse);
-  },
+    },
 
-  handleDamageAssessmentResponse(value) {
-    // Add the assessment to additional evidence
-    this.additionalEvidence[this.bestEvidence] = value
-    
-    // // Thank the user and submit the evidence
-    // this.$store.commit('addDialoguePiece', {
-    //   "voice_message": `Thank you for your assessment of ${this.bestEvidence}.`,
-    //   "visual_message_type": ["text"],
-    //   "visual_message": [`Thank you for your assessment of ${this.bestEvidence}.`],
-    //   "writer": "daphne"
-    // });
-    
-    // Clean up listener
-    this.$root.$off('damageAssessmentResponse', this.handleDamageAssessmentResponse);
-    
-    // Submit the evidence and update diagnosis
-    this.submitAdditionalEvidence();
-  },
+    handleBestEvidenceResponse(response) {
+      if (response === "Yes") {
+        // Show damage assessment slider for best evidence
+        this.showDamageAssessmentSlider();
+      } else {
+        // User doesn't want to provide additional evidence
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": "Alright, I'll work with the current information.",
+          "visual_message_type": ["text"],
+          "visual_message": ["Alright, I'll work with the current information."],
+          "writer": "daphne"
+        });
+      }
+      
+      // Clean up event listener
+      this.$root.$off('bestEvidenceResponse', this.handleBestEvidenceResponse);
+      this.bestEvidenceListener = false;
+    },
 
-  handleSymptomSelection(selectedSymptoms) {
-    this.showSymptomDialog = false;
-    this.symptomsToConfirm = selectedSymptoms;
-    this.currentSymptomIndex = -1;
-    this.additionalEvidence = {}; // Reset evidence
-    
-    // Start asking about each symptom
-    this.askNextSymptom();
-  },
-  askNextSymptom() {
-  this.currentSymptomIndex++;
+    showDamageAssessmentSlider() {
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": `On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`,
+        "visual_message_type": ["slider"],
+        "visual_message": [`On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`],
+        "writer": "daphne",
+        "sliderOptions": {
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "defaultValue": 3,
+          "callbackEvent": "damageAssessmentResponse"
+        }
+      });
+      
+      // Set up listener for slider response
+      this.$root.$on('damageAssessmentResponse', this.handleDamageAssessmentResponse);
+    },
+
+    handleDamageAssessmentResponse(value) {
+      // Add the assessment to additional evidence
+      this.additionalEvidence[this.bestEvidence] = value
+      
+      // // Thank the user and submit the evidence
+      // this.$store.commit('addDialoguePiece', {
+      //   "voice_message": `Thank you for your assessment of ${this.bestEvidence}.`,
+      //   "visual_message_type": ["text"],
+      //   "visual_message": [`Thank you for your assessment of ${this.bestEvidence}.`],
+      //   "writer": "daphne"
+      // });
+      
+      // Clean up listener
+      this.$root.$off('damageAssessmentResponse', this.handleDamageAssessmentResponse);
+      
+      // Submit the evidence and update diagnosis
+      this.submitAdditionalEvidence();
+    },
+
+    handleSymptomSelection(selectedSymptoms) {
+      this.showSymptomDialog = false;
+      this.symptomsToConfirm = selectedSymptoms;
+      this.currentSymptomIndex = -1;
+      this.additionalEvidence = {}; // Reset evidence
+      
+      // Start asking about each symptom
+      this.askNextSymptom();
+    },
   
-  if (this.currentSymptomIndex < this.symptomsToConfirm.length) {
-    const currentSymptom = this.symptomsToConfirm[this.currentSymptomIndex];
-    
-    // Set up event listener for the response if not already set
-    if (!this.yesNoQuestionListener) {
-      this.$root.$on('symptomEvidenceResponse', this.handleSymptomEvidenceResponse);
-      this.yesNoQuestionListener = true;
-    }
-    
-    // Ask about this symptom with Yes/No buttons
-    this.$store.commit('addDialoguePiece', {
-      "voice_message": `Can you report the status of ${currentSymptom}?`,
-      "visual_message_type": ["text"],
-      "visual_message": [`Can you report the status of ${currentSymptom} ?`],
-      "writer": "daphne",
-      "options": ["Yes", "No"],
-      "optionsCallbackEvent": "symptomEvidenceResponse"
-    });
-  } else {
-    // All done, submit the evidence
-    this.submitAdditionalEvidence();
-  }
-},
-
-handleSymptomEvidenceResponse(response) {
-  const currentSymptom = this.symptomsToConfirm[this.currentSymptomIndex];
-  const isPresent = response === "Yes";
-  
-  // Record the evidence
-  this.additionalEvidence[currentSymptom] = isPresent;
-  
-  // Ask about next symptom
-  this.askNextSymptom();
-},
-
-  setupYesNoQuestionListener() {
-    // Clean up previous listener if exists
-    if (this.yesNoQuestionListener) {
-      this.yesNoQuestionListener();
-    }
-    
-    this.yesNoQuestionListener = this.$store.subscribe((mutation, state) => {
-      if (mutation.type === 'addDialoguePiece') {
-        const newMessage = mutation.payload;
+    askNextSymptom() {
+      this.currentSymptomIndex++;
+      
+      if (this.currentSymptomIndex < this.symptomsToConfirm.length) {
+        const currentSymptom = this.symptomsToConfirm[this.currentSymptomIndex];
         
-        // Check if this is a user response to our yes/no question
-        if (newMessage.writer === 'user' && 
-            (newMessage.visual_message[0] === 'Yes' || newMessage.visual_message[0] === 'No')) {
-          
-          // Unsubscribe after processing
-          this.yesNoQuestionListener();
-          this.yesNoQuestionListener = null;
-          
-          const currentSymptom = this.symptomsToConfirm[this.currentSymptomIndex];
-          const isPresent = newMessage.visual_message[0] === 'Yes';
-          
-          // Record the evidence
-          this.additionalEvidence[currentSymptom] = isPresent;
-          
-          // Ask about next symptom
-          this.askNextSymptom();
+        // Set up event listener for the response if not already set
+        if (!this.yesNoQuestionListener) {
+          this.$root.$on('symptomEvidenceResponse', this.handleSymptomEvidenceResponse);
+          this.yesNoQuestionListener = true;
         }
+        
+        // Ask about this symptom with Yes/No buttons
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `Can you report the status of ${currentSymptom}?`,
+          "visual_message_type": ["text"],
+          "visual_message": [`Can you report the status of ${currentSymptom} ?`],
+          "writer": "daphne",
+          "options": ["Yes", "No"],
+          "optionsCallbackEvent": "symptomEvidenceResponse"
+        });
+      } else {
+        // All done, submit the evidence
+        this.submitAdditionalEvidence();
       }
-    });
-  },
-  handleAddHypotheticalDiagnosis(eventData) {
-    // Get the last message which contains the hypothetical data
-    const dialogueHistory = this.$store.state.daphne.dialogueHistory;
-    const lastMessage = dialogueHistory[dialogueHistory.length - 2];
-    console.log("last message", lastMessage);
-    console.log("last message hypothetical data", lastMessage.hypothetical_data);
-    
-    if (!lastMessage || !lastMessage.hypothetical_data) {
-      console.error("No hypothetical data found in the last message");
-      return;
-    }
-    
-    // Create a new diagnosis report object from the hypothetical data
-    const hypotheticalDiagnosis = {
-      diagnosis_list: lastMessage.hypothetical_data.diagnosis_list,
-      additional_evidence: lastMessage.hypothetical_data.additional_evidence,
-      is_hypothetical: true,
-      hypothetical_evidence: lastMessage.hypothetical_data.additional_evidence
-    };
-    
-    // Add to diagnostic history
-    this.diagnosticHistory.push(hypotheticalDiagnosis);
-    
-    // Switch to the new tab
-    this.activeDiagnosticTab = this.diagnosticHistory.length - 1;
-    
-    // Confirm to the user
-    this.$store.commit('addDialoguePiece', {
-      "voice_message": "I've added this hypothetical scenario to your diagnosis history tabs.",
-      "visual_message_type": ["text"],
-      "visual_message": ["I've added this hypothetical scenario to your diagnosis history tabs. You can switch between tabs to compare different evidence scenarios."],
-      "writer": "daphne"
-    });
-  },
+    },
 
-  async submitAdditionalEvidence() {
-    try {
-      this.isLoading = true;
-      this.$store.commit('addDialoguePiece', {
-        "voice_message": "Thank you for providing additional evidence. I'm updating the diagnosis...",
-        "visual_message_type": ["text"],
-        "visual_message": ["Thank you for providing additional evidence. I'm updating the diagnosis..."],
-        "writer": "daphne"
-      });
+    handleSymptomEvidenceResponse(response) {
+      const currentSymptom = this.symptomsToConfirm[this.currentSymptomIndex];
+      const isPresent = response === "Yes";
       
-      // Convert evidence to API format
-
-      // const currentDiagnosisReport = this.$store.getters.getDiagnosisReport;
-      // if (currentDiagnosisReport && currentDiagnosisReport.diagnosis_list) {
-      //   this.diagnosticHistory.push(JSON.parse(JSON.stringify(currentDiagnosisReport)));
-      // }
-      // const evidenceData = {
-      //   additional_evidence: this.additionalEvidence,
-      //   current_telemetry_values: this.currentTelemetryValues,
-      // };
-
-      console.log("Submitting additional evidence:", this.additionalEvidence);
-
-      const requestPayload = {
-      symptoms: this.selectedSymptomsList,
-      additional_evidence: this.additionalEvidence,
-      current_telemetry_values: this.currentTelemetryValues
-    };
+      // Record the evidence
+      this.additionalEvidence[currentSymptom] = isPresent;
       
-      // Make API call
+      // Ask about next symptom
+      this.askNextSymptom();
+    },
 
-      // await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
-      await this.$store.dispatch('requestDiagnosisWithEvidence', requestPayload);
-      const diagnosisReport = this.$store.getters.getDiagnosisReport;
+    setupYesNoQuestionListener() {
+      // Clean up previous listener if exists
+      if (this.yesNoQuestionListener) {
+        this.yesNoQuestionListener();
+      }
       
-      this.unconfirmedSymptoms = diagnosisReport.hidden_components;
-      this.bestEvidence = diagnosisReport.best_evidence;     
-      this.currentTelemetryValues = diagnosisReport.current_telemetry_values
-      
-      this.$store.commit('addDialoguePiece', {
-        "voice_message": "Diagnosis has been updated with your additional evidence!",
-        "visual_message_type": ["text"],
-        "visual_message": ["Diagnosis has been updated with your additional evidence!"],
-        "writer": "daphne"
-      });
-
-      this.activeDiagnosticTab = this.diagnosticHistory.length;
-
-      this.diagnosticHistory.push(JSON.parse(JSON.stringify(diagnosisReport)));
-      console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
-      console.log("current diagnostic history", this.diagnosticHistory);
-
-      setTimeout(() => {
-        if (this.bestEvidence) {
-          this.$store.commit('addDialoguePiece', {
-            "voice_message": `I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
-            "visual_message_type": ["text"],
-            "visual_message": [`I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
-            "writer": "daphne",
-            "options": ["Yes", "No"],
-            "optionsCallbackEvent": "bestEvidenceResponse"
-          });
+      this.yesNoQuestionListener = this.$store.subscribe((mutation, state) => {
+        if (mutation.type === 'addDialoguePiece') {
+          const newMessage = mutation.payload;
           
-          // Set up listener for response
-          this.setupBestEvidenceListener();
+          // Check if this is a user response to our yes/no question
+          if (newMessage.writer === 'user' && 
+              (newMessage.visual_message[0] === 'Yes' || newMessage.visual_message[0] === 'No')) {
+            
+            // Unsubscribe after processing
+            this.yesNoQuestionListener();
+            this.yesNoQuestionListener = null;
+            
+            const currentSymptom = this.symptomsToConfirm[this.currentSymptomIndex];
+            const isPresent = newMessage.visual_message[0] === 'Yes';
+            
+            // Record the evidence
+            this.additionalEvidence[currentSymptom] = isPresent;
+            
+            // Ask about next symptom
+            this.askNextSymptom();
+          }
         }
-      }, 1000);
+      });
+    },
 
-    } catch (error) {
-      console.error('Error updating diagnosis with additional evidence:', error);
+    handleAddHypotheticalDiagnosis(eventData) {
+      // Get the last message which contains the hypothetical data
+      const dialogueHistory = this.$store.state.daphne.dialogueHistory;
+      const lastMessage = dialogueHistory[dialogueHistory.length - 2];
+      console.log("last message", lastMessage);
+      console.log("last message hypothetical data", lastMessage.hypothetical_data);
+      
+      if (!lastMessage || !lastMessage.hypothetical_data) {
+        console.error("No hypothetical data found in the last message");
+        return;
+      }
+      
+      // Create a new diagnosis report object from the hypothetical data
+      const hypotheticalDiagnosis = {
+        diagnosis_list: lastMessage.hypothetical_data.diagnosis_list,
+        additional_evidence: lastMessage.hypothetical_data.additional_evidence,
+        is_hypothetical: true,
+        hypothetical_evidence: lastMessage.hypothetical_data.additional_evidence
+      };
+      
+      // Add to diagnostic history
+      this.diagnosticHistory.push(hypotheticalDiagnosis);
+      
+      // Switch to the new tab
+      this.activeDiagnosticTab = this.diagnosticHistory.length - 1;
+      
+      // Confirm to the user
       this.$store.commit('addDialoguePiece', {
-        "voice_message": "I couldn't update the diagnosis with your additional evidence. Please try again later.",
+        "voice_message": "I've added this hypothetical scenario to your diagnosis history tabs.",
         "visual_message_type": ["text"],
-        "visual_message": ["I couldn't update the diagnosis with your additional evidence. Please try again later."],
+        "visual_message": ["I've added this hypothetical scenario to your diagnosis history tabs. You can switch between tabs to compare different evidence scenarios."],
         "writer": "daphne"
       });
-    } finally {
-      this.isLoading = false;
-    }
-  },
+    },
 
-  setupAdditionalEvidenceListener() {
-  // Add event listener for options response
-  if (!this.additionalEvidenceListener) {
-    this.$root.$on('additionalEvidenceResponse', this.handleAdditionalEvidenceResponse);
-    this.additionalEvidenceListener = true;
-  }
-  
-  // Show question with Yes/No buttons
-  this.$store.commit('addDialoguePiece', {
-    "voice_message": "Would you like to provide additional evidence to improve the diagnosis?",
-    "visual_message_type": ["text"],
-    "visual_message": ["Would you like to provide additional evidence to improve the diagnosis?"],
-    "writer": "daphne",
-    "options": ["Yes", "No"],
-    "optionsCallbackEvent": "additionalEvidenceResponse"
-  });
-},
+    async submitAdditionalEvidence() {
+      try {
+        this.isLoading = true;
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": "Thank you for providing additional evidence. I'm updating the diagnosis...",
+          "visual_message_type": ["text"],
+          "visual_message": ["Thank you for providing additional evidence. I'm updating the diagnosis..."],
+          "writer": "daphne"
+        });
+        
+        // Convert evidence to API format
 
-handleAdditionalEvidenceResponse(response) {
-  if (response === "Yes") {
-    // Show symptom selection dialog
-    this.showSymptomDialog = true;
-  } else {
-    // User doesn't want to provide additional evidence
-    this.$store.commit('addDialoguePiece', {
-      "voice_message": "Alright, I'll work with the current information.",
-      "visual_message_type": ["text"],
-      "visual_message": ["Alright, I'll work with the current information."],
-      "writer": "daphne"
-    });
-  }
-  
-  // Clean up event listener
-  this.$root.$off('additionalEvidenceResponse', this.handleAdditionalEvidenceResponse);
-  this.additionalEvidenceListener = false;
-},
+        // const currentDiagnosisReport = this.$store.getters.getDiagnosisReport;
+        // if (currentDiagnosisReport && currentDiagnosisReport.diagnosis_list) {
+        //   this.diagnosticHistory.push(JSON.parse(JSON.stringify(currentDiagnosisReport)));
+        // }
+        // const evidenceData = {
+        //   additional_evidence: this.additionalEvidence,
+        //   current_telemetry_values: this.currentTelemetryValues,
+        // };
+
+        console.log("Submitting additional evidence:", this.additionalEvidence);
+
+        const requestPayload = {
+        symptoms: this.selectedSymptomsList,
+        additional_evidence: this.additionalEvidence,
+        current_telemetry_values: this.currentTelemetryValues
+      };
+        
+        // Make API call
+
+        // await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
+        await this.$store.dispatch('requestDiagnosisWithEvidence', requestPayload);
+        const diagnosisReport = this.$store.getters.getDiagnosisReport;
+        
+        this.unconfirmedSymptoms = diagnosisReport.hidden_components;
+        this.bestEvidence = diagnosisReport.best_evidence;     
+        this.currentTelemetryValues = diagnosisReport.current_telemetry_values
+        
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": "Diagnosis has been updated with your additional evidence!",
+          "visual_message_type": ["text"],
+          "visual_message": ["Diagnosis has been updated with your additional evidence!"],
+          "writer": "daphne"
+        });
+
+        this.activeDiagnosticTab = this.diagnosticHistory.length;
+
+        this.diagnosticHistory.push(JSON.parse(JSON.stringify(diagnosisReport)));
+        console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
+        console.log("current diagnostic history", this.diagnosticHistory);
+
+        setTimeout(() => {
+          if (this.bestEvidence) {
+            this.$store.commit('addDialoguePiece', {
+              "voice_message": `I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
+              "visual_message_type": ["text"],
+              "visual_message": [`I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
+              "writer": "daphne",
+              "options": ["Yes", "No"],
+              "optionsCallbackEvent": "bestEvidenceResponse"
+            });
+            
+            // Set up listener for response
+            this.setupBestEvidenceListener();
+          }
+        }, 1000);
+
+      } catch (error) {
+        console.error('Error updating diagnosis with additional evidence:', error);
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": "I couldn't update the diagnosis with your additional evidence. Please try again later.",
+          "visual_message_type": ["text"],
+          "visual_message": ["I couldn't update the diagnosis with your additional evidence. Please try again later."],
+          "writer": "daphne"
+        });
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    setupAdditionalEvidenceListener() {
+      // Add event listener for options response
+      if (!this.additionalEvidenceListener) {
+        this.$root.$on('additionalEvidenceResponse', this.handleAdditionalEvidenceResponse);
+        this.additionalEvidenceListener = true;
+      }
+      
+      // Show question with Yes/No buttons
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": "Would you like to provide additional evidence to improve the diagnosis?",
+        "visual_message_type": ["text"],
+        "visual_message": ["Would you like to provide additional evidence to improve the diagnosis?"],
+        "writer": "daphne",
+        "options": ["Yes", "No"],
+        "optionsCallbackEvent": "additionalEvidenceResponse"
+      });
+    },
+
+    handleAdditionalEvidenceResponse(response) {
+      if (response === "Yes") {
+        // Show symptom selection dialog
+        this.showSymptomDialog = true;
+      } else {
+        // User doesn't want to provide additional evidence
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": "Alright, I'll work with the current information.",
+          "visual_message_type": ["text"],
+          "visual_message": ["Alright, I'll work with the current information."],
+          "writer": "daphne"
+        });
+      }
+      
+      // Clean up event listener
+      this.$root.$off('additionalEvidenceResponse', this.handleAdditionalEvidenceResponse);
+      this.additionalEvidenceListener = false;
+    },
+
     async selectAnomaly(anomalyName) {
       this.isAnomalySelected = true;
         if (anomalyName.includes('&')) {
@@ -1373,12 +1714,15 @@ handleAdditionalEvidenceResponse(response) {
         }
         this.isAnomalySelected = false;
     },
+
     recoverSymptomsList() {
       this.$store.dispatch('recoverSymptomsList')
     },
+
     diagnosisTutorial(event) {
       this.$root.$emit('diagnosisTutorialIndividual');
     },
+
     showExplanations() {
       this.isLoading = true;
       console.log('Checked anomalies:', this.checked); // <-- Add this line
@@ -1394,10 +1738,12 @@ handleAdditionalEvidenceResponse(response) {
         console.log('Showing explanations for anomalies:', this.checked);
       }
     },
+
     clearExplanations() {
       this.explaining = false;
       this.checked = [];
     },
+
     tickOrCross(anomaly, symptom) {
       let ticksOrCross = 'cross'
       for (let i = 0; i < anomaly.length; i++) {
@@ -1407,7 +1753,20 @@ handleAdditionalEvidenceResponse(response) {
       }
       return ticksOrCross;
     },
+
+    addSimpleTab(label, content) {
+      this.simpleTabs.push({ label, content });
+      this.activeSimpleTab = this.simpleTabs.length - 1;
+    },
+    
+    closeSimpleTab(index) {
+      this.simpleTabs.splice(index, 1);
+      if (this.activeSimpleTab >= this.simpleTabs.length) {
+        this.activeSimpleTab = this.simpleTabs.length - 1;
+      }
+    }
   },
+
   mounted() {
     //main
     this.startAstrobeeStatusPolling();
@@ -1456,6 +1815,11 @@ handleAdditionalEvidenceResponse(response) {
       this.$nextTick(() => {
         this.updateScrollButtons();
       });
+    },
+    'physicsDiagnosisData.mostProbableAnomaly'() {
+      if (this.showPhysicsExplanation) {
+        this.generateTelemetryGraph();
+      }
     }
   }
 }
@@ -1709,4 +2073,61 @@ handleAdditionalEvidenceResponse(response) {
   transform: scale(0.95);
 }
 
+.physics-diagnosis-report {
+  background: #001e1e;
+  border-radius: 6px;
+  padding: 18px;
+  margin: 0;
+}
+
+.physics-title-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #003f3f;
+  padding: 12px 18px;
+  border-radius: 4px;
+  margin-bottom: 18px;
+}
+
+.physics-content-section {
+  display: flex;
+  gap: 24px;
+  margin-top: 0;
+}
+
+.physics-table-section {
+  flex: 1.2;
+}
+
+.physics-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #111;
+  color: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.physics-table th, .physics-table td {
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.physics-table th {
+  background: #002E2E;
+  color: #0AFEFF;
+}
+
+.physics-table tr:not(:first-child):hover {
+  background: #003f3f;
+}
+
+.physics-image-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 220px;
+}
 </style>
