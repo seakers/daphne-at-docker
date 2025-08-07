@@ -116,22 +116,18 @@
             
             <!-- Telemetry Comparison Graph -->
             <div v-if="showPhysicsExplanation" class="physics-explanation-section" style="margin-top: 20px; text-align: center;">
-              <div style="color:#0AFEFF; margin-bottom:15px; font-size: 16px; font-weight: bold;">
-                Telemetry Trend Comparison
+              <!-- Error Display -->
+              <div v-if="physicsDiagnosisError" style="background: #c0392b; color: white; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <strong>Physics Diagnosis Error:</strong> {{ physicsDiagnosisError }}
               </div>
-              <div class="telemetry-graph-container" style="background: #001e1e; border-radius: 6px; padding: 20px; min-height: 300px; display: inline-block; max-width: 90%;">
-                <canvas ref="telemetryGraph" width="800" height="300"></canvas>
-              </div>
-              <div style="margin-top: 15px; color: #ccc; font-size: 14px;">
-                <div style="display: flex; justify-content: center; gap: 30px;">
-                  <div style="display: flex; align-items: center;">
-                    <div style="width: 20px; height: 3px; background: #0AFEFF; margin-right: 8px;"></div>
-                    <span>Actual Telemetry</span>
-                  </div>
-                  <div style="display: flex; align-items: center;">
-                    <div style="width: 20px; height: 3px; background: #ff6b6b; margin-right: 8px;"></div>
-                    <span>Simulated ({{ physicsDiagnosisData.mostProbableAnomaly }})</span>
-                  </div>
+              
+              <!-- Graph Display -->
+              <div v-if="!physicsDiagnosisError">
+                <div style="color:#0AFEFF; margin-bottom:15px; font-size: 16px; font-weight: bold;">
+                  Telemetry Trend Comparison
+                </div>
+                <div class="telemetry-graph-container" style="background: #001e1e; border-radius: 6px; padding: 20px; min-height: 300px; display: inline-block; max-width: 90%;">
+                  <canvas ref="telemetryGraph" width="800" height="300"></canvas>
                 </div>
               </div>
             </div>
@@ -613,9 +609,10 @@ export default {
       showPhysicsExplanation: false,
       telemetryGraphData: {
         actual: [],
-        simulated: [],
+        simulated: {},
         timeLabels: []
       },
+      physicsDiagnosisError: null,
     }
   },
 
@@ -1117,27 +1114,68 @@ export default {
       this.explaining = false;
       this.checked = [];
       this.showPhysicsTab = true;
+      this.physicsDiagnosisError = null; // Clear any previous errors
 
-      // Generate physics diagnosis data
-      this.physicsDiagnosisData = {
-        mostProbableAnomaly: 'CDRA Failure',
-        probability: '88.73%',
-        componentAnomalies: [
-          { name: 'CO₂ Scrubber Valve Leak', score: '0.986', isHighlighted: true },
-          { name: 'Fan Bearing Wear', score: '0.942', isHighlighted: false },
-          { name: 'Absorption Bed Saturated', score: '0.871', isHighlighted: false },
-          { name: 'Heater Coil Failure', score: '0.790', isHighlighted: false },
-          { name: 'Pressure Sensor Drift', score: '0.732', isHighlighted: false }
-        ]
-      };
+      try {
+        // Request physics diagnosis from backend
+        await this.$store.dispatch('requestPhysicsDiagnosis', this.selectedSymptomsList);
+        
+        // Get the diagnosis report from store
+        const diagnosisReport = this.$store.getters.getDiagnosisReport;
+        
+        console.log("Physics Diagnosis - Raw diagnosis report:", diagnosisReport);
+        console.log("Physics Diagnosis - Has physics_diagnosis_data:", diagnosisReport && diagnosisReport.physics_diagnosis_data);
+        console.log("Physics Diagnosis - Report keys:", diagnosisReport ? Object.keys(diagnosisReport) : 'No report');
+        
+        if (diagnosisReport && diagnosisReport.physics_diagnosis_data) {
+          // Convert backend data to frontend format
+          this.physicsDiagnosisData = {
+            mostProbableAnomaly: diagnosisReport.physics_diagnosis_data.most_probable_anomaly,
+            probability: diagnosisReport.physics_diagnosis_data.probability,
+            componentAnomalies: diagnosisReport.physics_diagnosis_data.component_anomalies.map(anomaly => ({
+              name: anomaly.name,
+              score: anomaly.score,
+              isHighlighted: anomaly.is_highlighted
+            }))
+          };
 
-      // Add a simple tab with physics diagnosis content
-      this.simpleTabs.push({
-        label: "Physics Diagnosis",
-        content: "Physics diagnosis result goes here."
-      });
-      this.activeSimpleTab = this.simpleTabs.length - 1;
-      this.isLoading = false;
+          // Convert telemetry data from backend
+          this.telemetryGraphData = {
+            actual: diagnosisReport.physics_diagnosis_data.actual_telemetry,
+            simulated: {},
+            timeLabels: diagnosisReport.physics_diagnosis_data.time_labels
+          };
+
+          // Convert simulated data to the expected format
+          diagnosisReport.physics_diagnosis_data.component_anomalies.forEach((anomaly, index) => {
+            this.telemetryGraphData.simulated[anomaly.name] = {
+              data: anomaly.telemetry_data,
+              color: this.getAnomalyColor(index),
+              score: parseFloat(anomaly.score)
+            };
+          });
+
+          console.log("Physics diagnosis data successfully loaded from backend");
+        } else {
+          // Show error message if no proper diagnosis report received
+          this.showPhysicsDiagnosisError("No physics diagnosis data received from backend. Please check the backend connection and try again.");
+          console.error("Invalid or missing physics diagnosis data from backend:", diagnosisReport);
+          return;
+        }
+
+        // Add a simple tab with physics diagnosis content
+        this.simpleTabs.push({
+          label: "Physics Diagnosis",
+          content: "Physics diagnosis result goes here."
+        });
+        this.activeSimpleTab = this.simpleTabs.length - 1;
+        
+      } catch (error) {
+        console.error("Error during physics diagnosis request:", error);
+        this.showPhysicsDiagnosisError("Failed to request physics diagnosis. Please check your connection and try again.");
+      } finally {
+        this.isLoading = false;
+      }
     },
 
     togglePhysicsExplanation() {
@@ -1145,6 +1183,12 @@ export default {
       if (this.showPhysicsExplanation) {
         this.generateTelemetryGraph();
       }
+    },
+
+    generateTelemetryDataForAnomalies() {
+      // This method is now disabled - data should come from backend
+      console.warn("Frontend telemetry data generation is disabled. Data should come from backend.");
+      return false;
     },
 
     generateTelemetryGraph() {
@@ -1159,35 +1203,12 @@ export default {
         // Clear canvas
         ctx.clearRect(0, 0, width, height);
 
-        // Generate sample telemetry data
-        const timePoints = 20;
-        const actualData = [];
-        const simulatedData = [];
-        const timeLabels = [];
-
-        // Generate actual telemetry (slightly noisy)
-        for (let i = 0; i < timePoints; i++) {
-          const baseValue = 50 + Math.sin(i * 0.3) * 20;
-          const noise = (Math.random() - 0.5) * 5;
-          actualData.push(baseValue + noise);
-          timeLabels.push(`T${i + 1}`);
+        // Check if we have data from backend
+        if (!this.telemetryGraphData.actual || this.telemetryGraphData.actual.length === 0) {
+          console.error("No telemetry data available from backend. Cannot display graph.");
+          this.showPhysicsDiagnosisError("No telemetry data available. Please ensure backend is properly connected.");
+          return;
         }
-
-        // Generate simulated data based on the most probable anomaly
-        const anomalyEffect = this.getAnomalyEffect();
-        for (let i = 0; i < timePoints; i++) {
-          const baseValue = 50 + Math.sin(i * 0.3) * 20;
-          const anomalyInfluence = Math.max(0, (i - 5) / 10) * anomalyEffect;
-          const noise = (Math.random() - 0.5) * 3;
-          simulatedData.push(baseValue + anomalyInfluence + noise);
-        }
-
-        // Store data for potential future use
-        this.telemetryGraphData = {
-          actual: actualData,
-          simulated: simulatedData,
-          timeLabels: timeLabels
-        };
 
         // Draw grid
         this.drawGrid(ctx, width, height);
@@ -1195,24 +1216,60 @@ export default {
         // Draw axes
         this.drawAxes(ctx, width, height);
 
-        // Draw data lines
-        this.drawDataLine(ctx, actualData, width, height, '#0AFEFF', 'Actual');
-        this.drawDataLine(ctx, simulatedData, width, height, '#ff6b6b', 'Simulated');
+        // Draw actual telemetry line
+        this.drawDataLine(ctx, this.telemetryGraphData.actual, width, height, '#0AFEFF', 'Actual');
+
+        // Draw simulated data lines for each anomaly
+        Object.entries(this.telemetryGraphData.simulated).forEach(([anomalyName, anomalyData]) => {
+          this.drawDataLine(ctx, anomalyData.data, width, height, anomalyData.color, anomalyName);
+        });
 
         // Draw legend
         this.drawLegend(ctx, width, height);
       });
     },
 
-    getAnomalyEffect() {
+    showPhysicsDiagnosisError(message) {
+      // Set error state
+      this.physicsDiagnosisError = message;
+      
+      // Show error message to user
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": message,
+        "visual_message_type": ["text"],
+        "visual_message": [message],
+        "writer": "daphne"
+      });
+      
+      // Also log to console for debugging
+      console.error("Physics Diagnosis Error:", message);
+    },
+
+    getAnomalyEffect(anomalyName) {
       // Different anomalies have different effects on telemetry
-      const anomalyName = this.physicsDiagnosisData.mostProbableAnomaly;
       if (anomalyName.includes('Valve Leak')) return 15;
       if (anomalyName.includes('Bearing Wear')) return 10;
       if (anomalyName.includes('Bed Saturated')) return 20;
       if (anomalyName.includes('Coil Failure')) return 25;
       if (anomalyName.includes('Sensor Drift')) return 8;
       return 12; // Default effect
+    },
+
+    getAnomalyColor(index) {
+      // Different colors for each anomaly line
+      const colors = [
+        '#ff6b6b', // Red
+        '#4ecdc4', // Teal
+        '#45b7d1', // Blue
+        '#96ceb4', // Green
+        '#feca57', // Yellow
+        '#ff9ff3', // Pink
+        '#54a0ff', // Light Blue
+        '#5f27cd', // Purple
+        '#00d2d3', // Cyan
+        '#ff9f43'  // Orange
+      ];
+      return colors[index % colors.length];
     },
 
     drawGrid(ctx, width, height) {
@@ -1262,10 +1319,18 @@ export default {
       }
 
       // X-axis labels (time points)
-      const timeLabels = this.telemetryGraphData.timeLabels;
-      for (let i = 0; i < timeLabels.length; i += 2) {
-        const x = 50 + (i * (width - 70) / (timeLabels.length - 1));
-        ctx.fillText(timeLabels[i], x - 10, height - 10);
+      const timeLabels = this.telemetryGraphData.timeLabels || [];
+      if (timeLabels.length > 0) {
+        for (let i = 0; i < timeLabels.length; i += 2) {
+          const x = 50 + (i * (width - 70) / (timeLabels.length - 1));
+          ctx.fillText(timeLabels[i], x - 10, height - 10);
+        }
+      } else {
+        // Fallback labels if no time labels from backend
+        for (let i = 0; i <= 20; i += 2) {
+          const x = 50 + (i * (width - 70) / 20);
+          ctx.fillText(`T${i + 1}`, x - 10, height - 10);
+        }
       }
     },
 
@@ -1306,17 +1371,28 @@ export default {
 
     drawLegend(ctx, width, height) {
       ctx.fillStyle = '#ccc';
-      ctx.font = '14px Arial';
+      ctx.font = '12px Arial';
+      
+      const legendItems = [
+        { text: 'Actual Telemetry', color: '#0AFEFF' },
+        ...Object.entries(this.telemetryGraphData.simulated).map(([anomalyName, anomalyData]) => ({
+          text: `${anomalyName} (${anomalyData.score})`,
+          color: anomalyData.color
+        }))
+      ];
+      
+      const legendHeight = legendItems.length * 20 + 20;
+      const legendWidth = 250;
       
       // Legend background
-      ctx.fillStyle = 'rgba(0, 30, 30, 0.8)';
-      ctx.fillRect(width - 200, 20, 180, 60);
+      ctx.fillStyle = 'rgba(0, 30, 30, 0.9)';
+      ctx.fillRect(width - legendWidth - 20, 20, legendWidth, legendHeight);
       
       // Legend text
-      ctx.fillStyle = '#0AFEFF';
-      ctx.fillText('Actual Telemetry', width - 190, 40);
-      ctx.fillStyle = '#ff6b6b';
-      ctx.fillText('Simulated Telemetry', width - 190, 60);
+      legendItems.forEach((item, index) => {
+        ctx.fillStyle = item.color;
+        ctx.fillText(item.text, width - legendWidth - 10, 40 + (index * 20));
+      });
     },
 
     async requestDiagnosis() {
@@ -1818,6 +1894,13 @@ export default {
     },
     'physicsDiagnosisData.mostProbableAnomaly'() {
       if (this.showPhysicsExplanation) {
+        this.generateTelemetryDataForAnomalies();
+        this.generateTelemetryGraph();
+      }
+    },
+    'physicsDiagnosisData.componentAnomalies'() {
+      if (this.showPhysicsExplanation) {
+        this.generateTelemetryDataForAnomalies();
         this.generateTelemetryGraph();
       }
     }

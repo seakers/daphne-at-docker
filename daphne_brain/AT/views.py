@@ -23,6 +23,8 @@ from AT.neo4j_queries.query_functions import retrieve_procedures_fTitle_from_ano
 from auth_API.helpers import get_or_create_user_information
 from daphne_context.models import UserInformation
 from AT.diagnosis.bayesian.ECLSS_Bayesian_Network import get_probabilities
+from AT.diagnosis.physics.physics_diagnosis import create_physics_diagnosis_report
+
 
 astrobee_status = 'NA'
 response = 'NA'
@@ -463,6 +465,20 @@ class RequestDiagnosis(APIView):
                             'astrobee_procedure_list': astrobee_procedure_list,
                             'current_telemetry_values': telemetry_values}
 
+        return Response(diagnosis_report)
+
+
+
+class RequestPhysicsDiagnosis(APIView):
+    def post(self, request):
+        # Retrieve the symptoms list from the request
+        symptoms_list = json.loads(request.data['symptomsList'])
+        
+        print("Physics Diagnosis - Symptoms list:", symptoms_list)
+        
+        # Generate physics-based diagnosis data using the dedicated module
+        diagnosis_report = create_physics_diagnosis_report(symptoms_list)
+        
         return Response(diagnosis_report)
 
 class UpdateDiagnosisWithEvidence(APIView):
