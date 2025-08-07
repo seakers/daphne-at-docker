@@ -27,6 +27,23 @@ const state = {
     diagnosisReport: [], // Contains the information related to a requested diagnosis.
     selectedLeftSymptoms: [],
     selectedRightSymptoms:[],
+    
+    // Physics diagnosis related variables
+    physicsDiagnosisData: {
+        mostProbableAnomaly: '',
+        probability: '',
+        componentAnomalies: []
+    },
+    telemetryGraphData: {
+        actual: [],
+        simulated: {},
+        timeLabels: [],
+        telemetry_metadata: {
+            unit: '',
+            sensor_info: {},
+            target_sensor: ''
+        }
+    },
 
     lastUpdatedSymptomsTimestamp: '',
     lastUpdatedAnomaliesTimestamp: '',
@@ -76,6 +93,8 @@ const getters = {
     getLastUpdatedProceduresInfoTimestamp(state) {return state.lastUpdatedProceduresInfoTimestamp},
     getLastUpdatedDiagnosisTimestamp(state) {return state.lastUpdatedDiagnosisTimestamp},
     getAdditionalEvidence(state) {return state.additional_evidence},
+    getPhysicsDiagnosisData(state) {return state.physicsDiagnosisData},
+    getTelemetryGraphData(state) {return state.telemetryGraphData},
 };
 
 const actions = {
@@ -864,6 +883,8 @@ const mutations = {
     mutateLastUpdatedProceduresInfoTimestamp(state, newVal) { state.lastUpdatedProceduresInfoTimestamp = newVal},
     mutateLastUpdatedDiagnosisTimestamp(state, newVal) { state.lastUpdatedDiagnosisTimestamp = newVal},
     mutateAdditionalEvidence(state, newVal) { state.additional_evidence = newVal},
+    mutatePhysicsDiagnosisData(state, newVal) { state.physicsDiagnosisData = newVal},
+    mutateTelemetryGraphData(state, newVal) { state.telemetryGraphData = newVal},
 };
 
 export default {

@@ -24,6 +24,7 @@ from auth_API.helpers import get_or_create_user_information
 from daphne_context.models import UserInformation
 from AT.diagnosis.bayesian.ECLSS_Bayesian_Network import get_probabilities
 from AT.diagnosis.physics.physics_diagnosis import create_physics_diagnosis_report
+from AT.diagnosis.physics.telemetry_storage import telemetry_storage
 
 
 astrobee_status = 'NA'
@@ -335,6 +336,49 @@ class HeraFeed(APIView):
                         "error": "No habitat status data found"
                     }, status=400)
 
+            # Store telemetry data for physics diagnosis
+            if 'Parameters' in parsed_sensor_data:
+                try:
+                    parameters_list = parsed_sensor_data['Parameters']
+                    print(f"🔄 HeraFeed: Storing telemetry data with {len(parameters_list)} parameters")
+                    print(f"📊 HeraFeed: Raw Parameters data: {json.dumps(parameters_list, indent=2)}")
+                    
+                    # Convert list of sensor objects to dictionary for easier access
+                    telemetry_dict = {}
+                    for sensor in parameters_list:
+                        if isinstance(sensor, dict) and 'Name' in sensor and 'currentValue' in sensor:
+                            # Create key as "Name (ParameterGroup)" for unique identification
+                            sensor_key = f"{sensor['Name']} ({sensor.get('ParameterGroup', 'Unknown')})"
+                            telemetry_dict[sensor_key] = sensor['currentValue']
+                    
+                    print(f"📊 HeraFeed: Telemetry sensors: {list(telemetry_dict.keys())}")
+                    
+                    # Check if ppCO2 (L1) is in the telemetry data
+                    target_sensor = 'ppCO2 (L1)'
+                    if target_sensor in telemetry_dict:
+                        print(f"✅ HeraFeed: Found {target_sensor} = {telemetry_dict[target_sensor]}")
+                    else:
+                        print(f"❌ HeraFeed: {target_sensor} not found in telemetry data")
+                        # Look for any CO2-related sensors
+                        co2_sensors = [k for k in telemetry_dict.keys() if 'CO2' in k or 'co2' in k]
+                        print(f"🔍 HeraFeed: Available CO2-related sensors: {co2_sensors}")
+                    
+                    # Store both the converted dictionary and original data
+                    telemetry_record = telemetry_storage.store_telemetry(
+                        telemetry_data=telemetry_dict,  # Store the converted dictionary
+                        source='Hera',
+                        metadata={
+                            'api_endpoint': 'HeraFeed',
+                            'original_data': {'Parameters': parameters_list}  # Store original data for sensor info
+                        }
+                    )
+                    print(f"💾 HeraFeed: Successfully stored telemetry record ID: {telemetry_record.id}")
+                    
+                except Exception as e:
+                    print(f"❌ HeraFeed: Error storing telemetry data: {e}")
+                    import traceback
+                    traceback.print_exc()
+            
             if global_obj.hera_thread is not None \
                     and global_obj.hera_thread.is_alive() \
                     and global_obj.hera_thread.name == "Hera Telemetry Thread":
@@ -474,10 +518,19 @@ class RequestPhysicsDiagnosis(APIView):
         # Retrieve the symptoms list from the request
         symptoms_list = json.loads(request.data['symptomsList'])
         
-        print("Physics Diagnosis - Symptoms list:", symptoms_list)
+        print("🔬 RequestPhysicsDiagnosis: Starting physics diagnosis")
+        print(f"📋 RequestPhysicsDiagnosis: Symptoms list: {symptoms_list}")
+        
+        # Define target telemetry sensor for physics diagnosis
+        target_telemetry_sensor = 'ppCO2 (L1)'
+        print(f"🎯 RequestPhysicsDiagnosis: Target telemetry sensor: {target_telemetry_sensor}")
         
         # Generate physics-based diagnosis data using the dedicated module
-        diagnosis_report = create_physics_diagnosis_report(symptoms_list)
+        print(f"⚙️ RequestPhysicsDiagnosis: Calling create_physics_diagnosis_report")
+        diagnosis_report = create_physics_diagnosis_report(symptoms_list, target_telemetry_sensor)
+        
+        print(f"✅ RequestPhysicsDiagnosis: Diagnosis report generated successfully")
+        print(f"📊 RequestPhysicsDiagnosis: Report keys: {list(diagnosis_report.keys())}")
         
         return Response(diagnosis_report)
 

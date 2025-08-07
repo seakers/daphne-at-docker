@@ -567,7 +567,7 @@ export default {
     SymptomSelectionDialog
   },
 
-  data: function () {
+      data: function () {
     return {
       isLoading: false,
       isAnomalySelected: false,
@@ -601,17 +601,7 @@ export default {
       showPhysicsTab: false,
       simpleTabs: [],
       activeSimpleTab: 0,
-      physicsDiagnosisData: {
-        mostProbableAnomaly: '',
-        probability: '',
-        componentAnomalies: []
-      },
       showPhysicsExplanation: false,
-      telemetryGraphData: {
-        actual: [],
-        simulated: {},
-        timeLabels: []
-      },
       physicsDiagnosisError: null,
     }
   },
@@ -626,6 +616,8 @@ export default {
       selectedLeftSymptoms: 'getSelectedLeftSymptomsList',
       selectedRightSymptoms: 'getSelectedRightSymptomsList',
       telemetryValues: 'getTelemetryValues',
+      physicsDiagnosisData: 'getPhysicsDiagnosisData',
+      telemetryGraphData: 'getTelemetryGraphData',
     }),
     checkAll: {
       get: function () {
@@ -1129,7 +1121,7 @@ export default {
         
         if (diagnosisReport && diagnosisReport.physics_diagnosis_data) {
           // Convert backend data to frontend format
-          this.physicsDiagnosisData = {
+          const physicsDiagnosisData = {
             mostProbableAnomaly: diagnosisReport.physics_diagnosis_data.most_probable_anomaly,
             probability: diagnosisReport.physics_diagnosis_data.probability,
             componentAnomalies: diagnosisReport.physics_diagnosis_data.component_anomalies.map(anomaly => ({
@@ -1138,22 +1130,29 @@ export default {
               isHighlighted: anomaly.is_highlighted
             }))
           };
+          this.$store.commit('mutatePhysicsDiagnosisData', physicsDiagnosisData);
 
           // Convert telemetry data from backend
-          this.telemetryGraphData = {
+          const telemetryGraphData = {
             actual: diagnosisReport.physics_diagnosis_data.actual_telemetry,
             simulated: {},
-            timeLabels: diagnosisReport.physics_diagnosis_data.time_labels
+            timeLabels: diagnosisReport.physics_diagnosis_data.time_labels,
+            telemetry_metadata: diagnosisReport.physics_diagnosis_data.telemetry_metadata || {
+              unit: '',
+              sensor_info: {},
+              target_sensor: ''
+            }
           };
 
           // Convert simulated data to the expected format
           diagnosisReport.physics_diagnosis_data.component_anomalies.forEach((anomaly, index) => {
-            this.telemetryGraphData.simulated[anomaly.name] = {
+            telemetryGraphData.simulated[anomaly.name] = {
               data: anomaly.telemetry_data,
               color: this.getAnomalyColor(index),
               score: parseFloat(anomaly.score)
             };
           });
+          this.$store.commit('mutateTelemetryGraphData', telemetryGraphData);
 
           console.log("Physics diagnosis data successfully loaded from backend");
         } else {
@@ -1215,6 +1214,12 @@ export default {
 
         // Draw axes
         this.drawAxes(ctx, width, height);
+
+        // Debug: Log the data ranges
+        console.log('Graph Data Ranges:');
+        console.log('Actual telemetry:', this.telemetryGraphData.actual);
+        console.log('Simulated anomalies:', this.telemetryGraphData.simulated);
+        console.log('Y-axis range:', this.graphYRange);
 
         // Draw actual telemetry line
         this.drawDataLine(ctx, this.telemetryGraphData.actual, width, height, '#0AFEFF', 'Actual');
@@ -1299,38 +1304,72 @@ export default {
       ctx.fillStyle = '#ccc';
       ctx.font = '12px Arial';
 
+      // Calculate dynamic Y-axis range based on all data
+      const allData = [
+        ...(this.telemetryGraphData.actual || []),
+        ...Object.values(this.telemetryGraphData.simulated || {}).map(anomaly => anomaly.data || [])
+      ].flat();
+      
+      let minValue = Math.min(...allData);
+      let maxValue = Math.max(...allData);
+      
+      // Add padding to the range
+      const range = maxValue - minValue;
+      const padding = range * 0.1; // 10% padding
+      minValue = Math.max(0, minValue - padding);
+      maxValue = maxValue + padding;
+      
+      // Store the calculated range for use in drawDataLine
+      this.graphYRange = { min: minValue, max: maxValue };
+
       // Y-axis
       ctx.beginPath();
-      ctx.moveTo(50, 0);
-      ctx.lineTo(50, height - 30);
+      ctx.moveTo(70, 0);  // Increased left margin for longer labels
+      ctx.lineTo(70, height - 50);  // Increased bottom margin for timestamps
       ctx.stroke();
 
       // X-axis
       ctx.beginPath();
-      ctx.moveTo(50, height - 30);
-      ctx.lineTo(width - 20, height - 30);
+      ctx.moveTo(70, height - 50);
+      ctx.lineTo(width - 20, height - 50);
       ctx.stroke();
 
-      // Y-axis labels
+      // Y-axis labels with dynamic range and unit
+      const unit = (this.telemetryGraphData.telemetry_metadata && this.telemetryGraphData.telemetry_metadata.unit) || '';
       for (let i = 0; i <= 6; i++) {
-        const y = height - 30 - (i * (height - 30) / 6);
-        const value = 80 - (i * 10);
-        ctx.fillText(value.toString(), 10, y + 4);
+        const y = height - 50 - (i * (height - 50) / 6);
+        const value = maxValue - (i * (maxValue - minValue) / 6);
+        ctx.fillText(`${value.toFixed(1)}${unit ? ` ${unit}` : ''}`, 10, y + 4);
       }
 
       // X-axis labels (time points)
       const timeLabels = this.telemetryGraphData.timeLabels || [];
       if (timeLabels.length > 0) {
+        ctx.save();
+        ctx.translate(70, height - 30);
+        ctx.rotate(-Math.PI / 4);  // Rotate labels for better readability
+        
         for (let i = 0; i < timeLabels.length; i += 2) {
-          const x = 50 + (i * (width - 70) / (timeLabels.length - 1));
-          ctx.fillText(timeLabels[i], x - 10, height - 10);
+          const x = (i * (width - 90) / (timeLabels.length - 1));
+          ctx.fillText(timeLabels[i], 0, x);
         }
+        
+        ctx.restore();
       } else {
         // Fallback labels if no time labels from backend
         for (let i = 0; i <= 20; i += 2) {
-          const x = 50 + (i * (width - 70) / 20);
-          ctx.fillText(`T${i + 1}`, x - 10, height - 10);
+          const x = 70 + (i * (width - 90) / 20);
+          ctx.fillText(`T${i + 1}`, x - 10, height - 30);
         }
+      }
+
+      // Add sensor name and unit as title
+      const metadata = this.telemetryGraphData.telemetry_metadata || {};
+      const sensorName = metadata.target_sensor || '';
+      if (sensorName) {
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#0AFEFF';
+        ctx.fillText(`${sensorName} (${unit})`, width / 2 - 100, 20);
       }
     },
 
@@ -1341,14 +1380,24 @@ export default {
       ctx.lineWidth = 3;
       ctx.fillStyle = color;
 
-      const padding = 50;
-      const graphWidth = width - padding - 20;
-      const graphHeight = height - padding - 30;
+      const leftMargin = 70;  // Match the increased left margin from drawAxes
+      const bottomMargin = 50;  // Match the increased bottom margin from drawAxes
+      const rightMargin = 20;
+      const topMargin = 30;
+
+      const graphWidth = width - leftMargin - rightMargin;
+      const graphHeight = height - bottomMargin - topMargin;
+
+      // Use dynamic Y-axis range if available, otherwise fallback to fixed range
+      const yRange = this.graphYRange || { min: 0, max: 100 };
+      const yMin = yRange.min;
+      const yMax = yRange.max;
+      const yRangeSize = yMax - yMin;
 
       ctx.beginPath();
       data.forEach((value, index) => {
-        const x = padding + (index * graphWidth / (data.length - 1));
-        const y = height - 30 - ((value - 20) * graphHeight / 60);
+        const x = leftMargin + (index * graphWidth / (data.length - 1));
+        const y = height - bottomMargin - ((value - yMin) * graphHeight / yRangeSize);
         
         if (index === 0) {
           ctx.moveTo(x, y);
@@ -1360,8 +1409,8 @@ export default {
 
       // Draw data points
       data.forEach((value, index) => {
-        const x = padding + (index * graphWidth / (data.length - 1));
-        const y = height - 30 - ((value - 20) * graphHeight / 60);
+        const x = leftMargin + (index * graphWidth / (data.length - 1));
+        const y = height - bottomMargin - ((value - yMin) * graphHeight / yRangeSize);
         
         ctx.beginPath();
         ctx.arc(x, y, 3, 0, 2 * Math.PI);
@@ -1373,25 +1422,54 @@ export default {
       ctx.fillStyle = '#ccc';
       ctx.font = '12px Arial';
       
+      // Get sensor info
+      const metadata = this.telemetryGraphData.telemetry_metadata || {};
+      const sensorInfo = metadata.sensor_info || {};
+      const unit = metadata.unit || '';
+      
+      // Create legend items including sensor info
       const legendItems = [
         { text: 'Actual Telemetry', color: '#0AFEFF' },
-        ...Object.entries(this.telemetryGraphData.simulated).map(([anomalyName, anomalyData]) => ({
+        ...Object.entries(this.telemetryGraphData.simulated || {}).map(([anomalyName, anomalyData]) => ({
           text: `${anomalyName} (${anomalyData.score})`,
           color: anomalyData.color
         }))
       ];
       
-      const legendHeight = legendItems.length * 20 + 20;
+      // Add sensor info items
+      const sensorInfoItems = [
+        { text: `Nominal Value: ${sensorInfo.nominal_value || 'N/A'} ${unit}`, color: '#ccc' },
+        { text: `Upper Warning: ${sensorInfo.upper_warning || 'N/A'} ${unit}`, color: '#ff6b6b' },
+        { text: `Upper Caution: ${sensorInfo.upper_caution || 'N/A'} ${unit}`, color: '#ffd93d' },
+        { text: `Lower Caution: ${sensorInfo.lower_caution || 'N/A'} ${unit}`, color: '#ffd93d' },
+        { text: `Lower Warning: ${sensorInfo.lower_warning || 'N/A'} ${unit}`, color: '#ff6b6b' }
+      ];
+      
+      const legendHeight = (legendItems.length + sensorInfoItems.length + 1) * 20 + 20;  // +1 for separator
       const legendWidth = 250;
       
       // Legend background
       ctx.fillStyle = 'rgba(0, 30, 30, 0.9)';
       ctx.fillRect(width - legendWidth - 20, 20, legendWidth, legendHeight);
       
-      // Legend text
+      // Draw anomaly items
       legendItems.forEach((item, index) => {
         ctx.fillStyle = item.color;
         ctx.fillText(item.text, width - legendWidth - 10, 40 + (index * 20));
+      });
+      
+      // Draw separator
+      const separatorY = 40 + (legendItems.length * 20);
+      ctx.strokeStyle = '#666';
+      ctx.beginPath();
+      ctx.moveTo(width - legendWidth - 15, separatorY);
+      ctx.lineTo(width - 25, separatorY);
+      ctx.stroke();
+      
+      // Draw sensor info items
+      sensorInfoItems.forEach((item, index) => {
+        ctx.fillStyle = item.color;
+        ctx.fillText(item.text, width - legendWidth - 10, separatorY + 20 + (index * 20));
       });
     },
 
@@ -1892,16 +1970,20 @@ export default {
         this.updateScrollButtons();
       });
     },
-    'physicsDiagnosisData.mostProbableAnomaly'() {
-      if (this.showPhysicsExplanation) {
-        this.generateTelemetryDataForAnomalies();
-        this.generateTelemetryGraph();
+    physicsDiagnosisData: {
+      deep: true,
+      handler() {
+        if (this.showPhysicsExplanation) {
+          this.generateTelemetryGraph();
+        }
       }
     },
-    'physicsDiagnosisData.componentAnomalies'() {
-      if (this.showPhysicsExplanation) {
-        this.generateTelemetryDataForAnomalies();
-        this.generateTelemetryGraph();
+    telemetryGraphData: {
+      deep: true,
+      handler() {
+        if (this.showPhysicsExplanation) {
+          this.generateTelemetryGraph();
+        }
       }
     }
   }

@@ -79,19 +79,18 @@ export default {
   },
 
   methods: {
-    leftToggleFontWeight(index,symptom) {
-      console.log(this.selectedSymptomsList);
-      console.log(this.selectedLeftSymptoms);
-        if (this.isLeftSelected(index)) {
-          this.$store.commit('mutateSelectedLeftSymptomsList',this.selectedLeftSymptoms.filter(item => item.index !== index));
-          this.$store.dispatch('removeSelectedSymptom', symptom);
-
-        } else {
-          this.selectedLeftSymptoms.push({index: index, symptom: symptom});
-          this.$store.commit('mutateSelectedLeftSymptomsList',this.selectedLeftSymptoms);
-        }
-
-
+    leftToggleFontWeight(index, symptom) {
+      if (this.isLeftSelected(index)) {
+        // Remove symptom
+        const filteredSymptoms = this.selectedLeftSymptoms.filter(item => item.index !== index);
+        this.$store.commit('mutateSelectedLeftSymptomsList', filteredSymptoms);
+        this.$store.dispatch('removeSelectedSymptom', symptom);
+      } else {
+        // Add symptom
+        const updatedSymptoms = [...this.selectedLeftSymptoms, {index: index, symptom: symptom}];
+        this.$store.commit('mutateSelectedLeftSymptomsList', updatedSymptoms);
+        this.$store.dispatch('addSelectedSymptom', symptom);
+      }
     },
     isLeftSelected(index) {
       console.log(this.selectedLeftSymptoms);
@@ -99,14 +98,18 @@ export default {
       return this.selectedLeftSymptoms.some(item => item.index === index);
       return false;
     },
-    rightToggleFontWeight(index,symptom) {
-        if (this.isRightSelected(index)) {
-          this.$store.commit('mutateSelectedRightSymptomsList',this.selectedRightSymptoms.filter(item => item.index !== index));
-          this.$store.dispatch('removeSelectedSymptom', symptom);
-        } else {
-          this.selectedRightSymptoms.push({index: index, symptom: symptom});
-          this.$store.commit('mutateSelectedRightSymptomsList',this.selectedRightSymptoms);
-        }
+    rightToggleFontWeight(index, symptom) {
+      if (this.isRightSelected(index)) {
+        // Remove symptom
+        const filteredSymptoms = this.selectedRightSymptoms.filter(item => item.index !== index);
+        this.$store.commit('mutateSelectedRightSymptomsList', filteredSymptoms);
+        this.$store.dispatch('removeSelectedSymptom', symptom);
+      } else {
+        // Add symptom
+        const updatedSymptoms = [...this.selectedRightSymptoms, {index: index, symptom: symptom}];
+        this.$store.commit('mutateSelectedRightSymptomsList', updatedSymptoms);
+        this.$store.dispatch('addSelectedSymptom', symptom);
+      }
     },
     isRightSelected(index) {
       if(this.selectedRightSymptoms!==undefined)
@@ -120,39 +123,46 @@ export default {
       this.$root.$emit('detectionTutorialIndividual');
     },
     clear() {
-      this.selectedLeftSymptoms.splice(0, this.selectedLeftSymptoms.length);
-      this.selectedRightSymptoms.splice(0, this.selectedRightSymptoms.length);
+      // Clear all symptoms using mutations
+      this.$store.commit('mutateSelectedLeftSymptomsList', []);
+      this.$store.commit('mutateSelectedRightSymptomsList', []);
       this.$store.commit('mutateSymptomsList', []);
       this.$store.commit('mutateSelectedSymptomsList', []);
+      
+      // Update timestamp
       const now = new Date();
-      let formattedDate = now.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',  // e.g., October
-            day: 'numeric', // e.g., 15
-            hour: 'numeric',
-            minute: 'numeric',
-            second: 'numeric',
-            hour12: true    // Use 12-hour format with AM/PM
-          });
+      const formattedDate = now.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hour12: true
+      });
       this.$store.commit('mutateLastUpdatedSymptomsTimestamp', formattedDate);
     },
     selectall() {
       let symptomsList = this.symptomsList;
-      let even=0;
-      let odd =0;
-      for (let i = 0; i < symptomsList.length; i = i + 1) {
+      let leftSymptoms = [];
+      let rightSymptoms = [];
+      let even = 0;
+      let odd = 0;
+      
+      for (let i = 0; i < symptomsList.length; i++) {
         this.$store.dispatch('addSelectedSymptom', symptomsList[i]);
-        if(i%2===0)
-        {
-          this.selectedLeftSymptoms.push({index: even, symptom: symptomsList[i]});
+        if (i % 2 === 0) {
+          leftSymptoms.push({index: even, symptom: symptomsList[i]});
           even++;
-        }
-        else
-        {
-          this.selectedRightSymptoms.push({index: odd, symptom: symptomsList[i]});
+        } else {
+          rightSymptoms.push({index: odd, symptom: symptomsList[i]});
           odd++;
         }
       }
+      
+      // Use mutations to update state
+      this.$store.commit('mutateSelectedLeftSymptomsList', leftSymptoms);
+      this.$store.commit('mutateSelectedRightSymptomsList', rightSymptoms);
     }
   },
   watch: {
