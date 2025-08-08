@@ -84,6 +84,7 @@
                     <tr>
                       <th>Component Anomaly</th>
                       <th>Similarity Score</th>
+                      <th style="text-align:center;">Show</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -92,6 +93,15 @@
                         :style="anomaly.isHighlighted ? 'background:#c0392b; color:white; font-weight:bold;' : ''">
                       <td>{{ anomaly.name }}</td>
                       <td>{{ anomaly.score }}</td>
+                      <td class="checkbox-cell">
+                        <label class="checkbox-full">
+                          <input type="checkbox"
+                                 :value="anomaly.name"
+                                 v-model="selectedPhysicsAnomalies"
+                                 @change="onSelectedAnomaliesChange"/>
+                          <span class="check-icon">✓</span>
+                        </label>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -603,6 +613,7 @@ export default {
       activeSimpleTab: 0,
       showPhysicsExplanation: false,
       physicsDiagnosisError: null,
+      selectedPhysicsAnomalies: [],
     }
   },
 
@@ -1154,6 +1165,9 @@ export default {
           });
           this.$store.commit('mutateTelemetryGraphData', telemetryGraphData);
 
+          // Initialize selection to all anomalies on first load
+          this.selectedPhysicsAnomalies = physicsDiagnosisData.componentAnomalies.map(a => a.name);
+
           console.log("Physics diagnosis data successfully loaded from backend");
         } else {
           // Show error message if no proper diagnosis report received
@@ -1224,10 +1238,12 @@ export default {
         // Draw actual telemetry line
         this.drawDataLine(ctx, this.telemetryGraphData.actual, width, height, '#0AFEFF', 'Actual');
 
-        // Draw simulated data lines for each anomaly
-        Object.entries(this.telemetryGraphData.simulated).forEach(([anomalyName, anomalyData]) => {
-          this.drawDataLine(ctx, anomalyData.data, width, height, anomalyData.color, anomalyName);
-        });
+        // Draw simulated data lines for selected anomalies only
+        Object.entries(this.telemetryGraphData.simulated)
+          .filter(([name]) => this.selectedPhysicsAnomalies.indexOf(name) !== -1)
+          .forEach(([anomalyName, anomalyData]) => {
+            this.drawDataLine(ctx, anomalyData.data, width, height, anomalyData.color, anomalyName);
+          });
 
         // Draw legend
         this.drawLegend(ctx, width, height);
@@ -1479,10 +1495,12 @@ export default {
       // Create legend items for telemetry lines only
       const legendItems = [
         { text: 'Actual Telemetry', color: '#0AFEFF' },
-        ...Object.entries(this.telemetryGraphData.simulated || {}).map(([anomalyName, anomalyData]) => ({
-          text: `${anomalyName} (${anomalyData.score})`,
-          color: anomalyData.color
-        }))
+        ...Object.entries(this.telemetryGraphData.simulated || {})
+             .filter(([name]) => this.selectedPhysicsAnomalies.indexOf(name) !== -1)
+             .map(([anomalyName, anomalyData]) => ({
+               text: `${anomalyName} (${anomalyData.score})`,
+               color: anomalyData.color
+             }))
       ];
       
       const legendHeight = legendItems.length * 20 + 20;
@@ -1954,7 +1972,13 @@ export default {
       if (this.activeSimpleTab >= this.simpleTabs.length) {
         this.activeSimpleTab = this.simpleTabs.length - 1;
       }
-    }
+    },
+    onSelectedAnomaliesChange() {
+      // Redraw graph when selection changes
+      if (this.showPhysicsExplanation) {
+        this.generateTelemetryGraph();
+      }
+    },
   },
 
   mounted() {
@@ -2020,6 +2044,11 @@ export default {
         if (this.showPhysicsExplanation) {
           this.generateTelemetryGraph();
         }
+      }
+    },
+    selectedPhysicsAnomalies() {
+      if (this.showPhysicsExplanation) {
+        this.generateTelemetryGraph();
       }
     }
   }
@@ -2313,6 +2342,7 @@ export default {
 .physics-table th, .physics-table td {
   padding: 10px 14px;
   text-align: left;
+  border: 1px solid rgba(10, 254, 255, 0.18); /* grid lines */
 }
 
 .physics-table th {
@@ -2330,5 +2360,42 @@ export default {
   align-items: center;
   justify-content: center;
   min-width: 220px;
+}
+
+.checkbox-cell {
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.checkbox-full {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 6px 0; /* compact to avoid tall rows */
+  margin: 0;
+}
+
+.checkbox-full input[type="checkbox"] {
+  position: absolute;
+  opacity: 0; /* hide native, keep accessible */
+  pointer-events: none;
+}
+
+.checkbox-full:hover { background: rgba(10, 254, 255, 0.08); }
+.check-icon {
+  display: inline-block;
+  color: rgba(10, 254, 255, 0.25); /* faint when unchecked */
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0.6;
+  transition: color 0.12s ease, opacity 0.12s ease;
+}
+.checkbox-full input[type="checkbox"]:checked + .check-icon {
+  color: #0AFEFF; /* solid when checked */
+  opacity: 1;
 }
 </style>
