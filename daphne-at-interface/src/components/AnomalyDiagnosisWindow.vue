@@ -82,17 +82,16 @@
                 <table class="physics-table">
                   <thead>
                     <tr>
+                      <th style="text-align:center;">Show</th>
                       <th>Component Anomaly</th>
                       <th>Similarity Score</th>
-                      <th style="text-align:center;">Show</th>
+                      <th style="text-align:center;">Procedure</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="anomaly in physicsDiagnosisData.componentAnomalies" 
                         :key="anomaly.name"
                         :style="anomaly.isHighlighted ? 'background:#c0392b; color:white; font-weight:bold;' : ''">
-                      <td>{{ anomaly.name }}</td>
-                      <td>{{ anomaly.score }}</td>
                       <td class="checkbox-cell">
                         <label class="checkbox-full">
                           <input type="checkbox"
@@ -101,6 +100,15 @@
                                  @change="onSelectedAnomaliesChange"/>
                           <span class="check-icon">✓</span>
                         </label>
+                      </td>
+                      <td>{{ anomaly.name }}</td>
+                      <td>{{ anomaly.score }}</td>
+                      <td style="text-align:center;">
+                        <button class="button"
+                                style="width: 70%; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E"
+                                v-on:click.prevent="handlePhysicsProcedure(anomaly.name)">
+                          Select
+                        </button>
                       </td>
                     </tr>
                   </tbody>
@@ -1978,6 +1986,10 @@ export default {
       if (this.showPhysicsExplanation) {
         this.generateTelemetryGraph();
       }
+    },
+    handlePhysicsProcedure(anomalyName) {
+      // Minimal UX for now: simple alert; can be replaced with real procedure launch later
+      alert(`No procedure is available yet for: ${anomalyName}`);
     },
   },
 
