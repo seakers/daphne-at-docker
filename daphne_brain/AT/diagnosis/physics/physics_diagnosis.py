@@ -3,9 +3,73 @@ import math
 import json
 from typing import Dict, List, Any
 from .telemetry_storage import telemetry_storage
+try:
+    from AT.neo4j_queries import query_functions as neo4j_q
+except Exception:  # neo4j optional
+    neo4j_q = None
+from .cdra_sim_adapter import run_cdra_simulation, resample_series, scale_to_actual_units, anomaly_to_failure_config
 
 
-def generate_physics_diagnosis_data(symptoms_list: List[Dict[str, Any]], target_telemetry_sensor: str = 'ppCO2 (L1)') -> Dict[str, Any]:
+def get_cdra_component_anomalies_from_neo4j(max_items: int = 5) -> List[str]:
+    """Return a curated CDRA anomaly list.
+
+    Note: Neo4j is intentionally disabled for now. When ready,
+    uncomment the pseudo-code below to enable live queries.
+    """
+    fallback = [
+        'CO₂ Scrubber Valve Leak',
+        'Fan Bearing Wear',
+        'Absorption Bed Saturated',
+        'Heater Coil Failure',
+        'Pressure Sensor Drift'
+    ]
+
+    # Pseudo-code for future Neo4j integration (disabled):
+    # if neo4j_q is not None:
+    #     try:
+    #         all_anoms = neo4j_q.retrieve_all_anomalies()
+    #         keywords = ['co2', 'valve', 'fan', 'sorbent', 'bed', 'heater', 'pressure', 'scrubber']
+    #         filtered = [a for a in all_anoms if any(k in a.lower() for k in keywords)]
+    #         return (filtered or fallback)[:max_items]
+    #     except Exception:
+    #         pass
+
+    return fallback[:max_items]
+
+
+def _resample_labels(labels: List[str], target_len: int) -> List[str]:
+    if not labels or target_len <= 0:
+        return []
+    if len(labels) == target_len:
+        return list(labels)
+    result: List[str] = []
+    for i in range(target_len):
+        pos = i * (len(labels) - 1) / (target_len - 1)
+        idx = int(round(pos))
+        result.append(labels[idx])
+    return result
+
+
+def _normalize_series(values: List[float]) -> List[float]:
+    try:
+        nums = [float(v) for v in values]
+    except Exception:
+        nums = [0.0 for _ in values]
+    if not nums:
+        return nums
+    vmin = min(nums)
+    vmax = max(nums)
+    if vmax - vmin == 0:
+        return [0.0 for _ in nums]
+    return [(v - vmin) / (vmax - vmin) for v in nums]
+
+
+def generate_physics_diagnosis_data(
+    symptoms_list: List[Dict[str, Any]],
+    target_telemetry_sensor: str = 'ppCO2 (L1)',
+    sim_duration_seconds: int = 1000,
+    sampling_rate_seconds: int = 10,
+) -> Dict[str, Any]:
     """
     Generate physics-based diagnosis data based on symptoms.
     
@@ -36,44 +100,57 @@ def generate_physics_diagnosis_data(symptoms_list: List[Dict[str, Any]], target_
                 time_labels.append(ts)  # Use raw timestamp if parsing fails
     else:
         time_labels = generate_time_labels(len(actual_telemetry))
+
+    # Determine target points from duration and sampling rate
+    target_points = max(1, int(sim_duration_seconds // max(1, int(sampling_rate_seconds))))
+    # Resample actual series and labels to target_points
+    effective_len = target_points
+    print(f"[PHYS_DIAG] Sampling plan: duration={sim_duration_seconds}s, sample_every={sampling_rate_seconds}s -> target_points={target_points}")
+    actual_telemetry = resample_series(actual_telemetry, target_points)
+    time_labels = _resample_labels(time_labels, target_points)
     
     # Generate physics-based diagnosis data
     # This simulates the physics-based analysis that would be done by the backend
+    # Choose anomalies (from Neo4j if available)
+    cdra_anoms = get_cdra_component_anomalies_from_neo4j(max_items=5)
+    # Provide synthetic descending scores for now
+    comp_list = []
+    actual_norm = _normalize_series(actual_telemetry)
+    print(f"[PHYS_DIAG] Using {len(cdra_anoms)} anomalies; effective_len={effective_len}")
+    for name in cdra_anoms:
+        sim_vals = generate_anomaly_telemetry(
+            name,
+            score=0.9,  # severity seed; real severity is captured by similarity metric below
+            target_sensor=target_telemetry_sensor,
+            duration_seconds=sim_duration_seconds,
+            target_len_override=effective_len,
+        )['values']
+        sim_norm = _normalize_series(sim_vals)
+        # Mean Squared Error on normalized series
+        if actual_norm and sim_norm and len(actual_norm) == len(sim_norm):
+            mse = sum((a - b) ** 2 for a, b in zip(actual_norm, sim_norm)) / len(actual_norm)
+        else:
+            mse = 1.0
+        similarity = max(0.0, min(1.0, 1.0 - mse))
+        print(f"[PHYS_DIAG] anomaly='{name}', mse={mse:.4f}, similarity={similarity:.3f}")
+        comp_list.append({
+            'name': name,
+            'score': f"{similarity:.3f}",
+            'is_highlighted': False,  # set after sorting
+            'telemetry_data': sim_vals,
+        })
+
+    # Sort by similarity descending and highlight top
+    comp_list.sort(key=lambda x: float(x['score']), reverse=True)
+    if comp_list:
+        comp_list[0]['is_highlighted'] = True
+
+    top_prob = f"{(float(comp_list[0]['score']) * 100):.2f}%" if comp_list else '0.00%'
+    print(f"[PHYS_DIAG] top_anomaly={comp_list[0]['name'] if comp_list else 'N/A'}, prob={top_prob}")
     physics_diagnosis_data = {
-        'most_probable_anomaly': 'CDRA Failure',
-        'probability': '88.73%',
-        'component_anomalies': [
-            {
-                'name': 'CO₂ Scrubber Valve Leak',
-                'score': '0.986',
-                'is_highlighted': True,
-                'telemetry_data': generate_anomaly_telemetry('CO₂ Scrubber Valve Leak', 0.986, target_telemetry_sensor)['values']
-            },
-            {
-                'name': 'Fan Bearing Wear',
-                'score': '0.942',
-                'is_highlighted': False,
-                'telemetry_data': generate_anomaly_telemetry('Fan Bearing Wear', 0.942, target_telemetry_sensor)['values']
-            },
-            {
-                'name': 'Absorption Bed Saturated',
-                'score': '0.871',
-                'is_highlighted': False,
-                'telemetry_data': generate_anomaly_telemetry('Absorption Bed Saturated', 0.871, target_telemetry_sensor)['values']
-            },
-            {
-                'name': 'Heater Coil Failure',
-                'score': '0.790',
-                'is_highlighted': False,
-                'telemetry_data': generate_anomaly_telemetry('Heater Coil Failure', 0.790, target_telemetry_sensor)['values']
-            },
-            {
-                'name': 'Pressure Sensor Drift',
-                'score': '0.732',
-                'is_highlighted': False,
-                'telemetry_data': generate_anomaly_telemetry('Pressure Sensor Drift', 0.732, target_telemetry_sensor)['values']
-            }
-        ],
+        'most_probable_anomaly': comp_list[0]['name'] if comp_list else 'Unknown',
+        'probability': top_prob,
+        'component_anomalies': comp_list,
         'actual_telemetry': actual_telemetry,
         'time_labels': time_labels,
         'telemetry_metadata': {
@@ -175,7 +252,7 @@ def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)') -> Dict
                             if unit is None and 'metadata' in record and 'original_data' in record['metadata'] and 'Parameters' in record['metadata']['original_data']:
                                 print(f"🔍 Physics Diagnosis: Looking for sensor info in original data")
                                 original_params = record['metadata']['original_data']['Parameters']
-                                print(f"📊 Physics Diagnosis: Original Parameters: {json.dumps(original_params, indent=2)}")
+                                #print(f"📊 Physics Diagnosis: Original Parameters: {json.dumps(original_params, indent=2)}")
                                 
                                 target_name = found_sensor.split(' (')[0]
                                 target_group = found_sensor.split('(')[1].strip(')')
@@ -288,7 +365,8 @@ def generate_time_labels(data_length: int) -> List[str]:
     return [f'T{i+1}' for i in range(data_length)]
 
 
-def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: str = 'ppCO2 (L1)') -> Dict[str, Any]:
+def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: str = 'ppCO2 (L1)',
+                               duration_seconds: int = 60, target_len_override: int = None) -> Dict[str, Any]:
     """
     Generate simulated telemetry data for a specific anomaly.
     
@@ -306,59 +384,47 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
     # Get actual telemetry data to base simulation on
     telemetry_data = get_actual_telemetry_from_storage(target_sensor)
     actual_values = telemetry_data['values']
-    data_length = len(actual_values)
-    
-    # Calculate the scale factor based on the real telemetry values
+    target_len = (target_len_override if target_len_override and target_len_override > 0
+                  else (len(actual_values) if actual_values else 20))
+
+    # Build failure config from anomaly name and score
+    failure_cfg = anomaly_to_failure_config(anomaly_name, severity=float(score))
+
+    # Use baseline as the first actual value or average
     if actual_values:
-        # Convert all values to float to ensure numeric operations work
-        numeric_values = [float(v) for v in actual_values]
-        avg_value = sum(numeric_values) / len(numeric_values)
-        # Scale the anomaly effects to be proportional to the real telemetry values
-        # Use 10-20% of the average value as the maximum effect
-        max_effect_percentage = 0.15  # 15% of average value
-        scale_factor = avg_value * max_effect_percentage
+        try:
+            baseline = sum(float(v) for v in actual_values) / len(actual_values)
+        except Exception:
+            baseline = float(actual_values[0]) if actual_values else 0.006
     else:
-        scale_factor = 1.0
-    
-    # Define anomaly effects as percentages of the scale factor
-    anomaly_effects = {
-        'CO₂ Scrubber Valve Leak': 0.8,    # 80% of scale factor
-        'Fan Bearing Wear': 0.5,            # 50% of scale factor
-        'Absorption Bed Saturated': 1.0,    # 100% of scale factor
-        'Heater Coil Failure': 1.2,         # 120% of scale factor
-        'Pressure Sensor Drift': 0.4        # 40% of scale factor
-    }
-    
-    effect_percentage = anomaly_effects.get(anomaly_name, 0.5)
-    effect = scale_factor * effect_percentage
-    
-    simulated_values = []
-    
-    for i in range(data_length):
-        if i < len(actual_values):
-            try:
-                base_value = float(actual_values[i])
-            except (ValueError, TypeError):
-                # Fallback if value can't be converted to float
-                base_value = 50 + math.sin(i * 0.3) * 20
-        else:
-            # Fallback if actual data is shorter than expected
-            base_value = 50 + math.sin(i * 0.3) * 20
-        
-        # Different anomalies start affecting the system at different times
-        start_time = 3 + len(anomaly_name) % 5  # Vary start time based on anomaly name
-        anomaly_influence = max(0, (i - start_time) / 10) * effect * score
-        noise = (random.random() - 0.5) * effect * 0.1  # Reduced noise
-        simulated_values.append(base_value + anomaly_influence + noise)
-    
+        baseline = 0.006  # reasonable ppCO2 mass ratio baseline placeholder
+
+    # Run simulator (dt fixed at 1s as requested)
+    raw_series = run_cdra_simulation(
+        failure_config=failure_cfg,
+        duration_seconds=max(duration_seconds, target_len),
+        baseline_co2_mass_ratio=baseline,
+        onset_time_sec=3,
+        seed=42,
+    )
+
+    # Resample to the same number of points as actual data and scale to units
+    resampled = resample_series(raw_series, target_len)
+    scaled = scale_to_actual_units(resampled, actual_values)
+
     return {
-        'values': simulated_values,
+        'values': scaled,
         'timestamps': telemetry_data.get('timestamps', []),
         'unit': telemetry_data.get('unit', '')
     }
 
 
-def create_physics_diagnosis_report(symptoms_list: List[Dict[str, Any]], target_telemetry_sensor: str = 'ppCO2 (L1)') -> Dict[str, Any]:
+def create_physics_diagnosis_report(
+    symptoms_list: List[Dict[str, Any]],
+    target_telemetry_sensor: str = 'ppCO2 (L1)',
+    sim_duration_seconds: int = 1000,
+    sampling_rate_seconds: int = 10,
+) -> Dict[str, Any]:
     """
     Create a complete physics diagnosis report.
     
@@ -369,14 +435,24 @@ def create_physics_diagnosis_report(symptoms_list: List[Dict[str, Any]], target_
     Returns:
         Complete diagnosis report with physics data
     """
-    physics_diagnosis_data = generate_physics_diagnosis_data(symptoms_list, target_telemetry_sensor)
+    physics_diagnosis_data = generate_physics_diagnosis_data(
+        symptoms_list, target_telemetry_sensor,
+        sim_duration_seconds=sim_duration_seconds,
+        sampling_rate_seconds=sampling_rate_seconds,
+    )
     
     # Build the diagnosis report and send it to the frontend
     diagnosis_report = {
         'symptoms_list': symptoms_list,
         'physics_diagnosis_data': physics_diagnosis_data,
         'diagnosis_type': 'physics',
-        'target_telemetry_sensor': target_telemetry_sensor
+        'target_telemetry_sensor': target_telemetry_sensor,
+        'simulation': {
+            'duration_seconds': sim_duration_seconds,
+            'dt_seconds': 1,
+            'sampling_rate_seconds': sampling_rate_seconds,
+            'points': len(physics_diagnosis_data['actual_telemetry'])
+        }
     }
     
     return diagnosis_report

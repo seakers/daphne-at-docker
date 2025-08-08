@@ -341,7 +341,7 @@ class HeraFeed(APIView):
                 try:
                     parameters_list = parsed_sensor_data['Parameters']
                     print(f"🔄 HeraFeed: Storing telemetry data with {len(parameters_list)} parameters")
-                    print(f"📊 HeraFeed: Raw Parameters data: {json.dumps(parameters_list, indent=2)}")
+                    #print(f"📊 HeraFeed: Raw Parameters data: {json.dumps(parameters_list, indent=2)}")
                     
                     # Convert list of sensor objects to dictionary for easier access
                     telemetry_dict = {}
@@ -525,12 +525,33 @@ class RequestPhysicsDiagnosis(APIView):
         target_telemetry_sensor = 'ppCO2 (L1)'
         print(f"🎯 RequestPhysicsDiagnosis: Target telemetry sensor: {target_telemetry_sensor}")
         
+        # Optional simulation controls from frontend
+        try:
+            sim_duration_seconds = int(request.data.get('sim_duration_seconds', 1000))
+        except Exception:
+            sim_duration_seconds = 1000
+        try:
+            sampling_rate_seconds = int(request.data.get('sampling_rate_seconds', 10))
+        except Exception:
+            sampling_rate_seconds = 10
+        print(f"[API] PhysicsDiagnosis controls: duration={sim_duration_seconds}, sampling_rate={sampling_rate_seconds}s")
+
         # Generate physics-based diagnosis data using the dedicated module
-        print(f"⚙️ RequestPhysicsDiagnosis: Calling create_physics_diagnosis_report")
-        diagnosis_report = create_physics_diagnosis_report(symptoms_list, target_telemetry_sensor)
+        print(f"⚙️ RequestPhysicsDiagnosis: Calling create_physics_diagnosis_report (duration={sim_duration_seconds}s)")
+        diagnosis_report = create_physics_diagnosis_report(
+            symptoms_list,
+            target_telemetry_sensor,
+            sim_duration_seconds=sim_duration_seconds,
+            sampling_rate_seconds=sampling_rate_seconds,
+        )
         
         print(f"✅ RequestPhysicsDiagnosis: Diagnosis report generated successfully")
-        print(f"📊 RequestPhysicsDiagnosis: Report keys: {list(diagnosis_report.keys())}")
+        print(f"📊 Report keys: {list(diagnosis_report.keys())}")
+        try:
+            pdata = diagnosis_report.get('physics_diagnosis_data', {})
+            print(f"[API] actual_len={len(pdata.get('actual_telemetry', []))}, comp_anoms={len(pdata.get('component_anomalies', []))}")
+        except Exception:
+            pass
         
         return Response(diagnosis_report)
 

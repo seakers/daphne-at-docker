@@ -34,6 +34,8 @@ const state = {
         probability: '',
         componentAnomalies: []
     },
+    physicsSimDurationSeconds: 1000, // simulation window length in seconds
+    physicsSamplingRateSeconds: 10, // resample interval for both actual and simulated
     telemetryGraphData: {
         actual: [],
         simulated: {},
@@ -95,6 +97,8 @@ const getters = {
     getAdditionalEvidence(state) {return state.additional_evidence},
     getPhysicsDiagnosisData(state) {return state.physicsDiagnosisData},
     getTelemetryGraphData(state) {return state.telemetryGraphData},
+    getPhysicsSimDurationSeconds(state) {return state.physicsSimDurationSeconds},
+    getPhysicsSamplingRateSeconds(state) {return state.physicsSamplingRateSeconds},
 };
 
 const actions = {
@@ -548,6 +552,9 @@ const actions = {
         // Make the diagnosis request to the backend
         let reqData = new FormData();
         reqData.append('symptomsList', JSON.stringify(selectedSymptomsList));
+        // Optional simulation controls
+        reqData.append('sim_duration_seconds', String(state.physicsSimDurationSeconds));
+        reqData.append('sampling_rate_seconds', String(state.physicsSamplingRateSeconds));
         let response = await fetchPost('/api/at/requestPhysicsDiagnosis', reqData);
         
         if (response.ok) {
@@ -885,6 +892,8 @@ const mutations = {
     mutateAdditionalEvidence(state, newVal) { state.additional_evidence = newVal},
     mutatePhysicsDiagnosisData(state, newVal) { state.physicsDiagnosisData = newVal},
     mutateTelemetryGraphData(state, newVal) { state.telemetryGraphData = newVal},
+    mutatePhysicsSimDurationSeconds(state, newVal) { state.physicsSimDurationSeconds = newVal},
+    mutatePhysicsSamplingRateSeconds(state, newVal) { state.physicsSamplingRateSeconds = newVal},
 };
 
 export default {
