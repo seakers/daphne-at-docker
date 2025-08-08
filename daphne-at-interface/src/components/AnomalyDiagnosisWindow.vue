@@ -1278,6 +1278,14 @@ export default {
     },
 
     drawGrid(ctx, width, height) {
+      const metadata = this.telemetryGraphData.telemetry_metadata || {};
+      const sensorInfo = metadata.sensor_info || {};
+      const leftMargin = 70;
+      const bottomMargin = 50;
+      const graphWidth = width - leftMargin - 20;
+      const graphHeight = height - bottomMargin - 30;
+
+      // Draw basic grid
       ctx.strokeStyle = '#333';
       ctx.lineWidth = 1;
 
@@ -1295,6 +1303,52 @@ export default {
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
         ctx.stroke();
+      }
+
+      // Draw limit lines if sensor info is available
+      if (sensorInfo) {
+        const yRange = this.graphYRange || { min: 0, max: 100 };
+        const yMin = yRange.min;
+        const yMax = yRange.max;
+        const yRangeSize = yMax - yMin;
+
+        // Function to convert value to Y coordinate
+        const valueToY = (value) => {
+          return height - bottomMargin - ((value - yMin) * graphHeight / yRangeSize);
+        };
+
+        // Draw limit lines
+        const limits = [
+          { value: sensorInfo.nominal_value, color: '#ccc', label: 'Nominal' },
+          { value: sensorInfo.upper_warning, color: '#ff6b6b', label: 'Upper Warning' },
+          { value: sensorInfo.upper_caution, color: '#ffd93d', label: 'Upper Caution' },
+          { value: sensorInfo.lower_caution, color: '#ffd93d', label: 'Lower Caution' },
+          { value: sensorInfo.lower_warning, color: '#ff6b6b', label: 'Lower Warning' }
+        ];
+
+        limits.forEach(limit => {
+          if (limit.value !== undefined && limit.value !== null) {
+            const y = valueToY(limit.value);
+            
+            // Draw dotted line
+            ctx.strokeStyle = limit.color;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]); // Create dotted line effect
+            
+            ctx.beginPath();
+            ctx.moveTo(leftMargin, y);
+            ctx.lineTo(width - 20, y);
+            ctx.stroke();
+            
+            // Reset line dash
+            ctx.setLineDash([]);
+            
+            // Add small label on the left
+            ctx.fillStyle = limit.color;
+            ctx.font = '10px Arial';
+            ctx.fillText(limit.label, 5, y + 4);
+          }
+        });
       }
     },
 
@@ -1422,12 +1476,7 @@ export default {
       ctx.fillStyle = '#ccc';
       ctx.font = '12px Arial';
       
-      // Get sensor info
-      const metadata = this.telemetryGraphData.telemetry_metadata || {};
-      const sensorInfo = metadata.sensor_info || {};
-      const unit = metadata.unit || '';
-      
-      // Create legend items including sensor info
+      // Create legend items for telemetry lines only
       const legendItems = [
         { text: 'Actual Telemetry', color: '#0AFEFF' },
         ...Object.entries(this.telemetryGraphData.simulated || {}).map(([anomalyName, anomalyData]) => ({
@@ -1436,40 +1485,27 @@ export default {
         }))
       ];
       
-      // Add sensor info items
-      const sensorInfoItems = [
-        { text: `Nominal Value: ${sensorInfo.nominal_value || 'N/A'} ${unit}`, color: '#ccc' },
-        { text: `Upper Warning: ${sensorInfo.upper_warning || 'N/A'} ${unit}`, color: '#ff6b6b' },
-        { text: `Upper Caution: ${sensorInfo.upper_caution || 'N/A'} ${unit}`, color: '#ffd93d' },
-        { text: `Lower Caution: ${sensorInfo.lower_caution || 'N/A'} ${unit}`, color: '#ffd93d' },
-        { text: `Lower Warning: ${sensorInfo.lower_warning || 'N/A'} ${unit}`, color: '#ff6b6b' }
-      ];
-      
-      const legendHeight = (legendItems.length + sensorInfoItems.length + 1) * 20 + 20;  // +1 for separator
+      const legendHeight = legendItems.length * 20 + 20;
       const legendWidth = 250;
       
       // Legend background
       ctx.fillStyle = 'rgba(0, 30, 30, 0.9)';
       ctx.fillRect(width - legendWidth - 20, 20, legendWidth, legendHeight);
       
-      // Draw anomaly items
+      // Draw telemetry line items
       legendItems.forEach((item, index) => {
+        // Draw color line sample
+        ctx.strokeStyle = item.color;
+        ctx.lineWidth = 2;
+        const lineY = 34 + (index * 20);
+        ctx.beginPath();
+        ctx.moveTo(width - legendWidth - 10, lineY);
+        ctx.lineTo(width - legendWidth + 20, lineY);
+        ctx.stroke();
+        
+        // Draw text
         ctx.fillStyle = item.color;
-        ctx.fillText(item.text, width - legendWidth - 10, 40 + (index * 20));
-      });
-      
-      // Draw separator
-      const separatorY = 40 + (legendItems.length * 20);
-      ctx.strokeStyle = '#666';
-      ctx.beginPath();
-      ctx.moveTo(width - legendWidth - 15, separatorY);
-      ctx.lineTo(width - 25, separatorY);
-      ctx.stroke();
-      
-      // Draw sensor info items
-      sensorInfoItems.forEach((item, index) => {
-        ctx.fillStyle = item.color;
-        ctx.fillText(item.text, width - legendWidth - 10, separatorY + 20 + (index * 20));
+        ctx.fillText(item.text, width - legendWidth + 30, 40 + (index * 20));
       });
     },
 
