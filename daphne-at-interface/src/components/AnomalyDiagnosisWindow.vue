@@ -145,7 +145,12 @@
                   Telemetry Trend Comparison
                 </div>
                 <div class="telemetry-graph-container" style="background: #001e1e; border-radius: 6px; padding: 20px; min-height: 300px; display: inline-block; max-width: 90%;">
-                  <canvas ref="telemetryGraph" width="800" height="300"></canvas>
+                  <vue-plotly 
+                    style="width: 100%; height: 400px;"
+                    :data="physicsPlotData"
+                    :layout="physicsPlotLayout"
+                    :options="{displayModeBar: false, responsive: true}"
+                  />
                 </div>
               </div>
             </div>
@@ -574,6 +579,7 @@
 import {mapGetters} from 'vuex';
 import { fetchPost } from '../scripts/fetch-helpers';
 import SymptomSelectionDialog from './SymptomSelectionDialog.vue';
+import VuePlotly from '@statnett/vue-plotly';
 
 
 let loaderImage = require('../images/loader.svg');
@@ -582,7 +588,8 @@ let CDRAImage = require('../images/CDRA.png');
 export default {
   name: "AnomalyDiagnosisWindow",
   components: {
-    SymptomSelectionDialog
+    SymptomSelectionDialog,
+    VuePlotly
   },
 
       data: function () {
@@ -622,6 +629,7 @@ export default {
       showPhysicsExplanation: false,
       physicsDiagnosisError: null,
       selectedPhysicsAnomalies: [],
+
     }
   },
 
@@ -638,6 +646,112 @@ export default {
       physicsDiagnosisData: 'getPhysicsDiagnosisData',
       telemetryGraphData: 'getTelemetryGraphData',
     }),
+
+    // Vue Plotly data for physics diagnosis graph
+    physicsPlotData() {
+      if (!this.telemetryGraphData || !this.telemetryGraphData.actual) {
+        return [];
+      }
+
+      const plotData = [];
+
+      // Convert timestamps to relative time gaps
+      const relativeTimeLabels = this.convertToRelativeTime(this.telemetryGraphData.timeLabels);
+
+      // Add actual telemetry data
+      if (this.telemetryGraphData.actual && this.telemetryGraphData.actual.length > 0) {
+        plotData.push({
+          x: relativeTimeLabels || Array.from({length: this.telemetryGraphData.actual.length}, (_, i) => `-${i+1}:00`),
+          y: this.telemetryGraphData.actual,
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: 'Actual Telemetry',
+          line: { color: '#0AFEFF', width: 3 },
+          marker: { size: 6, color: '#0AFEFF' },
+          hovertemplate: '<b>%{fullData.name}</b><br>' +
+                        'Value: %{y:.2f} mmHg<br>' +
+                        'Time Gap: %{x}<br>' +
+                        '<extra></extra>'
+        });
+      }
+
+      // Add simulated anomaly data for selected anomalies
+      if (this.telemetryGraphData.simulated) {
+        Object.entries(this.telemetryGraphData.simulated)
+          .filter(([name]) => this.selectedPhysicsAnomalies.indexOf(name) !== -1)
+          .forEach(([anomalyName, anomalyData]) => {
+            if (anomalyData.data && anomalyData.data.length > 0) {
+              plotData.push({
+                x: relativeTimeLabels || Array.from({length: anomalyData.data.length}, (_, i) => `-${i+1}:00`),
+                y: anomalyData.data,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: anomalyName,
+                line: { color: anomalyData.color, width: 3 },
+                marker: { size: 6, color: anomalyData.color },
+                hovertemplate: '<b>%{fullData.name}</b><br>' +
+                              'Value: %{y:.2f} mmHg<br>' +
+                              'Time Gap: %{x}<br>' +
+                              '<extra></extra>'
+              });
+            }
+          });
+      }
+
+      return plotData;
+    },
+
+    // Vue Plotly layout for physics diagnosis graph
+    physicsPlotLayout() {
+      return {
+        title: {
+          text: 'Telemetry Trend Comparison',
+          font: { color: '#0AFEFF', size: 16 },
+          x: 0.5
+        },
+        plot_bgcolor: '#001e1e',
+        paper_bgcolor: '#001e1e',
+        font: { color: '#ccc' },
+        xaxis: {
+          title: 'Time Gap (min:sec)',
+          gridcolor: '#333',
+          zerolinecolor: '#666',
+          showline: true,
+          linecolor: '#666',
+          tickangle: -45,
+          tickfont: { size: 10 }
+        },
+        yaxis: {
+          title: 'Pressure (mmHg)',
+          gridcolor: '#333',
+          zerolinecolor: '#666',
+          showline: true,
+          linecolor: '#666',
+          range: [0, 8],
+          tickmode: 'linear',
+          dtick: 2,
+          tickfont: { size: 10 }
+        },
+        margin: { l: 80, r: 120, t: 60, b: 80 },
+        showlegend: true,
+        legend: {
+          x: 1.02,
+          y: 1,
+          xanchor: 'left',
+          yanchor: 'top',
+          bgcolor: 'rgba(0, 30, 30, 0.9)',
+          bordercolor: '#0AFEFF',
+          borderwidth: 1,
+          font: { color: '#ccc' }
+        },
+        hovermode: 'closest',
+        hoverlabel: {
+          bgcolor: 'rgba(0, 30, 30, 0.95)',
+          bordercolor: '#0AFEFF',
+          font: { color: '#fff' }
+        }
+      };
+    },
     checkAll: {
       get: function () {
         return this.diagnosisReport['diagnosis_list'] ? this.checked.length === this.diagnosisReport['diagnosis_list'].length : false;
@@ -1201,9 +1315,6 @@ export default {
 
     togglePhysicsExplanation() {
       this.showPhysicsExplanation = !this.showPhysicsExplanation;
-      if (this.showPhysicsExplanation) {
-        this.generateTelemetryGraph();
-      }
     },
 
     generateTelemetryDataForAnomalies() {
@@ -1212,51 +1323,7 @@ export default {
       return false;
     },
 
-    generateTelemetryGraph() {
-      this.$nextTick(() => {
-        const canvas = this.$refs.telemetryGraph;
-        if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-
-        // Clear canvas
-        ctx.clearRect(0, 0, width, height);
-
-        // Check if we have data from backend
-        if (!this.telemetryGraphData.actual || this.telemetryGraphData.actual.length === 0) {
-          console.error("No telemetry data available from backend. Cannot display graph.");
-          this.showPhysicsDiagnosisError("No telemetry data available. Please ensure backend is properly connected.");
-          return;
-        }
-
-        // Draw grid
-        this.drawGrid(ctx, width, height);
-
-        // Draw axes
-        this.drawAxes(ctx, width, height);
-
-        // Debug: Log the data ranges
-        console.log('Graph Data Ranges:');
-        console.log('Actual telemetry:', this.telemetryGraphData.actual);
-        console.log('Simulated anomalies:', this.telemetryGraphData.simulated);
-        console.log('Y-axis range:', this.graphYRange);
-
-        // Draw actual telemetry line
-        this.drawDataLine(ctx, this.telemetryGraphData.actual, width, height, '#0AFEFF', 'Actual');
-
-        // Draw simulated data lines for selected anomalies only
-        Object.entries(this.telemetryGraphData.simulated)
-          .filter(([name]) => this.selectedPhysicsAnomalies.indexOf(name) !== -1)
-          .forEach(([anomalyName, anomalyData]) => {
-            this.drawDataLine(ctx, anomalyData.data, width, height, anomalyData.color, anomalyName);
-          });
-
-        // Draw legend
-        this.drawLegend(ctx, width, height);
-      });
-    },
+    
 
     showPhysicsDiagnosisError(message) {
       // Set error state
@@ -1301,239 +1368,6 @@ export default {
       return colors[index % colors.length];
     },
 
-    drawGrid(ctx, width, height) {
-      const metadata = this.telemetryGraphData.telemetry_metadata || {};
-      const sensorInfo = metadata.sensor_info || {};
-      const leftMargin = 70;
-      const bottomMargin = 50;
-      const graphWidth = width - leftMargin - 20;
-      const graphHeight = height - bottomMargin - 30;
-
-      // Draw basic grid
-      ctx.strokeStyle = '#333';
-      ctx.lineWidth = 1;
-
-      // Vertical grid lines
-      for (let x = 0; x <= width; x += width / 10) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
-
-      // Horizontal grid lines
-      for (let y = 0; y <= height; y += height / 6) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
-
-      // Draw limit lines if sensor info is available
-      if (sensorInfo) {
-        const yRange = this.graphYRange || { min: 0, max: 100 };
-        const yMin = yRange.min;
-        const yMax = yRange.max;
-        const yRangeSize = yMax - yMin;
-
-        // Function to convert value to Y coordinate
-        const valueToY = (value) => {
-          return height - bottomMargin - ((value - yMin) * graphHeight / yRangeSize);
-        };
-
-        // Draw limit lines
-        const limits = [
-          { value: sensorInfo.nominal_value, color: '#ccc', label: 'Nominal' },
-          { value: sensorInfo.upper_warning, color: '#ff6b6b', label: 'Upper Warning' },
-          { value: sensorInfo.upper_caution, color: '#ffd93d', label: 'Upper Caution' },
-          { value: sensorInfo.lower_caution, color: '#ffd93d', label: 'Lower Caution' },
-          { value: sensorInfo.lower_warning, color: '#ff6b6b', label: 'Lower Warning' }
-        ];
-
-        limits.forEach(limit => {
-          if (limit.value !== undefined && limit.value !== null) {
-            const y = valueToY(limit.value);
-            
-            // Draw dotted line
-            ctx.strokeStyle = limit.color;
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 5]); // Create dotted line effect
-            
-            ctx.beginPath();
-            ctx.moveTo(leftMargin, y);
-            ctx.lineTo(width - 20, y);
-            ctx.stroke();
-            
-            // Reset line dash
-            ctx.setLineDash([]);
-            
-            // Add small label on the left
-            ctx.fillStyle = limit.color;
-            ctx.font = '10px Arial';
-            ctx.fillText(limit.label, 5, y + 4);
-          }
-        });
-      }
-    },
-
-    drawAxes(ctx, width, height) {
-      ctx.strokeStyle = '#666';
-      ctx.lineWidth = 2;
-      ctx.fillStyle = '#ccc';
-      ctx.font = '12px Arial';
-
-      // Calculate dynamic Y-axis range based on all data
-      const allData = [
-        ...(this.telemetryGraphData.actual || []),
-        ...Object.values(this.telemetryGraphData.simulated || {}).map(anomaly => anomaly.data || [])
-      ].flat();
-      
-      let minValue = Math.min(...allData);
-      let maxValue = Math.max(...allData);
-      
-      // Add padding to the range
-      const range = maxValue - minValue;
-      const padding = range * 0.1; // 10% padding
-      minValue = Math.max(0, minValue - padding);
-      maxValue = maxValue + padding;
-      
-      // Store the calculated range for use in drawDataLine
-      this.graphYRange = { min: minValue, max: maxValue };
-
-      // Y-axis
-      ctx.beginPath();
-      ctx.moveTo(70, 0);  // Increased left margin for longer labels
-      ctx.lineTo(70, height - 50);  // Increased bottom margin for timestamps
-      ctx.stroke();
-
-      // X-axis
-      ctx.beginPath();
-      ctx.moveTo(70, height - 50);
-      ctx.lineTo(width - 20, height - 50);
-      ctx.stroke();
-
-      // Y-axis labels with dynamic range and unit
-      const unit = (this.telemetryGraphData.telemetry_metadata && this.telemetryGraphData.telemetry_metadata.unit) || '';
-      for (let i = 0; i <= 6; i++) {
-        const y = height - 50 - (i * (height - 50) / 6);
-        const value = maxValue - (i * (maxValue - minValue) / 6);
-        ctx.fillText(`${value.toFixed(1)}${unit ? ` ${unit}` : ''}`, 10, y + 4);
-      }
-
-      // X-axis labels (time points)
-      const timeLabels = this.telemetryGraphData.timeLabels || [];
-      if (timeLabels.length > 0) {
-        ctx.save();
-        ctx.translate(70, height - 30);
-        ctx.rotate(-Math.PI / 4);  // Rotate labels for better readability
-        
-        for (let i = 0; i < timeLabels.length; i += 2) {
-          const x = (i * (width - 90) / (timeLabels.length - 1));
-          ctx.fillText(timeLabels[i], 0, x);
-        }
-        
-        ctx.restore();
-      } else {
-        // Fallback labels if no time labels from backend
-        for (let i = 0; i <= 20; i += 2) {
-          const x = 70 + (i * (width - 90) / 20);
-          ctx.fillText(`T${i + 1}`, x - 10, height - 30);
-        }
-      }
-
-      // Add sensor name and unit as title
-      const metadata = this.telemetryGraphData.telemetry_metadata || {};
-      const sensorName = metadata.target_sensor || '';
-      if (sensorName) {
-        ctx.font = '14px Arial';
-        ctx.fillStyle = '#0AFEFF';
-        ctx.fillText(`${sensorName} (${unit})`, width / 2 - 100, 20);
-      }
-    },
-
-    drawDataLine(ctx, data, width, height, color, label) {
-      if (!data || data.length === 0) return;
-
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
-      ctx.fillStyle = color;
-
-      const leftMargin = 70;  // Match the increased left margin from drawAxes
-      const bottomMargin = 50;  // Match the increased bottom margin from drawAxes
-      const rightMargin = 20;
-      const topMargin = 30;
-
-      const graphWidth = width - leftMargin - rightMargin;
-      const graphHeight = height - bottomMargin - topMargin;
-
-      // Use dynamic Y-axis range if available, otherwise fallback to fixed range
-      const yRange = this.graphYRange || { min: 0, max: 100 };
-      const yMin = yRange.min;
-      const yMax = yRange.max;
-      const yRangeSize = yMax - yMin;
-
-      ctx.beginPath();
-      data.forEach((value, index) => {
-        const x = leftMargin + (index * graphWidth / (data.length - 1));
-        const y = height - bottomMargin - ((value - yMin) * graphHeight / yRangeSize);
-        
-        if (index === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      });
-      ctx.stroke();
-
-      // Draw data points
-      data.forEach((value, index) => {
-        const x = leftMargin + (index * graphWidth / (data.length - 1));
-        const y = height - bottomMargin - ((value - yMin) * graphHeight / yRangeSize);
-        
-        ctx.beginPath();
-        ctx.arc(x, y, 3, 0, 2 * Math.PI);
-        ctx.fill();
-      });
-    },
-
-    drawLegend(ctx, width, height) {
-      ctx.fillStyle = '#ccc';
-      ctx.font = '12px Arial';
-      
-      // Create legend items for telemetry lines only
-      const legendItems = [
-        { text: 'Actual Telemetry', color: '#0AFEFF' },
-        ...Object.entries(this.telemetryGraphData.simulated || {})
-             .filter(([name]) => this.selectedPhysicsAnomalies.indexOf(name) !== -1)
-             .map(([anomalyName, anomalyData]) => ({
-               text: `${anomalyName} (${anomalyData.score})`,
-               color: anomalyData.color
-             }))
-      ];
-      
-      const legendHeight = legendItems.length * 20 + 20;
-      const legendWidth = 250;
-      
-      // Legend background
-      ctx.fillStyle = 'rgba(0, 30, 30, 0.9)';
-      ctx.fillRect(width - legendWidth - 20, 20, legendWidth, legendHeight);
-      
-      // Draw telemetry line items
-      legendItems.forEach((item, index) => {
-        // Draw color line sample
-        ctx.strokeStyle = item.color;
-        ctx.lineWidth = 2;
-        const lineY = 34 + (index * 20);
-        ctx.beginPath();
-        ctx.moveTo(width - legendWidth - 10, lineY);
-        ctx.lineTo(width - legendWidth + 20, lineY);
-        ctx.stroke();
-        
-        // Draw text
-        ctx.fillStyle = item.color;
-        ctx.fillText(item.text, width - legendWidth + 30, 40 + (index * 20));
-      });
-    },
 
     async requestDiagnosis() {
       this.allSelected = false;
@@ -1991,6 +1825,69 @@ export default {
       // Minimal UX for now: simple alert; can be replaced with real procedure launch later
       alert(`No procedure is available yet for: ${anomalyName}`);
     },
+
+    // Convert timestamps to relative time gaps (e.g., "20:51:38" -> "-10:10")
+    convertToRelativeTime(timeLabels) {
+      if (!timeLabels || timeLabels.length === 0) {
+        return null;
+      }
+
+      // Find the most recent timestamp (assuming they're in chronological order)
+      const mostRecentTime = timeLabels[timeLabels.length - 1];
+      
+      // Parse the most recent time
+      const mostRecentDate = this.parseTimeString(mostRecentTime);
+      if (!mostRecentDate) {
+        return null;
+      }
+
+      // Convert each timestamp to relative time gap
+      return timeLabels.map(timeStr => {
+        const currentDate = this.parseTimeString(timeStr);
+        if (!currentDate) {
+          return timeStr; // Fallback to original if parsing fails
+        }
+
+        // Calculate time difference in seconds
+        const diffSeconds = Math.floor((mostRecentDate - currentDate) / 1000);
+        
+        // Convert to minutes and seconds
+        const minutes = Math.floor(diffSeconds / 60);
+        const seconds = diffSeconds % 60;
+        
+        // Format as "-MM:SS" or "-0:SS" for recent data
+        if (minutes === 0) {
+          return `-0:${seconds.toString().padStart(2, '0')}`;
+        } else {
+          return `-${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+      });
+    },
+
+    // Parse time string in format "HH:MM:SS" or "HH:MM"
+    parseTimeString(timeStr) {
+      if (!timeStr || typeof timeStr !== 'string') {
+        return null;
+      }
+
+      // Handle different time formats
+      const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+      if (!timeMatch) {
+        return null;
+      }
+
+      const hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      const seconds = timeMatch[3] ? parseInt(timeMatch[3]) : 0;
+
+      // Create a date object for today with the given time
+      const date = new Date();
+      date.setHours(hours, minutes, seconds, 0);
+      
+      return date;
+    },
+
+
   },
 
   mounted() {
@@ -2034,6 +1931,8 @@ export default {
       window.removeEventListener('resize', this.updateScrollButtons);
     }
 
+
+
   },
 
   watch: {
@@ -2042,27 +1941,7 @@ export default {
         this.updateScrollButtons();
       });
     },
-    physicsDiagnosisData: {
-      deep: true,
-      handler() {
-        if (this.showPhysicsExplanation) {
-          this.generateTelemetryGraph();
-        }
-      }
-    },
-    telemetryGraphData: {
-      deep: true,
-      handler() {
-        if (this.showPhysicsExplanation) {
-          this.generateTelemetryGraph();
-        }
-      }
-    },
-    selectedPhysicsAnomalies() {
-      if (this.showPhysicsExplanation) {
-        this.generateTelemetryGraph();
-      }
-    }
+
   }
 }
 </script>
@@ -2410,4 +2289,6 @@ export default {
   color: #0AFEFF; /* solid when checked */
   opacity: 1;
 }
+
+
 </style>

@@ -7,7 +7,7 @@ try:
     from AT.neo4j_queries import query_functions as neo4j_q
 except Exception:  # neo4j optional
     neo4j_q = None
-from .cdra_sim_adapter import run_cdra_simulation, resample_series, scale_to_actual_units, anomaly_to_failure_config
+from .cdra_sim_adapter import run_cdra_simulation, resample_series, anomaly_to_failure_config
 
 
 def get_cdra_component_anomalies_from_neo4j(max_items: int = 5) -> List[str]:
@@ -118,7 +118,10 @@ def generate_physics_diagnosis_data(
     comp_list = []
     actual_norm = _normalize_series(actual_telemetry)
     print(f"[PHYS_DIAG] Using {len(cdra_anoms)} anomalies; effective_len={effective_len}")
-    for name in cdra_anoms:
+    print(f"[PHYS_DIAG] Anomaly names: {cdra_anoms}")
+    
+    for i, name in enumerate(cdra_anoms):
+        print(f"\n[PHYS_DIAG] === Processing anomaly {i+1}/{len(cdra_anoms)}: '{name}' ===")
         sim_vals = generate_anomaly_telemetry(
             name,
             score=0.9,  # severity seed; real severity is captured by similarity metric below
@@ -126,6 +129,10 @@ def generate_physics_diagnosis_data(
             duration_seconds=sim_duration_seconds,
             target_len_override=effective_len,
         )['values']
+        print(f"[PHYS_DIAG] Generated {len(sim_vals)} simulation values for '{name}'")
+        print(f"[PHYS_DIAG] First 10 values: {sim_vals[:10]}")
+        print(f"[PHYS_DIAG] Last 10 values: {sim_vals[-10:] if len(sim_vals) >= 10 else sim_vals}")
+        
         sim_norm = _normalize_series(sim_vals)
         # Mean Squared Error on normalized series
         if actual_norm and sim_norm and len(actual_norm) == len(sim_norm):
@@ -140,6 +147,7 @@ def generate_physics_diagnosis_data(
             'is_highlighted': False,  # set after sorting
             'telemetry_data': sim_vals,
         })
+        print(f"[PHYS_DIAG] === Completed anomaly {i+1}: '{name}' ===\n")
 
     # Sort by similarity descending and highlight top
     comp_list.sort(key=lambda x: float(x['score']), reverse=True)
@@ -196,7 +204,7 @@ def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)', sim_dur
         # Get telemetry data within the specified time window
         print(f"📊 Physics Diagnosis: Querying telemetry storage for Hera source, time window: {time_window_minutes} minutes (target: {sim_duration_seconds} data points)")
         recent_telemetry = telemetry_storage.get_telemetry_for_physics_diagnosis(source='Hera', time_window_minutes=time_window_minutes)
-        print(f"📈 Physics Diagnosis: Retrieved {len(recent_telemetry)} telemetry records from storage")
+        # print(f"📈 Physics Diagnosis: Retrieved {len(recent_telemetry)} telemetry records from storage")
         
         if recent_telemetry:
             telemetry_values = []
@@ -239,7 +247,7 @@ def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)', sim_dur
             # If we have telemetry data, process it and handle insufficient data
             if telemetry_values:
                 print(f"✅ Physics Diagnosis: Successfully retrieved {len(telemetry_values)} telemetry values for sensor '{target_sensor}'")
-                print(f"📊 Physics Diagnosis: Telemetry values: {telemetry_values}")
+                print(f"📊 Physics Diagnosis: Telemetry values: initial={telemetry_values[0]}, final={telemetry_values[-1]}")
                 
                 # Calculate how many data points we need based on sim_duration_seconds
                 # Since telemetry data comes almost every second, we need approximately sim_duration_seconds points
@@ -329,7 +337,7 @@ def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)', sim_dur
                                 
                                 # Combine: [filled_timestamps] + [original_timestamps]
                                 timestamps = filled_timestamps + timestamps
-                                print(f"✅ Physics Diagnosis: Generated {len(filled_timestamps)} timestamps for filled data")
+                                # print(f"✅ Physics Diagnosis: Generated {len(filled_timestamps)} timestamps for filled data")
                             else:
                                 # Fallback: use generic labels
                                 filled_timestamps = [f"T{i+1}" for i in range(points_to_add)]
@@ -455,39 +463,35 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
         - timestamps: List of timestamps (copied from actual data)
         - unit: Unit of measurement
     """
-    # Get actual telemetry data to base simulation on
-    # telemetry_data = get_actual_telemetry_from_storage(target_sensor)
-    # actual_values = telemetry_data['values']
-    # target_len = (target_len_override if target_len_override and target_len_override > 0
-    #               else (len(actual_values) if actual_values else 20))
+    print(f"[ANOMALY_TELEMETRY] Generating telemetry for anomaly: '{anomaly_name}'")
+    # print(f"[ANOMALY_TELEMETRY] Parameters: score={score}, duration={duration_seconds}s, target_len={target_len_override}")
 
     # Build failure config from anomaly name and score
     failure_cfg = anomaly_to_failure_config(anomaly_name, severity=float(score))
+    # print(f"[ANOMALY_TELEMETRY] Failure config generated: {failure_cfg}")
 
-    # Use baseline as the first actual value or average
-    # if actual_values:
-    #     try:
-    #         baseline = sum(float(v) for v in actual_values) / len(actual_values)
-    #     except Exception:
-    #         baseline = float(actual_values[0]) if actual_values else 0.006
-    # else:
-    baseline = 0.006  # reasonable ppCO2 mass ratio baseline placeholder
+    baseline = 3.0 #[mmHg] reasonable ppCO2 partial pressure baseline placeholder
+    print(f"[ANOMALY_TELEMETRY] Using baseline CO2: {baseline} mmHg")
 
     # Run simulator (dt fixed at 1s as requested)
+    print(f"[ANOMALY_TELEMETRY] Starting CDRA simulation...")
     raw_series = run_cdra_simulation(
         failure_config=failure_cfg,
-        # duration_seconds=max(duration_seconds, target_len),
         duration_seconds= duration_seconds,
-        baseline_co2_mass_ratio=baseline,
+        baseline_co2_mmHg=baseline,
         onset_time_sec=3,
-        seed=42,
     )
+    print(f"[ANOMALY_TELEMETRY] CDRA simulation completed, generated {len(raw_series)} points")
+    # print(f"[ANOMALY_TELEMETRY] Raw series range: {min(raw_series):.4f} to {max(raw_series):.4f} mmHg")
 
-    # Resample to the same number of points as actual data and scale to units
-    # resampled = resample_series(raw_series, target_len)
-    # scaled = scale_to_actual_units(resampled, actual_values)
-    resampled = resample_series(raw_series, target_len_override)
-    # scaled = scale_to_actual_units(resampled)
+    # Resample to the same number of points as actual data 
+    if target_len_override:
+        # print(f"[ANOMALY_TELEMETRY] Resampling from {len(raw_series)} to {target_len_override} points")
+        resampled = resample_series(raw_series, target_len_override)
+        print(f"[ANOMALY_TELEMETRY] Resampled series range: {min(resampled):.4f} to {max(resampled):.4f} mmHg")
+    else:
+        resampled = raw_series
+        print(f"[ANOMALY_TELEMETRY] No resampling needed")
 
     return {
         'values': resampled,
