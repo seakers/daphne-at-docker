@@ -538,12 +538,8 @@ class RequestPhysicsDiagnosis(APIView):
 
         # Generate physics-based diagnosis data using the dedicated module
         print(f"⚙️ RequestPhysicsDiagnosis: Calling create_physics_diagnosis_report (duration={sim_duration_seconds}s)")
-        diagnosis_report = create_physics_diagnosis_report(
-            symptoms_list,
-            target_telemetry_sensor,
-            sim_duration_seconds=sim_duration_seconds,
-            sampling_rate_seconds=sampling_rate_seconds,
-        )
+        
+        diagnosis_report = create_physics_diagnosis_report(symptoms_list, target_telemetry_sensor, sim_duration_seconds, sampling_rate_seconds)
         
         print(f"✅ RequestPhysicsDiagnosis: Diagnosis report generated successfully")
         print(f"📊 Report keys: {list(diagnosis_report.keys())}")

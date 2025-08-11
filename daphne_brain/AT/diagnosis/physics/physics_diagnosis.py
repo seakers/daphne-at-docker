@@ -20,8 +20,9 @@ def get_cdra_component_anomalies_from_neo4j(max_items: int = 5) -> List[str]:
         'CO₂ Scrubber Valve Leak',
         'Fan Bearing Wear',
         'Absorption Bed Saturated',
-        'Heater Coil Failure',
-        'Pressure Sensor Drift'
+        'Heater Coil Failure'
+        # ,
+        # 'Pressure Sensor Drift'
     ]
 
     # Pseudo-code for future Neo4j integration (disabled):
@@ -81,7 +82,7 @@ def generate_physics_diagnosis_data(
         Dictionary containing physics diagnosis data with anomalies, telemetry, and time labels
     """
     # Get real telemetry data from storage for the target sensor
-    telemetry_data = get_actual_telemetry_from_storage(target_telemetry_sensor)
+    telemetry_data = get_actual_telemetry_from_storage(target_telemetry_sensor, sim_duration_seconds)
     actual_telemetry = telemetry_data['values']
     timestamps = telemetry_data['timestamps']
     unit = telemetry_data['unit']
@@ -163,26 +164,38 @@ def generate_physics_diagnosis_data(
     return physics_diagnosis_data
 
 
-def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)') -> Dict[str, Any]:
+def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)', sim_duration_seconds: int = 1000) -> Dict[str, Any]:
     """
     Get actual telemetry data from the storage system for a specific sensor.
     
     Args:
         target_sensor: Target sensor to extract telemetry data for (default: 'ppCO2 (L1)')
+        sim_duration_seconds: Duration in seconds to fetch telemetry data for (default: 1000)
         
     Returns:
         Dictionary containing:
-        - values: List of telemetry values
-        - timestamps: List of timestamps
+        - values: List of telemetry values (chronologically ordered from oldest to newest)
+        - timestamps: List of timestamps (chronologically ordered from oldest to newest)
         - unit: Unit of measurement
         - sensor_info: Additional sensor information
+        
+    Note:
+        This function collects all available telemetry data within the specified time duration.
+        Since telemetry data comes almost every second, it aims to provide sim_duration_seconds
+        data points. If insufficient historical data is available, it fills the beginning
+        of the series with the oldest available value to reach the required length.
+        This maintains chronological order: [oldest_filled_data] + [actual_historical_data]
+        Data resampling is handled later in the process, not in this function.
     """
-    print(f"🔍 Physics Diagnosis: Starting telemetry retrieval for sensor '{target_sensor}'")
+    print(f"🔍 Physics Diagnosis: Starting telemetry retrieval for sensor '{target_sensor}' for {sim_duration_seconds} seconds")
     
     try:
-        # Get recent telemetry data (last 20 readings)
-        print(f"📊 Physics Diagnosis: Querying telemetry storage for Hera source, limit 20")
-        recent_telemetry = telemetry_storage.get_recent_telemetry(source='Hera', limit=20)
+        # Convert duration from seconds to minutes for the telemetry storage query
+        time_window_minutes = max(1, sim_duration_seconds // 60)  # Ensure at least 1 minute
+        
+        # Get telemetry data within the specified time window
+        print(f"📊 Physics Diagnosis: Querying telemetry storage for Hera source, time window: {time_window_minutes} minutes (target: {sim_duration_seconds} data points)")
+        recent_telemetry = telemetry_storage.get_telemetry_for_physics_diagnosis(source='Hera', time_window_minutes=time_window_minutes)
         print(f"📈 Physics Diagnosis: Retrieved {len(recent_telemetry)} telemetry records from storage")
         
         if recent_telemetry:
@@ -190,8 +203,8 @@ def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)') -> Dict
             
             for i, record in enumerate(recent_telemetry):
                 telemetry_data = record['data']
-                print(f"📋 Physics Diagnosis: Record {i+1} timestamp: {record['timestamp']}")
-                print(f"🔑 Physics Diagnosis: Record {i+1} keys: {list(telemetry_data.keys()) if isinstance(telemetry_data, dict) else 'Not a dict'}")
+                #print(f"📋 Physics Diagnosis: Record {i+1} timestamp: {record['timestamp']}")
+                #print(f"🔑 Physics Diagnosis: Record {i+1} keys: {list(telemetry_data.keys()) if isinstance(telemetry_data, dict) else 'Not a dict'}")
                 
                 if isinstance(telemetry_data, dict):
                     # Look for the target sensor specifically
@@ -199,7 +212,7 @@ def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)') -> Dict
                         try:
                             value = float(telemetry_data[target_sensor])
                             telemetry_values.append(value)
-                            print(f"✅ Physics Diagnosis: Found {target_sensor} = {value} in record {i+1}")
+                            #print(f"✅ Physics Diagnosis: Found {target_sensor} = {value} in record {i+1}")
                         except (ValueError, TypeError) as e:
                             print(f"❌ Physics Diagnosis: Could not convert {target_sensor} value to float: {telemetry_data[target_sensor]} (Error: {e})")
                             continue
@@ -223,10 +236,31 @@ def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)') -> Dict
                 else:
                     print(f"❌ Physics Diagnosis: Record {i+1} data is not a dictionary: {type(telemetry_data)}")
             
-            # If we have telemetry data, return it with metadata
+            # If we have telemetry data, process it and handle insufficient data
             if telemetry_values:
                 print(f"✅ Physics Diagnosis: Successfully retrieved {len(telemetry_values)} telemetry values for sensor '{target_sensor}'")
                 print(f"📊 Physics Diagnosis: Telemetry values: {telemetry_values}")
+                
+                # Calculate how many data points we need based on sim_duration_seconds
+                # Since telemetry data comes almost every second, we need approximately sim_duration_seconds points
+                target_data_points = sim_duration_seconds
+                
+                # If we don't have enough data, fill with the oldest available value
+                if len(telemetry_values) < target_data_points:
+                    print(f"⚠️ Physics Diagnosis: Insufficient data ({len(telemetry_values)} points), need {target_data_points} points")
+                    print(f"🔄 Physics Diagnosis: Filling remaining data with oldest available value to the beginning of series")
+                    
+                    # Get the oldest value (first in the list since data is ordered by timestamp)
+                    oldest_value = telemetry_values[0] if telemetry_values else 0
+                    
+                    # Calculate how many points we need to add
+                    points_to_add = target_data_points - len(telemetry_values)
+                    
+                    # Add the oldest value to the beginning of the series (head)
+                    # This maintains chronological order: [oldest_filled_data] + [actual_historical_data]
+                    telemetry_values = [oldest_value] * points_to_add + telemetry_values
+                    
+                    print(f"✅ Physics Diagnosis: Extended data to {len(telemetry_values)} points by adding {points_to_add} oldest values ({oldest_value}) to the beginning")
                 
                 # Extract timestamps and sensor info from the first record that had valid data
                 timestamps = []
@@ -272,6 +306,46 @@ def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)') -> Dict
                                         break
                                 else:
                                     print(f"❌ Physics Diagnosis: No matching sensor found in original data")
+                
+                # If we extended the data, also extend timestamps to match
+                if len(timestamps) < len(telemetry_values):
+                    print(f"🔄 Physics Diagnosis: Extending timestamps to match data length")
+                    points_to_add = len(telemetry_values) - len(timestamps)
+                    
+                    if timestamps:
+                        # Generate timestamps for the filled data at the beginning
+                        # Since telemetry data comes almost every second, calculate backward from the first timestamp
+                        from datetime import datetime, timedelta
+                        try:
+                            first_timestamp = timestamps[0]
+                            if isinstance(first_timestamp, str) and 'T' in first_timestamp:
+                                # Parse the first timestamp and generate earlier ones
+                                base_dt = datetime.fromisoformat(first_timestamp.replace('Z', '+00:00'))
+                                filled_timestamps = []
+                                for i in range(points_to_add, 0, -1):  # Count backwards
+                                    # Each point is 1 second apart (since telemetry comes almost every second)
+                                    earlier_time = base_dt - timedelta(seconds=i)
+                                    filled_timestamps.append(earlier_time.isoformat())
+                                
+                                # Combine: [filled_timestamps] + [original_timestamps]
+                                timestamps = filled_timestamps + timestamps
+                                print(f"✅ Physics Diagnosis: Generated {len(filled_timestamps)} timestamps for filled data")
+                            else:
+                                # Fallback: use generic labels
+                                filled_timestamps = [f"T{i+1}" for i in range(points_to_add)]
+                                timestamps = filled_timestamps + timestamps
+                                print(f"✅ Physics Diagnosis: Generated {len(filled_timestamps)} generic timestamps for filled data")
+                        except Exception as e:
+                            print(f"⚠️ Physics Diagnosis: Error generating timestamps, using fallback: {e}")
+                            # Fallback: use generic labels
+                            filled_timestamps = [f"T{i+1}" for i in range(points_to_add)]
+                            timestamps = filled_timestamps + timestamps
+                    else:
+                        # No timestamps available, generate generic ones
+                        filled_timestamps = [f"T{i+1}" for i in range(points_to_add)]
+                        timestamps = filled_timestamps + [f"T{i+1}" for i in range(points_to_add, len(telemetry_values))]
+                    
+                    print(f"✅ Physics Diagnosis: Extended timestamps to {len(timestamps)} to match data length")
                 
                 return {
                     'values': telemetry_values,
@@ -382,40 +456,43 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
         - unit: Unit of measurement
     """
     # Get actual telemetry data to base simulation on
-    telemetry_data = get_actual_telemetry_from_storage(target_sensor)
-    actual_values = telemetry_data['values']
-    target_len = (target_len_override if target_len_override and target_len_override > 0
-                  else (len(actual_values) if actual_values else 20))
+    # telemetry_data = get_actual_telemetry_from_storage(target_sensor)
+    # actual_values = telemetry_data['values']
+    # target_len = (target_len_override if target_len_override and target_len_override > 0
+    #               else (len(actual_values) if actual_values else 20))
 
     # Build failure config from anomaly name and score
     failure_cfg = anomaly_to_failure_config(anomaly_name, severity=float(score))
 
     # Use baseline as the first actual value or average
-    if actual_values:
-        try:
-            baseline = sum(float(v) for v in actual_values) / len(actual_values)
-        except Exception:
-            baseline = float(actual_values[0]) if actual_values else 0.006
-    else:
-        baseline = 0.006  # reasonable ppCO2 mass ratio baseline placeholder
+    # if actual_values:
+    #     try:
+    #         baseline = sum(float(v) for v in actual_values) / len(actual_values)
+    #     except Exception:
+    #         baseline = float(actual_values[0]) if actual_values else 0.006
+    # else:
+    baseline = 0.006  # reasonable ppCO2 mass ratio baseline placeholder
 
     # Run simulator (dt fixed at 1s as requested)
     raw_series = run_cdra_simulation(
         failure_config=failure_cfg,
-        duration_seconds=max(duration_seconds, target_len),
+        # duration_seconds=max(duration_seconds, target_len),
+        duration_seconds= duration_seconds,
         baseline_co2_mass_ratio=baseline,
         onset_time_sec=3,
         seed=42,
     )
 
     # Resample to the same number of points as actual data and scale to units
-    resampled = resample_series(raw_series, target_len)
-    scaled = scale_to_actual_units(resampled, actual_values)
+    # resampled = resample_series(raw_series, target_len)
+    # scaled = scale_to_actual_units(resampled, actual_values)
+    resampled = resample_series(raw_series, target_len_override)
+    # scaled = scale_to_actual_units(resampled)
 
     return {
-        'values': scaled,
-        'timestamps': telemetry_data.get('timestamps', []),
-        'unit': telemetry_data.get('unit', '')
+        'values': resampled,
+        # 'timestamps': telemetry_data.get('timestamps', []),
+        # 'unit': telemetry_data.get('unit', '')
     }
 
 
@@ -435,11 +512,7 @@ def create_physics_diagnosis_report(
     Returns:
         Complete diagnosis report with physics data
     """
-    physics_diagnosis_data = generate_physics_diagnosis_data(
-        symptoms_list, target_telemetry_sensor,
-        sim_duration_seconds=sim_duration_seconds,
-        sampling_rate_seconds=sampling_rate_seconds,
-    )
+    physics_diagnosis_data = generate_physics_diagnosis_data(symptoms_list, target_telemetry_sensor, sim_duration_seconds, sampling_rate_seconds)
     
     # Build the diagnosis report and send it to the frontend
     diagnosis_report = {
