@@ -133,60 +133,35 @@ class CDRAState:
 
 
 def _apply_failures(state: CDRAState, t: int, cfg: Dict) -> None:
-    """Apply failures to the CDRA state with detailed debugging."""
-    # if t % 100 == 0:  # Only print every 100 timesteps to reduce spam
-        # print(f"[FAILURES] Time {t}: Applying failures from config: {cfg}")
+    # Apply failures to the CDRA state with detailed debugging.
     
-    # Filter saturation window
-    filt_on = bool(cfg.get('filter_saturation', False))
+    # --- Filter Saturation Handling ---
+    fs_on  = cfg.get('filter_saturation')
     fs_start = cfg.get('filter_saturation_start')
     fs_end = cfg.get('filter_saturation_end')
-    if fs_start is not None and fs_end is not None:
-        filt_on = fs_start <= t <= fs_end
 
-    if filt_on and t % 50 == 0:
-        # print(f"[FAILURES] APPLYING: Filter saturation at t={t}")
+    if fs_on and fs_start <= t <= fs_end:
+        #print(f"[FAILURES] APPLYING: Filter saturation at t={t}") if t % 50 == 0 else None
         for comp in state.saturation:
             state.saturation[comp] = 1.0
             state.adsorption_eff[comp] = BASE_ADSORPTION_EFF + MAX_ADSORPTION_EFF_INCREMENT * 1.0
-    elif filt_on:
-        # Apply the failure but don't print
-        for comp in state.saturation:
-            state.saturation[comp] = 1.0
-            state.adsorption_eff[comp] = BASE_ADSORPTION_EFF + MAX_ADSORPTION_EFF_INCREMENT * 1.0
+    else:
+        pass
 
-    # Valve stuck window
-    stuck_on = bool(cfg.get('valve_stuck', False))
-    vs_start = cfg.get('valve_stuck_start')
-    vs_end = cfg.get('valve_stuck_end')
-    if vs_start is not None and vs_end is not None:
-        stuck_on = vs_start <= t <= vs_end
-    
-    # if stuck_on and t % 50 == 0:
-    #     print(f"[FAILURES] APPLYING: Valve stuck at t={t}")
-
-    # Heater failures
+    # --- Heater Failure Handling ---
     heater_failures = cfg.get('heater_failure', []) or []
-    # if heater_failures and t % 50 == 0:
-    #     print(f"[FAILURES] APPLYING: Heater failures at t={t}: {heater_failures}")
-    #     print(f"[FAILURES]   Heater states BEFORE: {state.heater_on}")
     for h in heater_failures:
         state.heater_on[h] = False
     # if heater_failures and t % 50 == 0:
     #     print(f"[FAILURES]   Heater states AFTER: {state.heater_on}")
 
-    # Fan degraded window
-    fan_on = bool(cfg.get('fan_degraded', False))
+    # --- Fan Degraded Handling ---
+    fd_on = bool(cfg.get('fan_degraded', False))
     fd_start = cfg.get('fan_degraded_start')
     fd_end = cfg.get('fan_degraded_end')
-    if fd_start is not None and fd_end is not None:
-        fan_on = fd_start <= t <= fd_end
     
-    if fan_on:
-        old_flow_rate = state.air_flow_rate
-        state.air_flow_rate = cfg.get('degraded_flow_rate', AIR_FLOW_RATE_NOMINAL)
-        # if t % 50 == 0:
-        #     print(f"[FAILURES] APPLYING: Fan degraded at t={t} - flow rate {old_flow_rate:.3f} -> {state.air_flow_rate:.3f}")
+    if fd_on and fd_start <= t <= fd_end:
+        state.air_flow_rate = cfg.get('degraded_flow_rate')
     else:
         state.air_flow_rate = AIR_FLOW_RATE_NOMINAL
 
@@ -210,10 +185,8 @@ def _timestep(state: CDRAState, dt: int) -> Tuple[float, float]:
     # Choose path efficiency
     active_path = state.valve_state['path_1_active']
     if active_path:
-        comp_used = 'sorbent_2'
         eta_co2 = state.adsorption_eff['sorbent_2'] if not state.heater_on['sorbent_2'] else -DESORPTION_MULTIPLIER
     else:
-        comp_used = 'sorbent_4'
         eta_co2 = state.adsorption_eff['sorbent_4'] if not state.heater_on['sorbent_4'] else -DESORPTION_MULTIPLIER
 
     # if state.time % 200 == 0:  # Print every 200 timesteps to avoid spam
@@ -238,25 +211,17 @@ def _update_cabin_concentration(state: CDRAState, C_out: float, flow: float) -> 
 
 
 def _control(state: CDRAState, failure_config: Dict = None) -> None:
-    """Control the CDRA system with failure awareness."""
-    # Check if valve is stuck
-    valve_stuck = False
+    # --- Valve Control Handling with failure awareness ---
     if failure_config:
-        valve_stuck = bool(failure_config.get('valve_stuck', False))
+        valve_failure = failure_config.get('valve_stuck')
         vs_start = failure_config.get('valve_stuck_start')
         vs_end = failure_config.get('valve_stuck_end')
-        if vs_start is not None and vs_end is not None:
-            valve_stuck = vs_start <= state.time <= vs_end
+        valve_stuck = valve_failure and vs_start <= state.time <= vs_end
     
     if not valve_stuck and state.time % VALVE_SWITCH_INTERVAL == 0 and state.time != 0:
         state.valve_state['path_1_active'] = not state.valve_state['path_1_active']
-        # if state.time % 200 == 0:  # Debug valve switching
-        #     print(f"[CONTROL] Time {state.time}: Valve switched to path_1_active={state.valve_state['path_1_active']}")
-    # elif valve_stuck and state.time % VALVE_SWITCH_INTERVAL == 0 and state.time != 0:
-    #     if state.time % 200 == 0:  # Debug valve stuck
-    #         print(f"[CONTROL] Time {state.time}: Valve switching PREVENTED (valve stuck)")
     
-    # Get list of failed heaters from failure config
+    # --- Heater Control Handling with failure awareness ---
     failed_heaters = set()
     if failure_config:
         failed_heaters = set(failure_config.get('heater_failure', []))
@@ -400,6 +365,6 @@ def anomaly_to_failure_config(anomaly_name: str, severity: float) -> Dict:
         # handled in caller by post-process drift
         pass
     
-    print(f"[ANOMALY_CFG] Final config: {cfg}")
+    # print(f"[ANOMALY_CFG] Final config: {cfg}")
     print(f"[ANOMALY_CFG] ---")
     return cfg

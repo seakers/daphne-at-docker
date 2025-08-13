@@ -527,13 +527,13 @@ class RequestPhysicsDiagnosis(APIView):
         
         # Optional simulation controls from frontend
         try:
-            sim_duration_seconds = int(request.data.get('sim_duration_seconds', 1000))
+            sim_duration_seconds = int(request.data.get('sim_duration_seconds'))
         except Exception:
-            sim_duration_seconds = 1000
+            print("Error getting sim duration seconds")
         try:
-            sampling_rate_seconds = int(request.data.get('sampling_rate_seconds', 10))
+            sampling_rate_seconds = int(request.data.get('sampling_rate_seconds'))
         except Exception:
-            sampling_rate_seconds = 10
+            print("Error getting sampling rate seconds")
         print(f"[API] PhysicsDiagnosis controls: duration={sim_duration_seconds}, sampling_rate={sampling_rate_seconds}s")
 
         # Generate physics-based diagnosis data using the dedicated module

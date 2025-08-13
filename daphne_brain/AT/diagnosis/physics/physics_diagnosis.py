@@ -1,6 +1,8 @@
 import random
 import math
+import numpy as np
 import json
+import os
 from typing import Dict, List, Any
 from .telemetry_storage import telemetry_storage
 try:
@@ -8,6 +10,43 @@ try:
 except Exception:  # neo4j optional
     neo4j_q = None
 from .cdra_sim_adapter import run_cdra_simulation, resample_series, anomaly_to_failure_config
+
+
+def load_npy_telemetry_data(anomaly_name: str, target_sensor: str) -> List[float]:
+    """
+    Load telemetry data from npy files to supplement missing historical data.
+    
+    Args:
+        anomaly_name: Name of the anomaly to load data for
+        target_sensor: Target sensor name (used to determine which npy file to load)
+        
+    Returns:
+        List of telemetry values from the npy file, or empty list if file not found
+    """
+    try:
+        # Try to find the npy file in the parent directory (daphne_brain/)
+        npy_filename = f"raw_series_{anomaly_name}.npy"
+        npy_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), npy_filename)
+        
+        if os.path.exists(npy_path):
+            print(f"📁 Physics Diagnosis: Loading npy data from {npy_path}")
+            npy_data = np.load(npy_path)
+            data_list = npy_data.tolist() if hasattr(npy_data, 'tolist') else list(npy_data)
+            print(f"✅ Physics Diagnosis: Loaded {len(data_list)} values from npy file for '{anomaly_name}'")
+            return data_list
+        else:
+            print(f"⚠️ Physics Diagnosis: Npy file not found at {npy_path}")
+            return []
+    except Exception as e:
+        print(f"❌ Physics Diagnosis: Error loading npy file for '{anomaly_name}': {e}")
+        return []
+
+
+# Hardcoded anomaly file for supplementation - change this to use a different .npy file if needed
+#SUPPLEMENTATION_ANOMALY = 'CO₂ Scrubber Valve Leak'
+#SUPPLEMENTATION_ANOMALY = None
+SUPPLEMENTATION_ANOMALY = 'Heater Coil Failure'
+
 
 
 def get_cdra_component_anomalies_from_neo4j(max_items: int = 5) -> List[str]:
@@ -67,9 +106,9 @@ def _normalize_series(values: List[float]) -> List[float]:
 
 def generate_physics_diagnosis_data(
     symptoms_list: List[Dict[str, Any]],
-    target_telemetry_sensor: str = 'ppCO2 (L1)',
-    sim_duration_seconds: int = 1000,
-    sampling_rate_seconds: int = 10,
+    target_telemetry_sensor: str,
+    sim_duration_seconds: int,
+    sampling_rate_seconds: int,
 ) -> Dict[str, Any]:
     """
     Generate physics-based diagnosis data based on symptoms.
@@ -81,8 +120,10 @@ def generate_physics_diagnosis_data(
     Returns:
         Dictionary containing physics diagnosis data with anomalies, telemetry, and time labels
     """
+    # simulation speed assumption:
+    simulation_speed_factor = 10
     # Get real telemetry data from storage for the target sensor
-    telemetry_data = get_actual_telemetry_from_storage(target_telemetry_sensor, sim_duration_seconds)
+    telemetry_data = get_actual_telemetry_from_storage(target_telemetry_sensor, int(sim_duration_seconds // simulation_speed_factor))
     actual_telemetry = telemetry_data['values']
     timestamps = telemetry_data['timestamps']
     unit = telemetry_data['unit']
@@ -172,7 +213,7 @@ def generate_physics_diagnosis_data(
     return physics_diagnosis_data
 
 
-def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)', sim_duration_seconds: int = 1000) -> Dict[str, Any]:
+def get_actual_telemetry_from_storage(target_sensor: str, sim_duration_seconds: int) -> Dict[str, Any]:
     """
     Get actual telemetry data from the storage system for a specific sensor.
     
@@ -253,22 +294,50 @@ def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)', sim_dur
                 # Since telemetry data comes almost every second, we need approximately sim_duration_seconds points
                 target_data_points = sim_duration_seconds
                 
-                # If we don't have enough data, fill with the oldest available value
+                # If we don't have enough data, try to supplement with npy file data
                 if len(telemetry_values) < target_data_points:
                     print(f"⚠️ Physics Diagnosis: Insufficient data ({len(telemetry_values)} points), need {target_data_points} points")
-                    print(f"🔄 Physics Diagnosis: Filling remaining data with oldest available value to the beginning of series")
                     
-                    # Get the oldest value (first in the list since data is ordered by timestamp)
-                    oldest_value = telemetry_values[0] if telemetry_values else 0
+                    # Try to get supplementation data from npy files
+                    npy_supplementation = load_npy_telemetry_data(SUPPLEMENTATION_ANOMALY, target_sensor)
                     
-                    # Calculate how many points we need to add
-                    points_to_add = target_data_points - len(telemetry_values)
-                    
-                    # Add the oldest value to the beginning of the series (head)
-                    # This maintains chronological order: [oldest_filled_data] + [actual_historical_data]
-                    telemetry_values = [oldest_value] * points_to_add + telemetry_values
-                    
-                    print(f"✅ Physics Diagnosis: Extended data to {len(telemetry_values)} points by adding {points_to_add} oldest values ({oldest_value}) to the beginning")
+                    if npy_supplementation:
+                        print(f"🔄 Physics Diagnosis: Using npy file data from '{SUPPLEMENTATION_ANOMALY}' for supplementation")
+                        
+                        # Calculate how many points we need to add
+                        points_to_add = target_data_points - len(telemetry_values)
+                        
+                        # Take the most recent points from the npy data (tail end) to supplement the beginning
+                        # This maintains chronological order: [npy_supplementation_data] + [actual_historical_data]
+                        if len(npy_supplementation) >= points_to_add:
+                            supplementation_data = npy_supplementation[-points_to_add:]  # Take tail end
+                            print(f"✅ Physics Diagnosis: Using {len(supplementation_data)} points from npy file for supplementation")
+                        else:
+                            # If npy file doesn't have enough data, use what we have and fill the rest with oldest value
+                            supplementation_data = npy_supplementation
+                            remaining_points = points_to_add - len(supplementation_data)
+                            oldest_value = telemetry_values[0] if telemetry_values else 0
+                            supplementation_data = [oldest_value] * remaining_points + supplementation_data
+                            print(f"⚠️ Physics Diagnosis: Npy file insufficient, using {len(npy_supplementation)} npy points + {remaining_points} oldest values")
+                        
+                        # Combine supplementation data with actual telemetry
+                        telemetry_values = supplementation_data + telemetry_values
+                        print(f"✅ Physics Diagnosis: Extended data to {len(telemetry_values)} points using npy supplementation")
+                    else:
+                        # Fallback to old method: fill with the oldest available value
+                        print(f"🔄 Physics Diagnosis: Npy supplementation failed, falling back to oldest value method")
+                        
+                        # Get the oldest value (first in the list since data is ordered by timestamp)
+                        oldest_value = telemetry_values[0] if telemetry_values else 0
+                        
+                        # Calculate how many points we need to add
+                        points_to_add = target_data_points - len(telemetry_values)
+                        
+                        # Add the oldest value to the beginning of the series (head)
+                        # This maintains chronological order: [oldest_filled_data] + [actual_historical_data]
+                        telemetry_values = [oldest_value] * points_to_add + telemetry_values
+                        
+                        print(f"✅ Physics Diagnosis: Extended data to {len(telemetry_values)} points by adding {points_to_add} oldest values ({oldest_value}) to the beginning")
                 
                 # Extract timestamps and sensor info from the first record that had valid data
                 timestamps = []
@@ -337,7 +406,7 @@ def get_actual_telemetry_from_storage(target_sensor: str = 'ppCO2 (L1)', sim_dur
                                 
                                 # Combine: [filled_timestamps] + [original_timestamps]
                                 timestamps = filled_timestamps + timestamps
-                                # print(f"✅ Physics Diagnosis: Generated {len(filled_timestamps)} timestamps for filled data")
+                                print(f"✅ Physics Diagnosis: Generated {len(filled_timestamps)} timestamps for filled data")
                             else:
                                 # Fallback: use generic labels
                                 filled_timestamps = [f"T{i+1}" for i in range(points_to_add)]
@@ -447,8 +516,8 @@ def generate_time_labels(data_length: int) -> List[str]:
     return [f'T{i+1}' for i in range(data_length)]
 
 
-def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: str = 'ppCO2 (L1)',
-                               duration_seconds: int = 60, target_len_override: int = None) -> Dict[str, Any]:
+def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: str,
+                               duration_seconds: int, target_len_override: int) -> Dict[str, Any]:
     """
     Generate simulated telemetry data for a specific anomaly.
     
@@ -483,6 +552,7 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
     )
     print(f"[ANOMALY_TELEMETRY] CDRA simulation completed, generated {len(raw_series)} points")
     # print(f"[ANOMALY_TELEMETRY] Raw series range: {min(raw_series):.4f} to {max(raw_series):.4f} mmHg")
+    np.save(f"raw_series_{anomaly_name}.npy", raw_series)
 
     # Resample to the same number of points as actual data 
     if target_len_override:
@@ -502,9 +572,9 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
 
 def create_physics_diagnosis_report(
     symptoms_list: List[Dict[str, Any]],
-    target_telemetry_sensor: str = 'ppCO2 (L1)',
-    sim_duration_seconds: int = 1000,
-    sampling_rate_seconds: int = 10,
+    target_telemetry_sensor: str,
+    sim_duration_seconds: int,
+    sampling_rate_seconds: int,
 ) -> Dict[str, Any]:
     """
     Create a complete physics diagnosis report.
