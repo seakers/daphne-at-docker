@@ -39,6 +39,17 @@
                       id="clear_symptoms" v-on:click.prevent="clearSymptoms">Clear
               </button>
             </div>
+            <!-- Physics Simulation Duration Input -->
+            <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+              <label style="color: #0AFEFF; font-size: 12px; white-space: nowrap;">Sim Duration (s):</label>
+              <input 
+                type="number" 
+                v-model="localPhysicsSimDuration" 
+                min="1" 
+                max="10000"
+                style="width: 80px; padding: 4px 8px; background: #002E2E; border: 1px solid #0AFEFF; color: #0AFEFF; border-radius: 4px; font-size: 12px;"
+              >
+            </div>
           </div>
         </div>
       </div>
@@ -629,6 +640,7 @@ export default {
       showPhysicsExplanation: false,
       physicsDiagnosisError: null,
       selectedPhysicsAnomalies: [],
+      localPhysicsSimDuration: 3000, // Local copy of physics simulation duration
 
     }
   },
@@ -645,6 +657,7 @@ export default {
       telemetryValues: 'getTelemetryValues',
       physicsDiagnosisData: 'getPhysicsDiagnosisData',
       telemetryGraphData: 'getTelemetryGraphData',
+      physicsSimDurationSeconds: 'getPhysicsSimDurationSeconds',
     }),
 
     // Vue Plotly data for physics diagnosis graph
@@ -1242,6 +1255,9 @@ export default {
       this.physicsDiagnosisError = null; // Clear any previous errors
 
       try {
+        // Update store with local value before making the request
+        this.$store.commit('mutatePhysicsSimDurationSeconds', this.localPhysicsSimDuration);
+        
         // Request physics diagnosis from backend
         await this.$store.dispatch('requestPhysicsDiagnosis', this.selectedSymptomsList);
         
@@ -1312,6 +1328,8 @@ export default {
         this.isLoading = false;
       }
     },
+
+
 
     togglePhysicsExplanation() {
       this.showPhysicsExplanation = !this.showPhysicsExplanation;
@@ -1895,6 +1913,9 @@ export default {
     this.startAstrobeeStatusPolling();
     setInterval(this.startAstrobeeStatusPolling, 1200);
 
+    // Initialize local physics simulation duration with store value
+    this.localPhysicsSimDuration = this.physicsSimDurationSeconds;
+
     this.$nextTick(() => {
       if (this.$refs.tabsContainer) {
         this.$refs.tabsContainer.addEventListener('scroll', this.updateScrollButtons);
@@ -1940,6 +1961,11 @@ export default {
       this.$nextTick(() => {
         this.updateScrollButtons();
       });
+    },
+    
+    // Watch for changes in store physics simulation duration and update local value
+    physicsSimDurationSeconds(newVal) {
+      this.localPhysicsSimDuration = newVal;
     },
 
   }

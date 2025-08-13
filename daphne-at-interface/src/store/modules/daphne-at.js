@@ -34,7 +34,7 @@ const state = {
         probability: '',
         componentAnomalies: []
     },
-    physicsSimDurationSeconds: 1000, // simulation window length in seconds
+    physicsSimDurationSeconds: 3000, // simulation window length in seconds
     physicsSamplingRateSeconds: 10, // resample interval for both actual and simulated
     telemetryGraphData: {
         actual: [],

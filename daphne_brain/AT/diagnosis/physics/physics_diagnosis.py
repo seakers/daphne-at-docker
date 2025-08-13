@@ -299,9 +299,12 @@ def get_actual_telemetry_from_storage(target_sensor: str, sim_duration_seconds: 
                     print(f"⚠️ Physics Diagnosis: Insufficient data ({len(telemetry_values)} points), need {target_data_points} points")
                     
                     # Try to get supplementation data from npy files
-                    npy_supplementation = load_npy_telemetry_data(SUPPLEMENTATION_ANOMALY, target_sensor)
+                    # SUPPLEMENTATION_METHOD = 'npy'
+                    SUPPLEMENTATION_METHOD = 'oldest_value'
+                    # SUPPLEMENTATION_METHOD = 'blank_data'
                     
-                    if npy_supplementation:
+                    if SUPPLEMENTATION_METHOD == 'npy':
+                        npy_supplementation = load_npy_telemetry_data(SUPPLEMENTATION_ANOMALY, target_sensor)
                         print(f"🔄 Physics Diagnosis: Using npy file data from '{SUPPLEMENTATION_ANOMALY}' for supplementation")
                         
                         # Calculate how many points we need to add
@@ -323,7 +326,7 @@ def get_actual_telemetry_from_storage(target_sensor: str, sim_duration_seconds: 
                         # Combine supplementation data with actual telemetry
                         telemetry_values = supplementation_data + telemetry_values
                         print(f"✅ Physics Diagnosis: Extended data to {len(telemetry_values)} points using npy supplementation")
-                    else:
+                    elif SUPPLEMENTATION_METHOD == 'oldest_value':
                         # Fallback to old method: fill with the oldest available value
                         print(f"🔄 Physics Diagnosis: Npy supplementation failed, falling back to oldest value method")
                         
@@ -338,6 +341,20 @@ def get_actual_telemetry_from_storage(target_sensor: str, sim_duration_seconds: 
                         telemetry_values = [oldest_value] * points_to_add + telemetry_values
                         
                         print(f"✅ Physics Diagnosis: Extended data to {len(telemetry_values)} points by adding {points_to_add} oldest values ({oldest_value}) to the beginning")
+                    elif SUPPLEMENTATION_METHOD == 'blank_data':
+                        # Supplement None data
+                        print(f"🔄 Physics Diagnosis: Filling with blank data, not even 0")
+
+                        # Calculate how many points we need to add
+                        points_to_add = target_data_points - len(telemetry_values)
+                        
+                        # Add the oldest value to the beginning of the series (head)
+                        # This maintains chronological order: [oldest_filled_data] + [actual_historical_data]
+                        telemetry_values = [None] * points_to_add + telemetry_values
+                        
+                    else:
+                        print(f"❌ Physics Diagnosis: Invalid supplementation method: {SUPPLEMENTATION_METHOD}")
+                        raise ValueError(f"Invalid supplementation method: {SUPPLEMENTATION_METHOD}")
                 
                 # Extract timestamps and sensor info from the first record that had valid data
                 timestamps = []

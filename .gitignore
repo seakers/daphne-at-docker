@@ -24,3 +24,4 @@ daphne-at-interface/dist/
 .idea/
 daphne_brain/.env
 bayesian-daphne-at/*
+*.npy
