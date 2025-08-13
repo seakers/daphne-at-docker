@@ -50,10 +50,8 @@ python simulation.py
 ```
 
 # Modify the simulation
-1. Confirm REAL_TIME_MODE is True and TELEMETRY_FREQUENCY_HZ = 1.0 in simulation_config.py. You can adjust  the simulation speed by changing SIMULATION_SPEED. Make sure TIME_STEPS is long enough for your demonstration.
-```bash
-open DaphneATsim/simulation_config.py
-```
+1. Open DaphneATsim/simulation_config.py and confirm REAL_TIME_MODE is True and TELEMETRY_FREQUENCY_HZ = 1.0. You can adjust  the simulation speed by changing SIMULATION_SPEED. Make sure TIME_STEPS is long enough for your demonstration.
+
 ```bash
 REAL_TIME_MODE = True  # Set to False to run as fast as possible (no delays, for testing)
 SIMULATION_SPEED = 10  # How many simulation steps to generate per real second
