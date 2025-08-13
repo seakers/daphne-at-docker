@@ -4,6 +4,7 @@ import numpy as np
 import json
 import os
 from typing import Dict, List, Any
+from sklearn.metrics import mean_squared_error
 from .telemetry_storage import telemetry_storage
 try:
     from AT.neo4j_queries import query_functions as neo4j_q
@@ -90,18 +91,73 @@ def _resample_labels(labels: List[str], target_len: int) -> List[str]:
     return result
 
 
-def _normalize_series(values: List[float]) -> List[float]:
+def _normalize_series(values: List[float], baseline_min: float = None, baseline_max: float = None) -> List[float]:
+    """
+    Normalize a time series using either provided baseline values or the series' own min/max.
+    
+    Args:
+        values: List of values to normalize
+        baseline_min: Optional baseline minimum value for consistent normalization
+        baseline_max: Optional baseline maximum value for consistent normalization
+        
+    Returns:
+        Normalized values in range [0, 1] if using baseline, or relative to series own range
+    """
     try:
         nums = [float(v) for v in values]
     except Exception:
         nums = [0.0 for _ in values]
     if not nums:
         return nums
+    
+    # If baseline values are provided, use them for consistent normalization
+    if baseline_min is not None and baseline_max is not None:
+        if baseline_max - baseline_min == 0:
+            return [0.0 for _ in nums]
+        return [(v - baseline_min) / (baseline_max - baseline_min) for v in nums]
+    
+    # Otherwise, normalize using the series' own min/max (legacy behavior)
     vmin = min(nums)
     vmax = max(nums)
     if vmax - vmin == 0:
         return [0.0 for _ in nums]
     return [(v - vmin) / (vmax - vmin) for v in nums]
+
+
+def _get_unified_baseline(actual_telemetry: List[float], all_simulations: List[List[float]]) -> tuple[float, float]:
+    """
+    Calculate a unified baseline for normalization that encompasses both actual telemetry
+    and all simulation data to ensure fair comparison.
+    
+    Args:
+        actual_telemetry: List of actual telemetry values
+        all_simulations: List of simulation value lists
+        
+    Returns:
+        Tuple of (baseline_min, baseline_max) for unified normalization
+    """
+    all_values = []
+    
+    # Add actual telemetry values
+    if actual_telemetry:
+        all_values.extend(actual_telemetry)
+    
+    # Add all simulation values
+    for sim_vals in all_simulations:
+        if sim_vals:
+            all_values.extend(sim_vals)
+    
+    if not all_values:
+        return 0.0, 1.0
+    
+    baseline_min = min(all_values)
+    baseline_max = max(all_values)
+    
+    # Ensure we don't have a zero range
+    if baseline_max - baseline_min == 0:
+        baseline_max = baseline_min + 1.0
+    
+    return baseline_min, baseline_max
 
 
 def generate_physics_diagnosis_data(
@@ -112,6 +168,11 @@ def generate_physics_diagnosis_data(
 ) -> Dict[str, Any]:
     """
     Generate physics-based diagnosis data based on symptoms.
+    
+    This function implements a time shift sweep approach to mitigate the uncertainty
+    about when faults are injected during simulation. For each anomaly scenario,
+    it sweeps through possible time alignments between simulated and actual telemetry
+    to find the best match (lowest MSE), providing more robust similarity assessment.
     
     Args:
         symptoms_list: List of symptoms from the frontend
@@ -155,14 +216,12 @@ def generate_physics_diagnosis_data(
     # This simulates the physics-based analysis that would be done by the backend
     # Choose anomalies (from Neo4j if available)
     cdra_anoms = get_cdra_component_anomalies_from_neo4j(max_items=5)
-    # Provide synthetic descending scores for now
-    comp_list = []
-    actual_norm = _normalize_series(actual_telemetry)
     print(f"[PHYS_DIAG] Using {len(cdra_anoms)} anomalies; effective_len={effective_len}")
     print(f"[PHYS_DIAG] Anomaly names: {cdra_anoms}")
     
-    for i, name in enumerate(cdra_anoms):
-        print(f"\n[PHYS_DIAG] === Processing anomaly {i+1}/{len(cdra_anoms)}: '{name}' ===")
+    # First pass: collect all simulation data to establish unified baseline
+    all_simulations = []
+    for name in cdra_anoms:
         sim_vals = generate_anomaly_telemetry(
             name,
             score=0.9,  # severity seed; real severity is captured by similarity metric below
@@ -170,23 +229,68 @@ def generate_physics_diagnosis_data(
             duration_seconds=sim_duration_seconds,
             target_len_override=effective_len,
         )['values']
+        all_simulations.append(sim_vals)
         print(f"[PHYS_DIAG] Generated {len(sim_vals)} simulation values for '{name}'")
+    
+    # Calculate unified baseline for consistent normalization
+    baseline_min, baseline_max = _get_unified_baseline(actual_telemetry, all_simulations)
+    print(f"[PHYS_DIAG] Unified baseline: min={baseline_min:.4f}, max={baseline_max:.4f}")
+    
+    # Normalize actual telemetry using unified baseline
+    actual_norm = _normalize_series(actual_telemetry, baseline_min, baseline_max)
+    print(f"[PHYS_DIAG] Normalized actual telemetry using unified baseline")
+    print(f"[PHYS_DIAG] Actual telemetry range: raw=[{min(actual_telemetry):.4f}, {max(actual_telemetry):.4f}], normalized=[{min(actual_norm):.4f}, {max(actual_norm):.4f}]")
+    
+    # Second pass: process each anomaly with unified normalization
+    comp_list = []
+    for i, (name, sim_vals) in enumerate(zip(cdra_anoms, all_simulations)):
+        print(f"\n[PHYS_DIAG] === Processing anomaly {i+1}/{len(cdra_anoms)}: '{name}' ===")
         print(f"[PHYS_DIAG] First 10 values: {sim_vals[:10]}")
         print(f"[PHYS_DIAG] Last 10 values: {sim_vals[-10:] if len(sim_vals) >= 10 else sim_vals}")
         
-        sim_norm = _normalize_series(sim_vals)
-        # Mean Squared Error on normalized series
-        if actual_norm and sim_norm and len(actual_norm) == len(sim_norm):
-            mse = sum((a - b) ** 2 for a, b in zip(actual_norm, sim_norm)) / len(actual_norm)
+        # Normalize simulation data using the same unified baseline
+        sim_norm = _normalize_series(sim_vals, baseline_min, baseline_max)
+        print(f"[PHYS_DIAG] Simulation '{name}' range: raw=[{min(sim_vals):.4f}, {max(sim_vals):.4f}], normalized=[{min(sim_norm):.4f}, {max(sim_norm):.4f}]")
+        
+        # Time shift sweep to find optimal alignment and mitigate time shift problem
+        # Since fault injection timing is unclear, we sweep through possible time shifts
+        # to find the best match between simulated anomaly data and actual telemetry
+        # This provides a more robust similarity assessment by considering all possible alignments
+        best_mse = float("inf")
+        best_shift = 0
+        best_similarity = 0.0
+        
+        if actual_norm and sim_norm and len(actual_norm) >= len(sim_norm):
+            # Sweep through possible time shifts to find the best alignment
+            max_shift = len(actual_norm) - len(sim_norm) + 1
+            for shift in range(max_shift):
+                obs_segment = actual_norm[shift:shift + len(sim_norm)]
+                hypo_segment = sim_norm
+                mse = mean_squared_error(obs_segment, hypo_segment)
+                
+                if mse < best_mse:
+                    best_mse = mse
+                    best_shift = shift
+                    best_similarity = max(0.0, min(1.0, 1.0 - mse))
+            
+            print(f"[PHYS_DIAG] anomaly='{name}', best_mse={best_mse:.4f}, best_shift={best_shift}, similarity={best_similarity:.3f}")
         else:
-            mse = 1.0
-        similarity = max(0.0, min(1.0, 1.0 - mse))
-        print(f"[PHYS_DIAG] anomaly='{name}', mse={mse:.4f}, similarity={similarity:.3f}")
+            # Fallback to direct comparison if lengths don't match
+            if actual_norm and sim_norm and len(actual_norm) == len(sim_norm):
+                best_mse = mean_squared_error(actual_norm, sim_norm)
+            else:
+                best_mse = 1.0
+            best_shift = 0
+            best_similarity = max(0.0, min(1.0, 1.0 - best_mse))
+            print(f"[PHYS_DIAG] anomaly='{name}', mse={best_mse:.4f}, similarity={best_similarity:.3f} (no shift sweep)")
+        
         comp_list.append({
             'name': name,
-            'score': f"{similarity:.3f}",
+            'score': f"{best_similarity:.3f}",
             'is_highlighted': False,  # set after sorting
             'telemetry_data': sim_vals,
+            'best_shift': best_shift,  # Store the best shift for debugging/analysis
+            'best_mse': f"{best_mse:.4f}",  # Store the best MSE for debugging/analysis
         })
         print(f"[PHYS_DIAG] === Completed anomaly {i+1}: '{name}' ===\n")
 
