@@ -111,7 +111,7 @@ class TelemetryStorageService:
         ]
     
     def get_telemetry_timeseries(self, source: str = 'Hera', 
-                               time_window_seconds: int = 60,
+                               time_window_seconds: int = 1,
                                sensor_keys: Optional[List[str]] = None) -> Dict[str, List[float]]:
         """
         Get telemetry data as a time series for physics diagnosis
