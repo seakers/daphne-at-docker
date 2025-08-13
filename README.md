@@ -33,25 +33,56 @@ API: http://localhost:8002
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/seakers/ECLSS.git
-cd ECLSS
+git clone https://github.com/seakers/daphne-at-habitat.git
 ```
 
 2. Create a virtual env
 ```bash
-python -m venv venv
-source venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
 3. Run the simulation
 ```bash
+cd DaphneATsim
 python simulation.py
 ```
 
 # Modify the simulation
+1. Confirm REAL_TIME_MODE is True and TELEMETRY_FREQUENCY_HZ = 1.0 in simulation_config.py. You can adjust  the simulation speed by changing SIMULATION_SPEED. Make sure TIME_STEPS is long enough for your demonstration.
+```bash
+open DaphneATsim/simulation_config.py
+```
+```bash
+REAL_TIME_MODE = True  # Set to False to run as fast as possible (no delays, for testing)
+SIMULATION_SPEED = 10  # How many simulation steps to generate per real second
+TELEMETRY_FREQUENCY_HZ = 1.0  # How many telemetry posts per real second (e.g., 1.0 = every 1 second)
+TIME_STEPS = 100000  # Total number of simulation steps
+ENABLE_PLOTTING = False # Whether to show matplotlib plots after simulation
+```
+1. Modify CDRA_FAILURES constants to set failure scenarios. By setting True for 'filter_saturation', 'valve_stuck', 'fan_degraded', or setting the list of failed heaters to 'heater_failure', the anomaly scenario is simulated.
 
-1. Modify the PARAMETER_INFO variable by updating or adding values to include upper and lower caution and warning limits.
+```bash
+CDRA_FAILURES = {
+    'filter_saturation': False,
+    'filter_saturation_start': 0,  # When filter saturation failure starts
+    'filter_saturation_end': TIME_STEPS,    # When filter saturation failure ends
+    
+    'valve_stuck': True,
+    'valve_stuck_start': 0,       # When valve stuck failure starts
+    'valve_stuck_end': TIME_STEPS,         # When valve stuck failure ends
+    
+    'heater_failure': [],             # List of failed heaters (e.g., ['desiccant_1', 'sorbent_2'])
+    
+    'fan_degraded': False,
+    'fan_degraded_start': 0,      # When fan degradation starts
+    'fan_degraded_end': TIME_STEPS,        # When fan degradation ends
+    'degraded_flow_rate': 0.38        # Degraded flow rate (kg/s)
+}
+```
+# Configuration of telemetry feed
+1. Modify the PARAMETER_INFO variable by updating or adding values to include upper and lower caution and warning limits. 
 ```bash
  PARAMETER_INFO = {
     "ppO2": {"DisplayName": "Cabin_ppO2", "Id": 43, "ParameterGroup": "L1", "NominalValue": 163.81,
@@ -71,7 +102,7 @@ python simulation.py
               "LowerWarningLimit": -2.0, "Divisor": 100, "Name": "ppCO2", "Unit":"mmHg"},
 }
 ```
-2. Add simulation values to the cabin variable so they appear in the telemetry feed. Ensure variable names match those defined in PARAMETER_INFO.
+1. Add simulation values to the cabin variable so they appear in the telemetry feed. Ensure variable names match those defined in PARAMETER_INFO. ppCO2/ppCO21 values are updated by the simulation, but other parameters can be modified manually (and the values are kept static).
 ```bash
 cabin = {
     "ppO2": 150, 
@@ -82,3 +113,4 @@ cabin = {
     "humidity1": 65, 
 }
 ```
+-->
