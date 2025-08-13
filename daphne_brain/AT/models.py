@@ -130,13 +130,13 @@ class TelemetryHistory(models.Model):
         return result
     
     @classmethod
-    def get_telemetry_for_physics_diagnosis(cls, source='Hera', time_window_minutes=60):
+    def get_telemetry_for_physics_diagnosis(cls, source='Hera', time_window_seconds=1):
         """
         Get telemetry data within a time window for physics diagnosis
         
         Args:
             source: Source of telemetry data (default: 'Hera')
-            time_window_minutes: Time window in minutes (default: 60)
+            time_window_seconds: Time window in seconds (default: 1)
             
         Returns:
             QuerySet of telemetry data within the time window
@@ -144,7 +144,10 @@ class TelemetryHistory(models.Model):
         from django.utils import timezone
         from datetime import timedelta
         
-        cutoff_time = timezone.now() - timedelta(minutes=time_window_minutes)
+        # Convert seconds to minutes for database query
+        time_window_minutes = max(1, time_window_seconds // 60)
+        #cutoff_time = timezone.now() - timedelta(minutes=time_window_minutes)
+        cutoff_time = timezone.now() - timedelta(seconds=time_window_seconds)
         return cls.objects.filter(
             source=source,
             timestamp__gte=cutoff_time

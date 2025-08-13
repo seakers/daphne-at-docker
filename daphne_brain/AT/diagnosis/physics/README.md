@@ -113,22 +113,22 @@ Gets recent telemetry data for physics diagnosis.
 **Returns:**
 - List of telemetry data dictionaries
 
-#### `TelemetryStorageService.get_telemetry_for_physics_diagnosis(source, time_window_minutes)`
+#### `TelemetryStorageService.get_telemetry_for_physics_diagnosis(source, time_window_seconds)`
 Gets telemetry data within a time window for physics diagnosis.
 
 **Parameters:**
 - `source`: Source of telemetry data (default: 'Hera')
-- `time_window_minutes`: Time window in minutes (default: 60)
+- `time_window_seconds`: Time window in seconds (default: 60)
 
 **Returns:**
 - List of telemetry data dictionaries within the time window
 
-#### `TelemetryStorageService.get_telemetry_timeseries(source, time_window_minutes, sensor_keys)`
+#### `TelemetryStorageService.get_telemetry_timeseries(source, time_window_seconds, sensor_keys)`
 Gets telemetry data as a time series for physics diagnosis.
 
 **Parameters:**
 - `source`: Source of telemetry data (default: 'Hera')
-- `time_window_minutes`: Time window in minutes (default: 60)
+- `time_window_seconds`: Time window in seconds (default: 60)
 - `sensor_keys`: Optional list of sensor keys to extract
 
 **Returns:**
@@ -264,7 +264,7 @@ recent_data = telemetry_storage.get_recent_telemetry(source='Hera', limit=20)
 # Get telemetry as time series
 timeseries = telemetry_storage.get_telemetry_timeseries(
     source='Hera',
-    time_window_minutes=60,
+    time_window_seconds=60,
     sensor_keys=['Cabin Temperature', 'ppCO2']
 )
 ```

@@ -239,12 +239,12 @@ def get_actual_telemetry_from_storage(target_sensor: str, sim_duration_seconds: 
     print(f"🔍 Physics Diagnosis: Starting telemetry retrieval for sensor '{target_sensor}' for {sim_duration_seconds} seconds")
     
     try:
-        # Convert duration from seconds to minutes for the telemetry storage query
-        time_window_minutes = max(1, sim_duration_seconds // 60)  # Ensure at least 1 minute
+        # Use seconds directly instead of converting to minutes
+        time_window_seconds = max(1, sim_duration_seconds)  # Ensure at least 1 second
         
         # Get telemetry data within the specified time window
-        print(f"📊 Physics Diagnosis: Querying telemetry storage for Hera source, time window: {time_window_minutes} minutes (target: {sim_duration_seconds} data points)")
-        recent_telemetry = telemetry_storage.get_telemetry_for_physics_diagnosis(source='Hera', time_window_minutes=time_window_minutes)
+        print(f"📊 Physics Diagnosis: Querying telemetry storage for Hera source, time window: {time_window_seconds} seconds (target: {sim_duration_seconds} data points)")
+        recent_telemetry = telemetry_storage.get_telemetry_for_physics_diagnosis(source='Hera', time_window_seconds=time_window_seconds)
         # print(f"📈 Physics Diagnosis: Retrieved {len(recent_telemetry)} telemetry records from storage")
         
         if recent_telemetry:

@@ -85,20 +85,20 @@ class TelemetryStorageService:
         return result
     
     def get_telemetry_for_physics_diagnosis(self, source: str = 'Hera', 
-                                          time_window_minutes: int = 60) -> List[Dict[str, Any]]:
+                                          time_window_seconds: int = 1) -> List[Dict[str, Any]]:
         """
         Get telemetry data within a time window for physics diagnosis
         
         Args:
             source: Source of telemetry data (default: 'Hera')
-            time_window_minutes: Time window in minutes (default: 60)
+            time_window_seconds: Time window in seconds (default: 60)
             
         Returns:
             List of telemetry data dictionaries within the time window
         """
         telemetry_records = TelemetryHistory.get_telemetry_for_physics_diagnosis(
             source=source,
-            time_window_minutes=time_window_minutes
+            time_window_seconds=time_window_seconds
         )
         
         return [
@@ -111,20 +111,20 @@ class TelemetryStorageService:
         ]
     
     def get_telemetry_timeseries(self, source: str = 'Hera', 
-                               time_window_minutes: int = 60,
+                               time_window_seconds: int = 60,
                                sensor_keys: Optional[List[str]] = None) -> Dict[str, List[float]]:
         """
         Get telemetry data as a time series for physics diagnosis
         
         Args:
             source: Source of telemetry data (default: 'Hera')
-            time_window_minutes: Time window in minutes (default: 60)
+            time_window_seconds: Time window in seconds (default: 60)
             sensor_keys: Optional list of sensor keys to extract (if None, uses all)
             
         Returns:
             Dictionary with sensor names as keys and lists of values as values
         """
-        telemetry_records = self.get_telemetry_for_physics_diagnosis(source, time_window_minutes)
+        telemetry_records = self.get_telemetry_for_physics_diagnosis(source, time_window_seconds)
         
         if not telemetry_records:
             return {}
