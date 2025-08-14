@@ -284,3 +284,57 @@ def get_step_from_procedure(step_number, procedure, context, new_dialogue_contex
     new_dialogue_contexts["atdialogue_context"].current_step_pointer = next_step - 1
     atcontext.save()
     return step_info
+
+
+def run_physics_diagnosis(time_duration_seconds):
+    """
+    Run physics diagnosis with the specified time duration.
+    
+    Args:
+        time_duration_seconds: Duration in seconds for the physics diagnosis
+        
+    Returns:
+        Dictionary containing physics diagnosis results
+    """
+    try:
+        from AT.diagnosis.physics.physics_diagnosis import create_physics_diagnosis_report
+        
+        # Default symptoms list for physics diagnosis
+        default_symptoms = [
+            {"sensor": "ppCO2 (L1)", "status": "Exceeds_UpperWarningLimit"},
+            {"sensor": "ppO2 (L1)", "status": "Exceeds_LowerCautionLimit"}
+        ]
+        
+        # Default target sensor
+        target_telemetry_sensor = 'ppCO2 (L1)'
+        
+        # Default sampling rate (1 second)
+        sampling_rate_seconds = 1
+        
+        print(f"🔬 Physics Diagnosis: Starting diagnosis with duration={time_duration_seconds}s")
+        
+        # Create physics diagnosis report
+        diagnosis_report = create_physics_diagnosis_report(
+            default_symptoms, 
+            target_telemetry_sensor, 
+            int(time_duration_seconds), 
+            sampling_rate_seconds
+        )
+        
+        print(f"✅ Physics Diagnosis: Diagnosis report generated successfully")
+        
+        return {
+            "diagnosis_report": diagnosis_report,
+            "status": "success",
+            "duration_seconds": time_duration_seconds,
+            "message": f"Physics diagnosis completed for {time_duration_seconds} seconds"
+        }
+        
+    except Exception as e:
+        print(f"❌ Physics Diagnosis: Error during diagnosis: {e}")
+        return {
+            "diagnosis_report": None,
+            "status": "error",
+            "error_message": str(e),
+            "message": "Failed to run physics diagnosis"
+        }

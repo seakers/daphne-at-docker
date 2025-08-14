@@ -136,6 +136,12 @@ const actions = {
                 commit('setResponse', data['response']['visual_message']);
                 console.log("VOICE MESSAGE" + data['response']['voice_message']);
                 console.log("VISUAL MESSAGE" + data['response']['visual_message']);
+                
+                // Check if this is a physics diagnosis completion response
+                if (data['response'].diagnosis_report) {
+                    console.log("Physics diagnosis completed via chatbot, processing results...");
+                    await this.handlePhysicsDiagnosisFromChatbot({ commit, rootState }, data['response'].diagnosis_report);
+                }
 
             }
             else {
@@ -146,6 +152,72 @@ const actions = {
             console.error('Networking error:', e);
         }
         commit('setIsLoading', false);
+    },
+    async handlePhysicsDiagnosisFromChatbot({ commit, rootState }, diagnosisReport) {
+        try {
+            console.log("Physics Diagnosis from Chatbot - Received diagnosis report:", diagnosisReport);
+            
+            if (diagnosisReport && diagnosisReport.physics_diagnosis_data) {
+                // Process the physics diagnosis data similar to the existing requestPhysicsDiagnosis
+                const physicsDiagnosisData = {
+                    mostProbableAnomaly: diagnosisReport.physics_diagnosis_data.most_probable_anomaly,
+                    probability: diagnosisReport.physics_diagnosis_data.probability,
+                    componentAnomalies: diagnosisReport.physics_diagnosis_data.component_anomalies.map(anomaly => ({
+                        name: anomaly.name,
+                        probability: anomaly.probability,
+                        similarity: anomaly.similarity,
+                        telemetry: anomaly.telemetry || []
+                    }))
+                };
+                
+                // Update the store with the physics diagnosis data
+                rootState.daphneat.commit('mutatePhysicsDiagnosisData', physicsDiagnosisData);
+                
+                // Update the plot data
+                if (diagnosisReport.physics_diagnosis_data.actual_telemetry) {
+                    rootState.daphneat.commit('mutatePhysicsDiagnosisPlotData', {
+                        actual: diagnosisReport.physics_diagnosis_data.actual_telemetry,
+                        timeLabels: diagnosisReport.physics_diagnosis_data.time_labels,
+                        telemetry_metadata: diagnosisReport.physics_diagnosis_data.telemetry_metadata || {
+                            unit: 'mmHg',
+                            sensor: 'ppCO2 (L1)'
+                        }
+                    });
+                    
+                    // Add simulated anomaly data to the plot
+                    diagnosisReport.physics_diagnosis_data.component_anomalies.forEach((anomaly, index) => {
+                        if (anomaly.telemetry && anomaly.telemetry.length > 0) {
+                            rootState.daphneat.commit('addPhysicsDiagnosisAnomalyPlot', {
+                                name: anomaly.name,
+                                data: anomaly.telemetry,
+                                color: `hsl(${index * 137.5 % 360}, 70%, 50%)`
+                            });
+                        }
+                    });
+                }
+                
+                // Emit a custom event to notify the component that physics diagnosis is complete
+                // This will trigger tab creation in the AnomalyDiagnosisWindow component
+                if (typeof window !== 'undefined' && window.dispatchEvent) {
+                    const physicsDiagnosisEvent = new CustomEvent('physicsDiagnosisCompleted', {
+                        detail: {
+                            diagnosisReport: diagnosisReport,
+                            physicsDiagnosisData: physicsDiagnosisData
+                        }
+                    });
+                    window.dispatchEvent(physicsDiagnosisEvent);
+                }
+                
+                console.log("Physics diagnosis data successfully loaded from chatbot");
+                return true;
+            } else {
+                console.error("Invalid or missing physics diagnosis data from chatbot");
+                return false;
+            }
+        } catch (error) {
+            console.error("Error handling physics diagnosis from chatbot:", error);
+            return false;
+        }
     },
     // async detectAnomalousSymptoms({ commit }, value) {
     //     commit('setAnomalousSymptomsDetected', value);

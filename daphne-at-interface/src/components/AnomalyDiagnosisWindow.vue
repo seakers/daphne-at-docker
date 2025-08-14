@@ -1,5 +1,5 @@
 <template>
-  <div id="anomaly_diagnosis">
+  <div id="anomaly_diagnosis" style="width: 100%;">
     <div class="is-title">
       Anomaly Diagnosis
       <span class="tutorialLink">
@@ -74,7 +74,40 @@
           </div>
         </div>
         <div v-if="simpleTabs[activeSimpleTab]">
-          <div class="physics-diagnosis-report">
+          <!-- Chatbot Physics Diagnosis Results -->
+          <div v-if="simpleTabs[activeSimpleTab].isChatbotResult" class="chatbot-physics-results">
+            <div style="text-align: center; padding: 20px;">
+              <h3 style="color: #0AFEFF; margin-bottom: 20px;">Physics Diagnosis Results (via Chatbot)</h3>
+              
+              <!-- Show basic info from the tab data -->
+              <div style="background: #001e1e; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <p style="color: #ccc; margin-bottom: 15px;">
+                  <strong>Status:</strong> 
+                  <span style="color: #4CAF50;">✅ Completed Successfully</span>
+                </p>
+                <p style="color: #ccc; margin-bottom: 15px;">
+                  <strong>Method:</strong> 
+                  <span style="color: #0AFEFF;">Chatbot Command</span>
+                </p>
+                <p style="color: #ccc; margin-bottom: 15px;">
+                  <strong>Results:</strong> 
+                  <span style="color: #0AFEFF;">Available in Physics Diagnosis Data</span>
+                </p>
+              </div>
+              
+              <!-- Link to view full results -->
+              <div style="text-align: center;">
+                <button class="button theme-buttons"
+                        style="border-color: #0AFEFF; color: #0AFEFF; background: #002E2E; padding: 12px 24px; font-size: 16px;"
+                        @click="viewFullPhysicsResults">
+                  View Full Physics Diagnosis Results
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Regular Physics Diagnosis Report -->
+          <div v-else class="physics-diagnosis-report">
             <!-- Title Section -->
             <div class="physics-title-section">
               <div>
@@ -96,6 +129,7 @@
                       <th style="text-align:center;">Show</th>
                       <th>Component Anomaly</th>
                       <th>Similarity Score</th>
+                      <th style="text-align:center;">Fault Injection Time</th>
                       <th style="text-align:center;">Procedure</th>
                     </tr>
                   </thead>
@@ -114,6 +148,13 @@
                       </td>
                       <td>{{ anomaly.name }}</td>
                       <td>{{ anomaly.score }}</td>
+                      <td style="text-align:center; font-size: 12px;">
+                        <span v-if="anomaly.faultInjectionTime !== undefined" 
+                              :title="`Fault injected at data point ${anomaly.faultInjectionTime} (${anomaly.faultInjectionTimeSeconds}s)`">
+                          {{ formatFaultInjectionTime(anomaly.faultInjectionTime, anomaly.faultInjectionTimeSeconds) }}
+                        </span>
+                        <span v-else style="color: #666;">N/A</span>
+                      </td>
                       <td style="text-align:center;">
                         <button class="button"
                                 style="width: 70%; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E"
@@ -155,7 +196,7 @@
                 <div style="color:#0AFEFF; margin-bottom:15px; font-size: 16px; font-weight: bold;">
                   Telemetry Trend Comparison
                 </div>
-                <div class="telemetry-graph-container" style="background: #001e1e; border-radius: 6px; padding: 20px; min-height: 300px; display: inline-block; max-width: 90%;">
+                <div class="telemetry-graph-container" style="background: #001e1e; border-radius: 6px; padding: 20px; min-height: 300px; width: 100%;">
                   <vue-plotly 
                     style="width: 100%; height: 400px;"
                     :data="physicsPlotData"
@@ -694,19 +735,73 @@ export default {
           .filter(([name]) => this.selectedPhysicsAnomalies.indexOf(name) !== -1)
           .forEach(([anomalyName, anomalyData]) => {
             if (anomalyData.data && anomalyData.data.length > 0) {
+              // Create data with proper fault injection time positioning
+              const faultInjectionTime = anomalyData.faultInjectionTime || 0;
+              const totalLength = this.telemetryGraphData.actual.length;
+              
+              // Create x-axis labels that account for fault injection time
+              const xLabels = [];
+              const yValues = [];
+              
+              for (let i = 0; i < totalLength; i++) {
+                if (i < faultInjectionTime) {
+                  // Before fault injection: transparent data (no visible points)
+                  xLabels.push(relativeTimeLabels ? relativeTimeLabels[i] : `-${totalLength - i}:00`);
+                  yValues.push(null); // null values won't be plotted
+                } else {
+                  // After fault injection: actual simulation data
+                  const simIndex = i - faultInjectionTime;
+                  if (simIndex < anomalyData.data.length) {
+                    xLabels.push(relativeTimeLabels ? relativeTimeLabels[i] : `-${totalLength - i}:00`);
+                    yValues.push(anomalyData.data[simIndex]);
+                  } else {
+                    // Beyond simulation data
+                    xLabels.push(relativeTimeLabels ? relativeTimeLabels[i] : `-${totalLength - i}:00`);
+                    yValues.push(null);
+                  }
+                }
+              }
+              
               plotData.push({
-                x: relativeTimeLabels || Array.from({length: anomalyData.data.length}, (_, i) => `-${i+1}:00`),
-                y: anomalyData.data,
+                x: xLabels,
+                y: yValues,
                 type: 'scatter',
                 mode: 'lines+markers',
-                name: anomalyName,
-                line: { color: anomalyData.color, width: 3 },
-                marker: { size: 6, color: anomalyData.color },
+                name: `${anomalyName} (Fault at T+${faultInjectionTime})`,
+                line: { 
+                  width: 3,
+                  // Make line transparent before fault injection
+                  color: yValues.map((y, i) => i < faultInjectionTime ? 'rgba(0,0,0,0)' : anomalyData.color)
+                },
+                marker: { 
+                  size: 6, 
+                  color: yValues.map((y, i) => i < faultInjectionTime ? 'rgba(0,0,0,0)' : anomalyData.color)
+                },
                 hovertemplate: '<b>%{fullData.name}</b><br>' +
                               'Value: %{y:.2f} mmHg<br>' +
                               'Time Gap: %{x}<br>' +
                               '<extra></extra>'
               });
+              
+              // Add a vertical line to mark fault injection point
+              if (faultInjectionTime > 0) {
+                const faultTimeLabel = relativeTimeLabels ? relativeTimeLabels[faultInjectionTime] : `-${totalLength - faultInjectionTime}:00`;
+                plotData.push({
+                  x: [faultTimeLabel, faultTimeLabel],
+                  y: [0, 8], // Full y-axis range
+                  type: 'scatter',
+                  mode: 'lines',
+                  name: `${anomalyName} Fault Injection`,
+                  line: { 
+                    color: anomalyData.color, 
+                    width: 2, 
+                    dash: 'dash',
+                    opacity: 0.6
+                  },
+                  showlegend: false,
+                  hoverinfo: 'skip'
+                });
+              }
             }
           });
       }
@@ -718,7 +813,7 @@ export default {
     physicsPlotLayout() {
       return {
         title: {
-          text: 'Telemetry Trend Comparison',
+          text: 'Telemetry Trend Comparison (with Fault Injection Times)',
           font: { color: '#0AFEFF', size: 16 },
           x: 0.5
         },
@@ -745,7 +840,7 @@ export default {
           dtick: 2,
           tickfont: { size: 10 }
         },
-        margin: { l: 80, r: 120, t: 60, b: 80 },
+        margin: { l: 60, r: 80, t: 60, b: 80 }, // Optimized margins for full-width display
         showlegend: true,
         legend: {
           x: 1.02,
@@ -755,14 +850,19 @@ export default {
           bgcolor: 'rgba(0, 30, 30, 0.9)',
           bordercolor: '#0AFEFF',
           borderwidth: 1,
-          font: { color: '#ccc' }
+          font: { color: '#ccc', size: 11 }
         },
         hovermode: 'closest',
         hoverlabel: {
           bgcolor: 'rgba(0, 30, 30, 0.95)',
           bordercolor: '#0AFEFF',
           font: { color: '#fff' }
-        }
+        },
+        // Ensure the plot can expand to full width
+        width: null,
+        height: null,
+        // Add annotations for fault injection points
+        annotations: this.getFaultInjectionAnnotations()
       };
     },
     checkAll: {
@@ -875,6 +975,133 @@ export default {
         this.closedTabs.shift();
       }
     },
+    
+    handlePhysicsDiagnosisFromChatbot(event) {
+      /**
+       * Handle physics diagnosis completion from chatbot.
+       * This method is called when the chatbot completes a physics diagnosis
+       * and emits the 'physicsDiagnosisCompleted' event.
+       */
+      try {
+        console.log("🎯 Physics Diagnosis from Chatbot - Event received:", event);
+        
+        const { diagnosisReport, physicsDiagnosisData } = event.detail;
+        
+        if (diagnosisReport && physicsDiagnosisData) {
+          console.log("📊 Processing physics diagnosis data from chatbot...");
+          
+          // Check if a physics diagnosis tab already exists
+          const existingPhysicsTabIndex = this.simpleTabs.findIndex(tab => 
+            tab.label === "Physics Diagnosis (Chatbot)"
+          );
+          
+          if (existingPhysicsTabIndex !== -1) {
+            // Update existing tab
+            console.log("🔄 Updating existing physics diagnosis tab");
+            this.simpleTabs[existingPhysicsTabIndex] = {
+              label: "Physics Diagnosis (Chatbot)",
+              content: "Physics diagnosis completed via chatbot. Results are displayed below.",
+              isChatbotResult: true,
+              diagnosisReport: diagnosisReport
+            };
+            this.activeSimpleTab = existingPhysicsTabIndex;
+          } else {
+            // Create new tab
+            console.log("🆕 Creating new physics diagnosis tab for chatbot results");
+            this.simpleTabs.push({
+              label: "Physics Diagnosis (Chatbot)",
+              content: "Physics diagnosis completed via chatbot. Results are displayed below.",
+              isChatbotResult: true,
+              diagnosisReport: diagnosisReport
+            });
+            this.activeSimpleTab = this.simpleTabs.length - 1;
+          }
+          
+          console.log("✅ Physics diagnosis tab created/updated successfully");
+          
+          // Show success message
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "Physics diagnosis results are now displayed in a new tab.",
+            "visual_message_type": ["text"],
+            "visual_message": ["Physics diagnosis results are now displayed in a new tab."],
+            "writer": "daphne"
+          });
+          
+        } else {
+          console.error("❌ Invalid event data received from chatbot");
+        }
+        
+               } catch (error) {
+           console.error("❌ Error handling physics diagnosis from chatbot:", error);
+           
+           // Show error message
+           this.$store.commit('addDialoguePiece', {
+             "voice_message": "Error processing physics diagnosis results from chatbot.",
+             "visual_message_type": ["text"],
+             "visual_message": ["Error processing physics diagnosis results from chatbot."],
+             "writer": "daphne"
+           });
+         }
+       },
+       
+       viewFullPhysicsResults() {
+         /**
+          * Navigate to the full physics diagnosis results.
+          * This method is called when the user clicks the "View Full Physics Diagnosis Results" button
+          * in the chatbot results tab.
+          */
+         try {
+           console.log("🔍 User requested to view full physics diagnosis results");
+           
+           // Find the physics diagnosis tab (if it exists)
+           const physicsTabIndex = this.simpleTabs.findIndex(tab => 
+             tab.label === "Physics Diagnosis" && !tab.isChatbotResult
+           );
+           
+           if (physicsTabIndex !== -1) {
+             // Switch to the existing physics diagnosis tab
+             console.log("🔄 Switching to existing physics diagnosis tab");
+             this.activeSimpleTab = physicsTabIndex;
+           } else {
+             // Create a new physics diagnosis tab with the data from the chatbot
+             console.log("🆕 Creating new physics diagnosis tab with chatbot data");
+             
+             // Get the chatbot results data
+             const chatbotTab = this.simpleTabs.find(tab => tab.isChatbotResult);
+             if (chatbotTab && chatbotTab.diagnosisReport) {
+               // Create a new tab with the full physics diagnosis content
+               this.simpleTabs.push({
+                 label: "Physics Diagnosis",
+                 content: "Full physics diagnosis results from chatbot command.",
+                 isChatbotResult: false,
+                 diagnosisReport: chatbotTab.diagnosisReport
+               });
+               this.activeSimpleTab = this.simpleTabs.length - 1;
+               
+               // Show success message
+               this.$store.commit('addDialoguePiece', {
+                 "voice_message": "Switched to full physics diagnosis results view.",
+                 "visual_message_type": ["text"],
+                 "visual_message": ["Switched to full physics diagnosis results view."],
+                 "writer": "daphne"
+               });
+             } else {
+               console.error("❌ No chatbot diagnosis report found");
+             }
+           }
+           
+         } catch (error) {
+           console.error("❌ Error viewing full physics diagnosis results:", error);
+           
+           // Show error message
+           this.$store.commit('addDialoguePiece', {
+             "voice_message": "Error viewing full physics diagnosis results.",
+             "visual_message_type": ["text"],
+             "visual_message": ["Error viewing full physics diagnosis results."],
+             "writer": "daphne"
+           });
+         }
+       },
     
     undoCloseTab() {
       if (this.closedTabs.length === 0) return;
@@ -1276,7 +1503,9 @@ export default {
             componentAnomalies: diagnosisReport.physics_diagnosis_data.component_anomalies.map(anomaly => ({
               name: anomaly.name,
               score: anomaly.score,
-              isHighlighted: anomaly.is_highlighted
+              isHighlighted: anomaly.is_highlighted,
+              faultInjectionTime: anomaly.fault_injection_time,
+              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds
             }))
           };
           this.$store.commit('mutatePhysicsDiagnosisData', physicsDiagnosisData);
@@ -1298,7 +1527,9 @@ export default {
             telemetryGraphData.simulated[anomaly.name] = {
               data: anomaly.telemetry_data,
               color: this.getAnomalyColor(index),
-              score: parseFloat(anomaly.score)
+              score: parseFloat(anomaly.score),
+              faultInjectionTime: anomaly.fault_injection_time,
+              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds
             };
           });
           this.$store.commit('mutateTelemetryGraphData', telemetryGraphData);
@@ -1844,6 +2075,53 @@ export default {
       alert(`No procedure is available yet for: ${anomalyName}`);
     },
 
+    formatFaultInjectionTime(dataPoint, seconds) {
+      if (dataPoint === undefined || seconds === undefined) {
+        return 'N/A';
+      }
+      // Format as "T+3 (15s)" or similar
+      return `T+${dataPoint} (${seconds}s)`;
+    },
+
+    getFaultInjectionAnnotations() {
+      if (!this.telemetryGraphData.simulated) {
+        return [];
+      }
+
+      const annotations = [];
+      const relativeTimeLabels = this.convertToRelativeTime(this.telemetryGraphData.timeLabels);
+      const totalLength = this.telemetryGraphData.actual.length;
+
+      Object.entries(this.telemetryGraphData.simulated)
+        .filter(([name]) => this.selectedPhysicsAnomalies.indexOf(name) !== -1)
+        .forEach(([anomalyName, anomalyData]) => {
+          if (anomalyData.faultInjectionTime > 0) {
+            const faultTimeLabel = relativeTimeLabels ? 
+              relativeTimeLabels[anomalyData.faultInjectionTime] : 
+              `-${totalLength - anomalyData.faultInjectionTime}:00`;
+            
+            annotations.push({
+              x: faultTimeLabel,
+              y: 7.5, // Position at top of y-axis
+              text: `Fault<br>${anomalyName}`,
+              showarrow: true,
+              arrowhead: 2,
+              arrowsize: 1,
+              arrowwidth: 2,
+              arrowcolor: anomalyData.color,
+              ax: 0,
+              ay: -30,
+              bgcolor: 'rgba(0, 30, 30, 0.9)',
+              bordercolor: anomalyData.color,
+              borderwidth: 1,
+              font: { color: '#fff', size: 10 }
+            });
+          }
+        });
+
+      return annotations;
+    },
+
     // Convert timestamps to relative time gaps (e.g., "20:51:38" -> "-10:10")
     convertToRelativeTime(timeLabels) {
       if (!timeLabels || timeLabels.length === 0) {
@@ -1924,6 +2202,9 @@ export default {
       }
     });
     this.$root.$on('addHypotheticalDiagnosis', this.handleAddHypotheticalDiagnosis);
+    
+    // Add event listener for physics diagnosis completion from chatbot
+    window.addEventListener('physicsDiagnosisCompleted', this.handlePhysicsDiagnosisFromChatbot);
   },
   beforeDestroy() {
     // Clean up interval when component is destroyed
@@ -1951,6 +2232,9 @@ export default {
       this.$refs.tabsContainer.removeEventListener('scroll', this.updateScrollButtons);
       window.removeEventListener('resize', this.updateScrollButtons);
     }
+    
+    // Remove event listener for physics diagnosis completion from chatbot
+    window.removeEventListener('physicsDiagnosisCompleted', this.handlePhysicsDiagnosisFromChatbot);
 
 
 
@@ -2225,6 +2509,7 @@ export default {
   border-radius: 6px;
   padding: 18px;
   margin: 0;
+  width: 100%;
 }
 
 .physics-title-section {
@@ -2241,10 +2526,13 @@ export default {
   display: flex;
   gap: 24px;
   margin-top: 0;
+  width: 100%;
+  min-width: 100%;
 }
 
 .physics-table-section {
-  flex: 1.2;
+  flex: 0.8;
+  min-width: 400px;
 }
 
 .physics-table {
@@ -2257,9 +2545,45 @@ export default {
 }
 
 .physics-table th, .physics-table td {
-  padding: 10px 14px;
+  padding: 10px 8px; /* Reduced padding to accommodate new column */
   text-align: left;
   border: 1px solid rgba(10, 254, 255, 0.18); /* grid lines */
+}
+
+.physics-table th:nth-child(4), .physics-table td:nth-child(4) {
+  text-align: center; /* Center the fault injection time column */
+  min-width: 120px; /* Ensure minimum width for the new column */
+}
+
+/* Ensure full width expansion for the main container */
+#anomaly_diagnosis {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Ensure the content areas can expand to full width */
+.is-content {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Ensure the telemetry graph container can expand to full width */
+.telemetry-graph-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+}
+
+/* Ensure the tabs container can expand to full width */
+.tabs-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Ensure the tab content can expand to full width */
+.tab-wrapper {
+  width: 100%;
+  max-width: 100%;
 }
 
 .physics-table th {

@@ -649,6 +649,61 @@ class Command(APIView):
 
             enhanced_query = self.enhance_query_with_context(request.data['command'], dialogue_history, client)
 
+            # Check for physics diagnosis command
+            if enhanced_query.lower().strip() == "run physics diagnosis":
+                # Set session state to waiting for duration
+                self.session_state['waiting_for_physics_duration'] = True
+                return Response({"response": {
+                    "voice_message": "How long time duration in seconds?",
+                    "visual_message_type": ["text"],
+                    "visual_message": ["How long time duration in seconds?"],
+                    "writer": "daphne"
+                }})
+            
+            # Check if waiting for physics duration and user provided a number
+            if self.session_state.get('waiting_for_physics_duration', False):
+                try:
+                    duration = int(enhanced_query.strip())
+                    if duration > 0:
+                        # Reset the flag
+                        self.session_state['waiting_for_physics_duration'] = False
+                        
+                        # Import and run physics diagnosis
+                        from AT.dialogue.dialogue_functions import run_physics_diagnosis
+                        result = run_physics_diagnosis(duration)
+                        
+                        if result["status"] == "success":
+                            # Store the diagnosis report in session for later use
+                            self.session_state['physics_diagnosis_report'] = result["diagnosis_report"]
+                            
+                            return Response({"response": {
+                                "voice_message": f"Physics diagnosis completed for {duration} seconds. The results are now available in the Anomaly Diagnosis window.",
+                                "visual_message_type": ["text"],
+                                "visual_message": [f"Physics diagnosis completed for {duration} seconds. The results are now available in the Anomaly Diagnosis window."],
+                                "writer": "daphne"
+                            }})
+                        else:
+                            return Response({"response": {
+                                "voice_message": f"Physics diagnosis failed: {result['error_message']}",
+                                "visual_message_type": ["text"],
+                                "visual_message": [f"Physics diagnosis failed: {result['error_message']}"],
+                                "writer": "daphne"
+                            }})
+                    else:
+                        return Response({"response": {
+                            "voice_message": "Please provide a positive number for the time duration in seconds.",
+                            "visual_message_type": ["text"],
+                            "visual_message": ["Please provide a positive number for the time duration in seconds."],
+                            "writer": "daphne"
+                        }})
+                except ValueError:
+                    return Response({"response": {
+                        "voice_message": "Please provide a valid number for the time duration in seconds.",
+                        "visual_message_type": ["text"],
+                        "visual_message": ["Please provide a valid number for the time duration in seconds."],
+                        "writer": "daphne"
+                    }})
+
             response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[

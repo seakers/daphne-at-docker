@@ -647,6 +647,41 @@ class RetrieveInfoFromProcedure(APIView):
         return Response(info)
 
 
+class GetPhysicsDiagnosisFromSession(APIView):
+    """
+    Retrieve physics diagnosis results from the session.
+    This endpoint is called by the frontend to get the results
+    after a physics diagnosis is completed via the chatbot.
+    """
+    def post(self, request):
+        try:
+            # Get the session ID from the request
+            session_id = request.data.get('session_id')
+            
+            if not session_id:
+                return Response({
+                    'error': 'Session ID is required',
+                    'status': 'error'
+                }, status=400)
+            
+            # For now, we'll return a message indicating that the results
+            # should be available in the Anomaly Diagnosis window
+            # In a full implementation, you would retrieve the actual results from the session
+            
+            return Response({
+                'message': 'Physics diagnosis results are available in the Anomaly Diagnosis window',
+                'status': 'success',
+                'redirect_to': 'anomaly_diagnosis'
+            })
+            
+        except Exception as e:
+            print(f"❌ GetPhysicsDiagnosisFromSession: Error: {e}")
+            return Response({
+                'error': str(e),
+                'status': 'error'
+            }, status=500)
+
+
 class TutorialStatus(APIView):
     def post(self, request):
         user_info = get_or_create_user_information(request.session, request.user, 'AT')

@@ -1,0 +1,30 @@
+{
+  "type": "run_function",
+  "params": [
+    { "name": "TIME_DURATION", "type": "TIME_DURATION", "options": "", "from_context": false, "mandatory": true }
+  ],
+  "objective": "run physics diagnosis with specified time duration",
+  "function": {
+    "run_template": "dialogue_functions.run_physics_diagnosis(data['TIME_DURATION'])",
+    "results": [
+      {
+        "result_type": "physics_diagnosis",
+        "result_fields": {
+          "diagnosis_report": "item"
+        }
+      }
+    ]
+  },
+  "voice_response": [
+    {
+      "type": "text",
+      "begin": "Running physics diagnosis for ${TIME_DURATION} seconds. Please wait while I analyze the system..."
+    }
+  ],
+  "visual_response": [
+    {
+      "type": "text",
+      "begin": "Running physics diagnosis for ${TIME_DURATION} seconds. Please wait while I analyze the system..."
+    }
+  ]
+}

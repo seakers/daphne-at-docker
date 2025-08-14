@@ -240,6 +240,9 @@ def generate_physics_diagnosis_data(
     actual_norm = _normalize_series(actual_telemetry, baseline_min, baseline_max)
     print(f"[PHYS_DIAG] Normalized actual telemetry using unified baseline")
     print(f"[PHYS_DIAG] Actual telemetry range: raw=[{min(actual_telemetry):.4f}, {max(actual_telemetry):.4f}], normalized=[{min(actual_norm):.4f}, {max(actual_norm):.4f}]")
+    print(f"[PHYS_DIAG] Actual telemetry length: {len(actual_telemetry)} -> normalized: {len(actual_norm)}")
+    print(f"[PHYS_DIAG] Sampling rate: {sampling_rate_seconds}s")
+    print(f"[PHYS_DIAG] Effective length: {effective_len}")
     
     # Second pass: process each anomaly with unified normalization
     comp_list = []
@@ -251,38 +254,67 @@ def generate_physics_diagnosis_data(
         # Normalize simulation data using the same unified baseline
         sim_norm = _normalize_series(sim_vals, baseline_min, baseline_max)
         print(f"[PHYS_DIAG] Simulation '{name}' range: raw=[{min(sim_vals):.4f}, {max(sim_vals):.4f}], normalized=[{min(sim_norm):.4f}, {max(sim_norm):.4f}]")
+        print(f"[PHYS_DIAG] Simulation '{name}' length: {len(sim_vals)} -> normalized: {len(sim_norm)}")
         
         # Time shift sweep to find optimal alignment and mitigate time shift problem
         # Since fault injection timing is unclear, we sweep through possible time shifts
         # to find the best match between simulated anomaly data and actual telemetry
         # This provides a more robust similarity assessment by considering all possible alignments
+        print(f"[PHYS_DIAG] === Starting time shift sweep for '{name}' ===")
+        print(f"[PHYS_DIAG] actual_norm length: {len(actual_norm) if actual_norm else 'None'}")
+        print(f"[PHYS_DIAG] sim_norm length: {len(sim_norm) if sim_norm else 'None'}")
+        print(f"[PHYS_DIAG] Can perform shift sweep: {actual_norm and sim_norm and len(actual_norm) >= len(sim_norm)}")
+        
         best_mse = float("inf")
         best_shift = 0
         best_similarity = 0.0
         
-        if actual_norm and sim_norm and len(actual_norm) >= len(sim_norm):
+        if actual_norm and sim_norm:
             # Sweep through possible time shifts to find the best alignment
-            max_shift = len(actual_norm) - len(sim_norm) + 1
-            for shift in range(max_shift):
-                obs_segment = actual_norm[shift:shift + len(sim_norm)]
-                hypo_segment = sim_norm
-                mse = mean_squared_error(obs_segment, hypo_segment)
-                
-                if mse < best_mse:
-                    best_mse = mse
-                    best_shift = shift
-                    best_similarity = max(0.0, min(1.0, 1.0 - mse))
+            segment_length = int(len(actual_norm)/2)
+            print(f"[PHYS_DIAG] Max possible shifts: {segment_length}")
+            print(f"[PHYS_DIAG] Actual telemetry range: [{min(actual_norm):.4f}, {max(actual_norm):.4f}]")
+            print(f"[PHYS_DIAG] Simulation range: [{min(sim_norm):.4f}, {max(sim_norm):.4f}]")
             
-            print(f"[PHYS_DIAG] anomaly='{name}', best_mse={best_mse:.4f}, best_shift={best_shift}, similarity={best_similarity:.3f}")
+            # Show first few values for debugging
+            print(f"[PHYS_DIAG] First 5 actual values: {actual_norm[:5]}")
+            print(f"[PHYS_DIAG] First 5 simulation values: {sim_norm[:5]}")
+            
+            shift_results = []
+            for shift in range(len(actual_norm) - segment_length + 1):
+                obs_segment = actual_norm[shift:shift + segment_length]
+                hypo_segment = sim_norm[:segment_length]
+                mse_score = mean_squared_error(obs_segment, hypo_segment)
+                shift_results.append((shift, mse_score))
+                
+                if mse_score < best_mse:
+                    best_mse = mse_score
+                    best_shift = shift
+                    best_similarity = max(0.0, min(1.0, 1.0 - mse_score * 10)) # scale down mse_score to make it more sensitive
+                    print(f"[PHYS_DIAG] New best at shift {shift}: MSE={mse_score:.6f}")
+            
+            print(f"[PHYS_DIAG] === Shift sweep results for '{name}' ===")
+            print(f"[PHYS_DIAG] All shift results (shift, MSE): {shift_results[:10]}...")  # Show first 10
+            print(f"[PHYS_DIAG] Final result: best_mse={best_mse:.6f}, best_shift={best_shift}, similarity={best_similarity:.3f}")
+            
         else:
             # Fallback to direct comparison if lengths don't match
+            print(f"[PHYS_DIAG] === Fallback comparison for '{name}' ===")
             if actual_norm and sim_norm and len(actual_norm) == len(sim_norm):
                 best_mse = mean_squared_error(actual_norm, sim_norm)
+                print(f"[PHYS_DIAG] Direct comparison (same length): MSE={best_mse:.6f}")
             else:
                 best_mse = 1.0
+                print(f"[PHYS_DIAG] Fallback to default MSE=1.0 (lengths don't match)")
             best_shift = 0
             best_similarity = max(0.0, min(1.0, 1.0 - best_mse))
-            print(f"[PHYS_DIAG] anomaly='{name}', mse={best_mse:.4f}, similarity={best_similarity:.3f} (no shift sweep)")
+            print(f"[PHYS_DIAG] Fallback result: mse={best_mse:.6f}, similarity={best_similarity:.3f}")
+        
+        print(f"[PHYS_DIAG] === Final values for '{name}' ===")
+        print(f"[PHYS_DIAG] best_shift: {best_shift}")
+        print(f"[PHYS_DIAG] fault_injection_time: {best_shift}")
+        print(f"[PHYS_DIAG] fault_injection_time_seconds: {best_shift * sampling_rate_seconds}")
+        print(f"[PHYS_DIAG] ==========================================")
         
         comp_list.append({
             'name': name,
@@ -291,8 +323,12 @@ def generate_physics_diagnosis_data(
             'telemetry_data': sim_vals,
             'best_shift': best_shift,  # Store the best shift for debugging/analysis
             'best_mse': f"{best_mse:.4f}",  # Store the best MSE for debugging/analysis
+            'fault_injection_time': best_shift,  # Time point when fault was injected (in data points)
+            'fault_injection_time_seconds': best_shift * sampling_rate_seconds,  # Time in seconds
         })
-        print(f"[PHYS_DIAG] === Completed anomaly {i+1}: '{name}' ===\n")
+        print(f"[PHYS_DIAG] === Completed anomaly {i+1}: '{name}' ===")
+        print(f"[PHYS_DIAG] Added to comp_list: fault_injection_time={best_shift}, fault_injection_time_seconds={best_shift * sampling_rate_seconds}")
+        print(f"[PHYS_DIAG] ==========================================\n")
 
     # Sort by similarity descending and highlight top
     comp_list.sort(key=lambda x: float(x['score']), reverse=True)
@@ -313,6 +349,15 @@ def generate_physics_diagnosis_data(
             'target_sensor': target_telemetry_sensor
         }
     }
+    
+    print(f"[PHYS_DIAG] === FINAL DATA STRUCTURE ===")
+    print(f"[PHYS_DIAG] Component anomalies count: {len(comp_list)}")
+    for i, comp in enumerate(comp_list):
+        print(f"[PHYS_DIAG] Anomaly {i+1}: '{comp['name']}'")
+        print(f"[PHYS_DIAG]   - fault_injection_time: {comp.get('fault_injection_time', 'MISSING')}")
+        print(f"[PHYS_DIAG]   - fault_injection_time_seconds: {comp.get('fault_injection_time_seconds', 'MISSING')}")
+        print(f"[PHYS_DIAG]   - best_shift: {comp.get('best_shift', 'MISSING')}")
+    print(f"[PHYS_DIAG] =================================")
     
     return physics_diagnosis_data
 
