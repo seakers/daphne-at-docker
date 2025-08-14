@@ -74,8 +74,109 @@
           </div>
         </div>
         <div v-if="simpleTabs[activeSimpleTab]">
+          <!-- KG Diagnosis Results -->
+          <div v-if="simpleTabs[activeSimpleTab].type === 'kg'" class="kg-diagnosis-report">
+            <div v-if="!simpleTabs[activeSimpleTab].diagnosisData || simpleTabs[activeSimpleTab].diagnosisData.length === 0">
+              <img v-if="isLoading"
+                   src="assets/img/loader.svg"
+                   style="display: block; margin: auto;"
+                   height="40" width="40"
+                   alt="Loading spinner">
+              <p v-else>No KG diagnosis reports requested.</p>
+            </div>
+            <div v-else>
+              <div class="column" style="margin: 0px; padding: 0px">
+                <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Set of symptoms selected for diagnosis:</span>
+                <ul>
+                  <li class="hover" v-for="symptom in simpleTabs[activeSimpleTab].diagnosisData['symptoms_list']" v-on:click="recoverSymptomsList()"
+                      style="cursor: pointer">
+                    {{ symptom['detection_text'] }}
+                  </li>
+                </ul>
+              </div>
+              <div class="column" style="margin-top: 20px; padding: 0px">
+                <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Could be caused by anomalies:</span><br />
+                <span><input type='checkbox' v-model="simpleTabs[activeSimpleTab].allSelected" v-on:click="selectAllAnomaliesForTab(activeSimpleTab)"> Select All </span>
+                <ul v-for="anomaly in simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list']">
+                  <li>
+                    <input type="checkbox" class='checkall' v-model="simpleTabs[activeSimpleTab].checked" :value="anomaly"
+                            style="border-color: #0AFEFF; color: #0AFEFF; background: #002E2E;">
+                    {{ anomaly['name'] }} <span :style="{'color': 0.66<anomaly['score']<1?(anomaly['score']<0.33 ? 'green' : 'yellow'):'red'}">({{anomaly['text_score']}}) </span>
+                  </li>
+                </ul>
+              </div>
+              <div style="text-align: center; margin-top: 30px">
+                <p v-if="showAlert" style="color: red">Please select an anomaly to investigate.</p>
+                <button class="button" type="submit" onclick="errorMessage()"
+                        style="width: 30%; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E;"
+                        v-on:click.prevent="showExplanationsForTab(activeSimpleTab)">Show explanations
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Bayesian Diagnosis Results -->
+          <div v-else-if="simpleTabs[activeSimpleTab].type === 'bayesian'" class="bayesian-diagnosis-report">
+            <div v-if="!simpleTabs[activeSimpleTab].diagnosisData || simpleTabs[activeSimpleTab].diagnosisData.length === 0">
+              <img v-if="isLoading"
+                   src="assets/img/loader.svg"
+                   style="display: block; margin: auto;"
+                   height="40" width="40"
+                   alt="Loading spinner">
+              <p v-else>No Bayesian diagnosis reports requested.</p>
+            </div>
+            <div v-else>
+              <!-- Most probable anomaly highlighting -->
+              <div v-if="simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'].length > 0" class="most-probable-anomaly" 
+                  style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
+                <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly:</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 18px; font-weight: bold;">{{ simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'][0].anomaly }}</span>
+                  <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+                    Probability: {{ (simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'][0].probability * 100 ).toFixed(4) }}%
+                  </span>
+                </div>
+              </div>
+
+              <!-- Top 5 anomalies table -->
+              <div style="margin-bottom: 20px;">
+                <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Top 5 Most Likely Anomalies:</span>
+                <div class="table-container" style="margin-top: 10px;">
+                  <table class="table is-bordered is-narrow is-hoverable is-fullwidth" 
+                        style="background: transparent; color: white;">
+                    <thead>
+                      <tr style="background: #002E2E;">
+                        <th style="color: #0AFEFF; width: 60%;">Anomaly</th>
+                        <th style="color: #0AFEFF; width: 40%;">Probability</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list']" 
+                          style="background: rgba(0,46,46,0.7);">
+                        <td style="padding: 8px; vertical-align: middle;">{{ item.anomaly }}</td>
+                        <td style="padding: 8px;">
+                          <div class="progress" 
+                              style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
+                            <div :style="{
+                              width: `${item.probability * 100}%`,
+                              background: getProbabilityColor(item.probability),
+                              height: '100%'
+                            }"></div>
+                            <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
+                              {{ (item.probability * 100).toFixed(4) }}%
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <!-- Chatbot Physics Diagnosis Results -->
-          <div v-if="simpleTabs[activeSimpleTab].isChatbotResult" class="chatbot-physics-results">
+          <div v-else-if="simpleTabs[activeSimpleTab].isChatbotResult" class="chatbot-physics-results">
             <div style="text-align: center; padding: 20px;">
               <h3 style="color: #0AFEFF; margin-bottom: 20px;">Physics Diagnosis Results (via Chatbot)</h3>
               
@@ -107,15 +208,15 @@
           </div>
           
           <!-- Regular Physics Diagnosis Report -->
-          <div v-else class="physics-diagnosis-report">
+          <div v-else-if="simpleTabs[activeSimpleTab].type === 'physics'" class="physics-diagnosis-report">
             <!-- Title Section -->
             <div class="physics-title-section">
               <div>
                 <span style="color:#0AFEFF;">Most Probable Anomaly:</span>
-                <span style="font-weight:bold; color:white; margin-left:10px;">{{ physicsDiagnosisData.mostProbableAnomaly }}</span>
+                <span style="font-weight:bold; color:white; margin-left:10px;">{{ simpleTabs[activeSimpleTab].physicsDiagnosisData ? simpleTabs[activeSimpleTab].physicsDiagnosisData.mostProbableAnomaly : 'N/A' }}</span>
               </div>
               <div style="margin-left:auto; color:#0AFEFF;">
-                Probability: <span style="font-weight:bold; color:white;">{{ physicsDiagnosisData.probability }}</span>
+                Probability: <span style="font-weight:bold; color:white;">{{ simpleTabs[activeSimpleTab].physicsDiagnosisData ? simpleTabs[activeSimpleTab].physicsDiagnosisData.probability : 'N/A' }}</span>
               </div>
             </div>
             <!-- Content Section -->
@@ -134,7 +235,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="anomaly in physicsDiagnosisData.componentAnomalies" 
+                    <tr v-for="anomaly in (simpleTabs[activeSimpleTab].physicsDiagnosisData ? simpleTabs[activeSimpleTab].physicsDiagnosisData.componentAnomalies : [])" 
                         :key="anomaly.name"
                         :style="anomaly.isHighlighted ? 'background:#c0392b; color:white; font-weight:bold;' : ''">
                       <td class="checkbox-cell">
@@ -208,52 +309,25 @@
             </div>
           </div>
         </div>
-        <button class="button" @click="addSimpleTab('New Tab', 'This is a new independent tab.')" style="margin-top: 10px;">
+        <button class="button" @click="addSimpleTab('New Tab', 'This is a new independent tab.')" style="margin-top: 10px;" v-if="false">
           Add Simple Tab
         </button>
 
-        <div v-if="diagnosisReport.length === 0">
-          <img v-if="isLoading"
-               src="assets/img/loader.svg"
-               style="display: block; margin: auto;"
-               height="40" width="40"
-               alt="Loading spinner">
-          <p v-else>No diagnosis reports requested.</p>
+        <!-- Show loading or no reports message only when no tabs are active -->
+        <div v-if="simpleTabs.length === 0">
+          <div v-if="diagnosisReport.length === 0">
+            <img v-if="isLoading"
+                 src="assets/img/loader.svg"
+                 style="display: block; margin: auto;"
+                 height="40" width="40"
+                 alt="Loading spinner">
+            <p v-else>No diagnosis reports requested.</p>
+          </div>
         </div>
 
-        <!-- ################### KG Diagnosis report hypothesis list ########################-->
-        <div v-else>
-          <div class="column" style="margin: 0px; padding: 0px">
-            <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Set of symptoms selected for diagnosis:</span>
-            <ul>
-              <li class="hover" v-for="symptom in diagnosisReport['symptoms_list']" v-on:click="recoverSymptomsList()"
-                  style="cursor: pointer">
-                {{ symptom['detection_text'] }}
-              </li>
-            </ul>
-          </div>
-          <div class="column" style="margin-top: 20px; padding: 0px">
-            <span style="margin-bottom:20px; color: #0AFEFF; background: #002E2E">Could be caused by anomalies:</span><br />
-            <span><input type='checkbox' v-model="allSelected" v-on:click="selectAllAnomalies()"> Select All </span>
-            <ul v-for="anomaly in diagnosisReport['diagnosis_list']">
-              <li>
-                <input type="checkbox" class='checkall' v-model="checked" :value="anomaly"
-                        style="border-color: #0AFEFF; color: #0AFEFF; background: #002E2E;">
-                {{ anomaly['name'] }} <span :style="{'color': 0.66<anomaly['score']<1?(anomaly['score']<0.33 ? 'green' : 'yellow'):'red'}">({{anomaly['text_score']}}) </span>
-              </li>
-            </ul>
-          </div>
-          <div style="text-align: center; margin-top: 30px">
-            <p v-if="showAlert" style="color: red">Please select an anomaly to investigate.</p>
-            <button class="button" type="submit" onclick="errorMessage()"
-                    style="width: 30%; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E;"
-                    v-on:click.prevent="showExplanations">Show explanations
-            </button>
-          </div>
-        </div>
+        <!-- KG diagnosis content is now displayed in tabs above -->
 
         <!-- ################### Physics-based Diagnosis report ########################-->
-
 
         <!-- ################### Bayesian Diagnosis report previous ########################-->
 
@@ -308,7 +382,7 @@
               
         <!-- ################### Bayesian Diagnosis report interactive ########################-->
 
-        <div v-else>
+        <div v-else v-if="false">
           <!-- Diagnosis tabs -->
           <div class="tabs-container">
             <button class="tab-scroll-button left" @click="scrollTabs('left')" v-show="showLeftScroll">
@@ -1470,6 +1544,21 @@ export default {
       this.explaining = false;
       this.checked = [];
       await this.$store.dispatch('requestKGDiagnosis', this.selectedSymptomsList);
+      
+      // Get the diagnosis report from store
+      const diagnosisReport = this.$store.getters.getDiagnosisReport;
+      
+      // Add a simple tab with KG diagnosis content and store the data
+      this.simpleTabs.push({
+        label: "KG Diagnosis",
+        type: "kg",
+        content: "KG diagnosis result goes here.",
+        diagnosisData: diagnosisReport, // Store the diagnosis data in the tab
+        checked: [], // Store the checked anomalies for this tab
+        allSelected: false // Store the select all state for this tab
+      });
+      this.activeSimpleTab = this.simpleTabs.length - 1;
+      
       this.isLoading = false;
     },
 
@@ -1548,7 +1637,11 @@ export default {
         // Add a simple tab with physics diagnosis content
         this.simpleTabs.push({
           label: "Physics Diagnosis",
-          content: "Physics diagnosis result goes here."
+          type: "physics",
+          content: "Physics diagnosis result goes here.",
+          diagnosisData: diagnosisReport, // Store the diagnosis data in the tab
+          physicsDiagnosisData: this.$store.getters.getPhysicsDiagnosisData, // Store physics-specific data
+          telemetryGraphData: this.$store.getters.getTelemetryGraphData // Store telemetry data
         });
         this.activeSimpleTab = this.simpleTabs.length - 1;
         
@@ -1636,6 +1729,18 @@ export default {
       console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
       // console.log("current diagnostic history 1111111", this.diagnosticHistory);
       // console.log("current diagnostic history 2222222", this.diagnosticHistory[this.activeDiagnosticTab]);
+      
+      // Add a simple tab with Bayesian diagnosis content
+      this.simpleTabs.push({
+        label: "Bayesian Diagnosis",
+        type: "bayesian",
+        content: "Bayesian diagnosis result goes here.",
+        diagnosisData: diagnosisReport, // Store the diagnosis data in the tab
+        checked: [], // Store the checked anomalies for this tab
+        allSelected: false // Store the select all state for this tab
+      });
+      this.activeSimpleTab = this.simpleTabs.length - 1;
+      
       // After getting diagnosis report, ask if user has additional evidence
       setTimeout(() => {
       if (this.bestEvidence) {
@@ -2062,6 +2167,34 @@ export default {
       this.simpleTabs.splice(index, 1);
       if (this.activeSimpleTab >= this.simpleTabs.length) {
         this.activeSimpleTab = this.simpleTabs.length - 1;
+      }
+    },
+    
+    selectAllAnomaliesForTab(tabIndex) {
+      const tab = this.simpleTabs[tabIndex];
+      if (tab && tab.diagnosisData && tab.diagnosisData.diagnosis_list) {
+        if (!tab.allSelected) {
+          tab.checked = [...tab.diagnosisData.diagnosis_list];
+        } else {
+          tab.allSelected = false;
+          tab.checked = [];
+        }
+      }
+    },
+    
+    showExplanationsForTab(tabIndex) {
+      const tab = this.simpleTabs[tabIndex];
+      if (tab && tab.checked && tab.checked.length > 0) {
+        this.isLoading = true;
+        this.showAlert = false;
+        this.isLoading = false;
+        this.explaining = true;
+        console.log('Showing explanations for anomalies in tab:', tabIndex, tab.checked);
+      } else {
+        this.isLoading = false;
+        this.showAlert = true;
+        this.explaining = false;
+        console.log("Please select anomalies for investigation in tab:", tabIndex);
       }
     },
     onSelectedAnomaliesChange() {
