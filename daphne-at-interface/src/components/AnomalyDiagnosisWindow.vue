@@ -885,6 +885,9 @@ export default {
 
     // Vue Plotly layout for physics diagnosis graph
     physicsPlotLayout() {
+      // Generate better-spaced X-axis ticks
+      const xAxisTicks = this.generateBetterXAxisTicks();
+      
       return {
         title: {
           text: 'Telemetry Trend Comparison (with Fault Injection Times)',
@@ -901,7 +904,11 @@ export default {
           showline: true,
           linecolor: '#666',
           tickangle: -45,
-          tickfont: { size: 10 }
+          tickfont: { size: 10 },
+          // Improve X-axis readability by controlling tick spacing
+          tickmode: 'array',
+          tickvals: xAxisTicks.tickvals,
+          ticktext: xAxisTicks.ticktext
         },
         yaxis: {
           title: 'Pressure (mmHg)',
@@ -914,10 +921,10 @@ export default {
           dtick: 2,
           tickfont: { size: 10 }
         },
-        margin: { l: 60, r: 80, t: 60, b: 80 }, // Optimized margins for full-width display
+        margin: { l: 60, r: 150, t: 60, b: 80 }, // Increased right margin for better graph spacing
         showlegend: true,
         legend: {
-          x: 1.02,
+          x: 1.08, // Moved further to the right (was 1.02)
           y: 1,
           xanchor: 'left',
           yanchor: 'top',
@@ -1665,7 +1672,70 @@ export default {
       return false;
     },
 
+    generateBetterXAxisTicks() {
+      // Generate better-spaced X-axis ticks to reduce clutter
+      if (!this.telemetryGraphData || !this.telemetryGraphData.actual) {
+        return { tickvals: [], ticktext: [] };
+      }
+      
+      const totalPoints = this.telemetryGraphData.actual.length;
+      
+      // For better spacing, use fewer ticks with more strategic placement
+      let tickvals = [];
+      let ticktext = [];
+      
+      if (totalPoints <= 5) {
+        // For very short data, show all points
+        for (let i = 0; i < totalPoints; i++) {
+          tickvals.push(i);
+          ticktext.push(this.formatTimeLabel(i, totalPoints));
+        }
+      } else {
+        // For longer data, use strategic spacing
+        const targetTicks = 6; // Optimal number of ticks for good spacing
+        
+        // Always include first and last
+        tickvals.push(0);
+        ticktext.push(this.formatTimeLabel(0, totalPoints));
+        
+        // Calculate optimal spacing for intermediate ticks
+        const step = Math.max(1, Math.floor(totalPoints / (targetTicks - 1)));
+        
+        // Add intermediate ticks with better distribution
+        for (let i = step; i < totalPoints - 1; i += step) {
+          tickvals.push(i);
+          ticktext.push(this.formatTimeLabel(i, totalPoints));
+        }
+        
+        // Always include the last point
+        if (totalPoints > 1) {
+          tickvals.push(totalPoints - 1);
+          ticktext.push(this.formatTimeLabel(totalPoints - 1, totalPoints));
+        }
+        
+        // Ensure we don't have too many ticks close together at the end
+        if (tickvals.length > 2) {
+          const lastTick = tickvals[tickvals.length - 1];
+          const secondLastTick = tickvals[tickvals.length - 2];
+          
+          // If last two ticks are too close, remove the second-to-last
+          if (lastTick - secondLastTick < Math.floor(totalPoints / 8)) {
+            tickvals.splice(tickvals.length - 2, 1);
+            ticktext.splice(ticktext.length - 2, 1);
+          }
+        }
+      }
+      
+      return { tickvals, ticktext };
+    },
     
+    formatTimeLabel(index, totalLength) {
+      // Format time label as "-MM:SS" for better readability
+      const timeGap = totalLength - index - 1;
+      const minutes = Math.floor(timeGap / 60);
+      const seconds = timeGap % 60;
+      return `-${minutes}:${seconds.toString().padStart(2, '0')}`;
+    },
 
     showPhysicsDiagnosisError(message) {
       // Set error state
