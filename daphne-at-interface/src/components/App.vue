@@ -1541,7 +1541,7 @@ export default {
       let oldValJSON = JSON.stringify(oldVal);
       let newValJSON = JSON.stringify(newVal);
       if (newValJSON.length !== 0 && oldValJSON.length < newValJSON.length){
-        this.$store.commit('activateModal', 'SymptomChangeNotificationModal');
+        //this.$store.commit('activateModal', 'SymptomChangeNotificationModal');
       }
     },
     experimentStage: async function (val, oldVal) {
