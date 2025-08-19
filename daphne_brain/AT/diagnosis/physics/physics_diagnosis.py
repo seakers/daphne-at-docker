@@ -182,7 +182,7 @@ def generate_physics_diagnosis_data(
         Dictionary containing physics diagnosis data with anomalies, telemetry, and time labels
     """
     # simulation speed assumption:
-    simulation_speed_factor = 10
+    simulation_speed_factor = 50
     # Get real telemetry data from storage for the target sensor
     telemetry_data = get_actual_telemetry_from_storage(target_telemetry_sensor, int(sim_duration_seconds // simulation_speed_factor))
     actual_telemetry = telemetry_data['values']
