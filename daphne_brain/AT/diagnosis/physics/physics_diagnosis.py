@@ -176,7 +176,7 @@ def generate_physics_diagnosis_data(
     
     Args:
         symptoms_list: List of symptoms from the frontend
-        target_telemetry_sensor: Target telemetry sensor to analyze (default: 'ppCO2 (L1)')
+        target_telemetry_sensor: Target telemetry sensor to analyze (default: 'ppCO2')
         
     Returns:
         Dictionary containing physics diagnosis data with anomalies, telemetry, and time labels
@@ -367,7 +367,7 @@ def get_actual_telemetry_from_storage(target_sensor: str, sim_duration_seconds: 
     Get actual telemetry data from the storage system for a specific sensor.
     
     Args:
-        target_sensor: Target sensor to extract telemetry data for (default: 'ppCO2 (L1)')
+        target_sensor: Target sensor to extract telemetry data for (default: 'ppCO2')
         sim_duration_seconds: Duration in seconds to fetch telemetry data for (default: 1000)
         
     Returns:
@@ -685,54 +685,140 @@ def generate_time_labels(data_length: int) -> List[str]:
 def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: str,
                                duration_seconds: int, target_len_override: int) -> Dict[str, Any]:
     """
-    Generate simulated telemetry data for a specific anomaly.
-    
-    Args:
-        anomaly_name: Name of the anomaly
-        score: Similarity score for the anomaly
-        target_sensor: Target sensor to simulate (default: 'ppCO2 (L1)')
-        
-    Returns:
-        Dictionary containing:
-        - values: List of simulated telemetry values
-        - timestamps: List of timestamps (copied from actual data)
-        - unit: Unit of measurement
+    Generate telemetry data using BioSim instead of hardcoded CDRA simulation.
+    Falls back to CDRA simulation if BioSim is unavailable.
     """
     print(f"[ANOMALY_TELEMETRY] Generating telemetry for anomaly: '{anomaly_name}'")
-    # print(f"[ANOMALY_TELEMETRY] Parameters: score={score}, duration={duration_seconds}s, target_len={target_len_override}")
+    print(f"[ANOMALY_TELEMETRY] Target sensor: {target_sensor}, Duration: {duration_seconds}s, Target length: {target_len_override}")
+    
+    # Try BioSim first
+    try:
+        print(f"[ANOMALY_TELEMETRY] 🔄 Attempting to use BioSim for anomaly simulation...")
+        
+        # Import BioSim client (local import to avoid dependency issues)
+        try:
+            from .biosim_client import BioSimClient
+            print(f"[ANOMALY_TELEMETRY] ✅ BioSim client imported successfully")
+        except ImportError as e:
+            print(f"[ANOMALY_TELEMETRY] ❌ Failed to import BioSim client: {e}")
+            print(f"[ANOMALY_TELEMETRY] 🔄 Falling back to CDRA simulation")
+            return _fallback_cdra_simulation(anomaly_name, score, target_sensor, duration_seconds, target_len_override)
+        
+        # Initialize BioSim client
+        biosim_client = BioSimClient()
+        print(f"[ANOMALY_TELEMETRY] 🚀 BioSim client initialized")
+        
+        # Check if BioSim server is accessible
+        print(f"[ANOMALY_TELEMETRY] 🏥 Checking BioSim server status...")
+        if not biosim_client.check_server_status():
+            print(f"[ANOMALY_TELEMETRY] ⚠️ BioSim server is not accessible")
+            print(f"[ANOMALY_TELEMETRY] 🔄 Falling back to CDRA simulation")
+            return _fallback_cdra_simulation(anomaly_name, score, target_sensor, duration_seconds, target_len_override)
+        
+        print(f"[ANOMALY_TELEMETRY] ✅ BioSim server is accessible")
+        
+        # Start a NEW BioSim simulation for this specific anomaly
+        print(f"[ANOMALY_TELEMETRY] 🔄 Starting new BioSim simulation for anomaly: '{anomaly_name}'")
+        
+        # Create anomaly-specific configuration
+        # For now, we'll use a base configuration and modify it for the anomaly
+        # In the future, this could be enhanced with specific fault configurations
+        config_file_path = biosim_client._create_anomaly_config(anomaly_name, duration_seconds)
+        
+        if not config_file_path:
+            print(f"[ANOMALY_TELEMETRY] ⚠️ Could not create anomaly configuration")
+            print(f"[ANOMALY_TELEMETRY] 🔄 Falling back to CDRA simulation")
+            return _fallback_cdra_simulation(anomaly_name, score, target_sensor, duration_seconds, target_len_override)
+        
+        print(f"[ANOMALY_TELEMETRY] 📄 Created anomaly configuration: {config_file_path}")
+        
+        # Start the new simulation
+        sim_id = biosim_client.start_simulation(config_file_path)
+        
+        if not sim_id:
+            print(f"[ANOMALY_TELEMETRY] ⚠️ Failed to start BioSim simulation")
+            print(f"[ANOMALY_TELEMETRY] 🔄 Falling back to CDRA simulation")
+            return _fallback_cdra_simulation(anomaly_name, score, target_sensor, duration_seconds, target_len_override)
+        
+        print(f"[ANOMALY_TELEMETRY] ✅ Successfully started BioSim simulation with ID: {sim_id}")
+        
+        # Wait a moment for simulation to run and generate data
+        print(f"[ANOMALY_TELEMETRY] ⏳ Waiting for simulation to generate data...")
+        import time
+        time.sleep(2)  # Give simulation time to run
+        
+        # Now get the sensor data from this specific simulation
+        print(f"[ANOMALY_TELEMETRY] 🔍 Retrieving data from simulation ID: {sim_id}")
+        
+        sensor_data = biosim_client.get_sensor_data_from_log(
+            sim_id=sim_id,
+            sensor_name=target_sensor,
+            duration_seconds=duration_seconds
+        )
+        
+        if sensor_data and len(sensor_data) > 0:
+            print(f"[ANOMALY_TELEMETRY] ✅ Successfully retrieved {len(sensor_data)} data points from BioSim")
+            print(f"[ANOMALY_TELEMETRY] 📊 BioSim data range: [{min(sensor_data):.4f}, {max(sensor_data):.4f}]")
+            
+            # Resample if needed
+            if target_len_override and len(sensor_data) != target_len_override:
+                original_length = len(sensor_data)
+                sensor_data = resample_series(sensor_data, target_len_override)
+                print(f"[ANOMALY_TELEMETRY] 🔧 Resampled BioSim data from {original_length} to {len(sensor_data)} points")
+            
+            # Clean up temporary configuration file
+            biosim_client.cleanup_temp_config(config_file_path)
+            
+            return {
+                'values': sensor_data,
+                'source': 'biosim',
+                'simulation_id': sim_id,
+                'anomaly_name': anomaly_name
+            }
+        else:
+            print(f"[ANOMALY_TELEMETRY] ⚠️ No BioSim data available for sensor '{target_sensor}'")
+            print(f"[ANOMALY_TELEMETRY] 🔄 Falling back to CDRA simulation")
+            
+            # Clean up temporary configuration file before fallback
+            biosim_client.cleanup_temp_config(config_file_path)
+            
+            return _fallback_cdra_simulation(anomaly_name, score, target_sensor, duration_seconds, target_len_override)
+            
+    except Exception as e:
+        print(f"[ANOMALY_TELEMETRY] ❌ Error using BioSim: {e}")
+        print(f"[ANOMALY_TELEMETRY] 🔄 Falling back to CDRA simulation")
+        return _fallback_cdra_simulation(anomaly_name, score, target_sensor, duration_seconds, target_len_override)
 
-    # Build failure config from anomaly name and score
+
+def _fallback_cdra_simulation(anomaly_name: str, score: float, target_sensor: str,
+                              duration_seconds: int, target_len_override: int) -> Dict[str, Any]:
+    """Fallback to original CDRA simulation if BioSim fails or is unavailable."""
+    print(f"[ANOMALY_TELEMETRY] 🔄 Using fallback CDRA simulation for '{anomaly_name}'")
+    
+    # Original CDRA simulation code
     failure_cfg = anomaly_to_failure_config(anomaly_name, severity=float(score))
-    # print(f"[ANOMALY_TELEMETRY] Failure config generated: {failure_cfg}")
-
-    baseline = 3.0 #[mmHg] reasonable ppCO2 partial pressure baseline placeholder
-    print(f"[ANOMALY_TELEMETRY] Using baseline CO2: {baseline} mmHg")
-
-    # Run simulator (dt fixed at 1s as requested)
-    print(f"[ANOMALY_TELEMETRY] Starting CDRA simulation...")
+    baseline = 3.0
+    print(f"[ANOMALY_TELEMETRY] 🔧 CDRA: Using baseline CO2: {baseline} mmHg")
+    
+    print(f"[ANOMALY_TELEMETRY] 🔄 CDRA: Starting simulation...")
     raw_series = run_cdra_simulation(
         failure_config=failure_cfg,
-        duration_seconds= duration_seconds,
+        duration_seconds=duration_seconds,
         baseline_co2_mmHg=baseline,
         onset_time_sec=3,
     )
-    print(f"[ANOMALY_TELEMETRY] CDRA simulation completed, generated {len(raw_series)} points")
-    # print(f"[ANOMALY_TELEMETRY] Raw series range: {min(raw_series):.4f} to {max(raw_series):.4f} mmHg")
-    np.save(f"raw_series_{anomaly_name}.npy", raw_series)
-
-    # Resample to the same number of points as actual data 
+    print(f"[ANOMALY_TELEMETRY] ✅ CDRA: Simulation completed, generated {len(raw_series)} points")
+    
     if target_len_override:
-        # print(f"[ANOMALY_TELEMETRY] Resampling from {len(raw_series)} to {target_len_override} points")
         resampled = resample_series(raw_series, target_len_override)
-        print(f"[ANOMALY_TELEMETRY] Resampled series range: {min(resampled):.4f} to {max(resampled):.4f} mmHg")
+        print(f"[ANOMALY_TELEMETRY] 🔧 CDRA: Resampled to {len(resampled)} points")
     else:
         resampled = raw_series
-        print(f"[ANOMALY_TELEMETRY] No resampling needed")
-
+    
     return {
         'values': resampled,
-        # 'timestamps': telemetry_data.get('timestamps', []),
-        # 'unit': telemetry_data.get('unit', '')
+        'source': 'cdra_fallback',
+        'anomaly_name': anomaly_name
     }
 
 
@@ -747,7 +833,7 @@ def create_physics_diagnosis_report(
     
     Args:
         symptoms_list: List of symptoms from the frontend
-        target_telemetry_sensor: Target telemetry sensor to analyze (default: 'ppCO2 (L1)')
+        target_telemetry_sensor: Target telemetry sensor to analyze (default: 'ppCO2')
         
     Returns:
         Complete diagnosis report with physics data

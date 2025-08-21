@@ -283,3 +283,20 @@ LOGGING = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+# BioSim Configuration
+BIOSIM_CONFIG = {
+    'BASE_URL': 'http://10.5.0.7:8009',  # BioSim container IP in spaceip network
+    'REQUEST_TIMEOUT': 30,  # Request timeout in seconds
+    'HEALTH_CHECK_TIMEOUT': 5,  # Health check timeout in seconds
+    'DEFAULT_SIMULATION_ID': 1,  # Default simulation ID to use for data retrieval
+    'ENABLE_BIOSIM': True,  # Master switch to enable/disable BioSim integration
+    'FALLBACK_TO_CDRA': True,  # Whether to fallback to CDRA simulation when BioSim fails
+}
+
+# Add BioSim client logging
+LOGGING['loggers']['biosim_client'] = {
+    'handlers': ['file', 'console'],
+    'level': 'INFO',
+    'propagate': True,
+}
