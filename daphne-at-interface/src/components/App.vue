@@ -17,7 +17,7 @@
     </div>
     <div v-if="isChatVisible" class="columns is-gapless is-vertical-filler is-mobile">
       <div class="is-seclss-background-black column is-9">
-        <div class="is-seclss-background-black sticky" style="z-index: 1">
+        <div class="is-seclss-background-black" style="z-index: 1">
           <div class="box is-main" style="margin-bottom: 5px;">
             <anomaly-detection-window></anomaly-detection-window>
           </div>
@@ -40,7 +40,7 @@
     </div>
     <div v-else>
       <div class="is-seclss-background-black column is-12">
-        <div class="is-seclss-background-black sticky" style="z-index: 1">
+        <div class="is-seclss-background-black" style="z-index: 1">
           <div class="box is-main" style="margin-bottom: 5px;">
             <anomaly-detection-window></anomaly-detection-window>
           </div>
@@ -1723,9 +1723,5 @@ export default {
   cursor: pointer;
 }
 
-div.sticky {
-  position: -webkit-sticky;
-  position: sticky !important;
-  top: 50px;
-}
+/* Removed sticky positioning - anomaly detection now scrolls normally */
 </style>

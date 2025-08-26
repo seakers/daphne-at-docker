@@ -22,20 +22,20 @@ module.exports = merge(common, {
         port: 8081,
         proxy: {
             '/api': {
-                //target: 'http://localhost:8002/', // for local development
-                target: 'http://10.5.0.10:8002/', // for docker development
+                target: 'http://localhost:8002/', // for local development
+                //target: 'http://10.5.0.10:8002/', // for docker development
                 changeOrigin: true,
                 ws: true
             },
             '/server': {
-                //target: 'http://localhost:8002/', // for local development
-                target: 'http://10.5.0.10:8002/', // for docker development
+                target: 'http://localhost:8002/', // for local development
+                //target: 'http://10.5.0.10:8002/', // for docker development
                 changeOrigin: true,
                 ws: true
             },
             '/static': {
-                //target: 'http://localhost:8002/', // for local development
-                target: 'http://10.5.0.10:8002/', // for docker development
+                target: 'http://localhost:8002/', // for local development
+                //target: 'http://10.5.0.10:8002/', // for docker development
                 changeOrigin: true,
                 ws: true
             },
