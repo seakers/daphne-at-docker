@@ -305,6 +305,31 @@ def resample_series(values: List[float], target_len: int) -> List[float]:
         return list(values)
     if len(values) == 0:
         return [0.0] * target_len
+    
+    # Handle case where target length is larger than input length
+    if target_len > len(values):
+        # Interpolate between existing points to increase density across the full span
+        if len(values) == 1:
+            # If only one value, repeat it (edge case)
+            return [values[0]] * target_len
+        else:
+            # Create a denser interpolation across the full range
+            result = []
+            for i in range(target_len):
+                # Map target index to original data range
+                # This ensures we cover the full span from first to last value
+                pos = i * (len(values) - 1) / (target_len - 1)
+                lo = int(math.floor(pos))
+                hi = min(lo + 1, len(values) - 1)
+                frac = pos - lo
+                
+                # Linear interpolation between consecutive points
+                v = values[lo] * (1 - frac) + values[hi] * frac
+                result.append(v)
+            
+            return result
+    
+    # Original case: target length is smaller than or equal to input length
     # Linear resample
     result: List[float] = []
     for i in range(target_len):

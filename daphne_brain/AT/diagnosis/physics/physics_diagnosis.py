@@ -10,6 +10,7 @@ try:
     from AT.neo4j_queries import query_functions as neo4j_q
 except Exception:  # neo4j optional
     neo4j_q = None
+from .biosim_client import BioSimClient
 from .cdra_sim_adapter import run_cdra_simulation, resample_series, anomaly_to_failure_config
 
 
@@ -78,11 +79,67 @@ def get_cdra_component_anomalies_from_neo4j(max_items: int = 5) -> List[str]:
     return fallback[:max_items]
 
 
+def _generate_simulation_time_labels(sim_duration_seconds: int, target_points: int, simulation_speed_factor: int) -> List[str]:
+    """
+    Generate time labels that reflect simulation time progression, accounting for simulation speed factor.
+    
+    Args:
+        sim_duration_seconds: Total simulation duration in seconds
+        target_points: Number of target data points
+        simulation_speed_factor: Factor by which simulation is accelerated (e.g., 50 means 50x faster)
+        
+    Returns:
+        List of time labels representing simulation time progression
+    """
+    if target_points <= 0:
+        return []
+    
+    if sim_duration_seconds <= 0:
+        return ["00:00:00"] * target_points
+    
+    time_labels = []
+    for i in range(target_points):
+        # Calculate simulation time for this point
+        # Each point represents a fraction of the total simulation duration
+        if target_points == 1:
+            sim_time_seconds = 0
+        else:
+            sim_time_seconds = (i / (target_points - 1)) * sim_duration_seconds
+        
+        # Convert to HH:MM:SS format
+        hours = int(sim_time_seconds // 3600)
+        minutes = int((sim_time_seconds % 3600) // 60)
+        seconds = int(sim_time_seconds % 60)
+        
+        time_labels.append(f"{hours:02d}:{minutes:02d}:{seconds:02d}")
+    
+    return time_labels
+
+
 def _resample_labels(labels: List[str], target_len: int) -> List[str]:
     if not labels or target_len <= 0:
         return []
     if len(labels) == target_len:
         return list(labels)
+    
+    # Handle case where target length is larger than input length
+    if target_len > len(labels):
+        if len(labels) == 1:
+            # If only one label, repeat it
+            return [labels[0]] * target_len
+        else:
+            # Interpolate between existing labels to increase density across the full span
+            result = []
+            for i in range(target_len):
+                # Map target index to original labels range
+                # This ensures we cover the full span from first to last label
+                pos = i * (len(labels) - 1) / (target_len - 1)
+                idx = int(round(pos))
+                result.append(labels[idx])
+            
+            return result
+    
+    # Original case: target length is smaller than or equal to input length
     result: List[str] = []
     for i in range(target_len):
         pos = i * (len(labels) - 1) / (target_len - 1)
@@ -190,27 +247,24 @@ def generate_physics_diagnosis_data(
     unit = telemetry_data['unit']
     sensor_info = telemetry_data['sensor_info']
     
-    # Generate time labels based on timestamps or fallback to T1, T2, etc.
-    if timestamps:
-        # Convert timestamps to readable format (e.g., "14:30:45")
-        from datetime import datetime
-        time_labels = []
-        for ts in timestamps:
-            try:
-                dt = datetime.fromisoformat(ts.replace('Z', '+00:00'))
-                time_labels.append(dt.strftime('%H:%M:%S'))
-            except (ValueError, AttributeError):
-                time_labels.append(ts)  # Use raw timestamp if parsing fails
-    else:
-        time_labels = generate_time_labels(len(actual_telemetry))
-
     # Determine target points from duration and sampling rate
     target_points = max(1, int(sim_duration_seconds // max(1, int(sampling_rate_seconds))))
-    # Resample actual series and labels to target_points
+    
+    # Generate simulation-aware time labels that reflect the simulation timeline
+    # These labels represent simulation time progression, not real-time telemetry collection
+    time_labels = _generate_simulation_time_labels(sim_duration_seconds, target_points, simulation_speed_factor)
+    
+    # Resample actual series to target_points
     effective_len = target_points
     print(f"[PHYS_DIAG] Sampling plan: duration={sim_duration_seconds}s, sample_every={sampling_rate_seconds}s -> target_points={target_points}")
+    print(f"[PHYS_DIAG] Simulation speed factor: {simulation_speed_factor}x")
+    print(f"[PHYS_DIAG] Time labels represent simulation time (not real-time telemetry collection)")
     actual_telemetry = resample_series(actual_telemetry, target_points)
-    time_labels = _resample_labels(time_labels, target_points)
+    print(f"[PHYS_DIAG] Time labels: {time_labels}")
+    print(f"[PHYS_DIAG] Time labels length: {len(time_labels)}")
+    print(f"[PHYS_DIAG] First label: {time_labels[0]} (simulation start)")
+    print(f"[PHYS_DIAG] Last label: {time_labels[-1]} (simulation end)")
+    
     
     # Generate physics-based diagnosis data
     # This simulates the physics-based analysis that would be done by the backend
@@ -225,8 +279,8 @@ def generate_physics_diagnosis_data(
         sim_vals = generate_anomaly_telemetry(
             name,
             score=0.9,  # severity seed; real severity is captured by similarity metric below
-            target_sensor=target_telemetry_sensor,
-            duration_seconds=sim_duration_seconds,
+            target_sensor='ppCO2_IHab',
+            duration_seconds=int(sim_duration_seconds/simulation_speed_factor),
             target_len_override=effective_len,
         )['values']
         all_simulations.append(sim_vals)
@@ -695,15 +749,6 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
     try:
         print(f"[ANOMALY_TELEMETRY] 🔄 Attempting to use BioSim for anomaly simulation...")
         
-        # Import BioSim client (local import to avoid dependency issues)
-        try:
-            from .biosim_client import BioSimClient
-            print(f"[ANOMALY_TELEMETRY] ✅ BioSim client imported successfully")
-        except ImportError as e:
-            print(f"[ANOMALY_TELEMETRY] ❌ Failed to import BioSim client: {e}")
-            print(f"[ANOMALY_TELEMETRY] 🔄 Falling back to CDRA simulation")
-            return _fallback_cdra_simulation(anomaly_name, score, target_sensor, duration_seconds, target_len_override)
-        
         # Initialize BioSim client
         biosim_client = BioSimClient()
         print(f"[ANOMALY_TELEMETRY] 🚀 BioSim client initialized")
@@ -750,11 +795,33 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
         # Now get the sensor data from this specific simulation
         print(f"[ANOMALY_TELEMETRY] 🔍 Retrieving data from simulation ID: {sim_id}")
         
-        sensor_data = biosim_client.get_sensor_data_from_log(
+        # CURRENT CODE: Using basic sensor data extraction
+        # sensor_data = biosim_client.get_sensor_data_from_log(
+        #     sim_id=sim_id,
+        #     sensor_name=target_sensor,
+        #     duration_seconds=duration_seconds
+        # )
+        
+        # STEP 2: Replace with unit-aware sensor data extraction (commented out for now)
+        sensor_data_result = biosim_client.get_sensor_data_with_units(
             sim_id=sim_id,
             sensor_name=target_sensor,
-            duration_seconds=duration_seconds
+            duration_seconds=duration_seconds,
+            target_unit='mmHg'  # Convert to mmHg for consistency with CDRA simulation
         )
+        
+        if sensor_data_result:
+            sensor_data = sensor_data_result['values']
+            original_unit = sensor_data_result['source_unit']
+            conversion_applied = sensor_data_result['conversion_applied']
+            
+            if conversion_applied:
+                print(f"[ANOMALY_TELEMETRY] ✅ Converted {len(sensor_data)} values from {original_unit} to mmHg")
+                print(f"[ANOMALY_TELEMETRY] 📊 Conversion details: {sensor_data_result['target_unit']}")
+            else:
+                print(f"[ANOMALY_TELEMETRY] ℹ️ No unit conversion needed (already in {original_unit})")
+        else:
+            sensor_data = None
         
         if sensor_data and len(sensor_data) > 0:
             print(f"[ANOMALY_TELEMETRY] ✅ Successfully retrieved {len(sensor_data)} data points from BioSim")

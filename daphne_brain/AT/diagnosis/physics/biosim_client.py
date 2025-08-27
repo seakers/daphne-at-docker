@@ -4,6 +4,7 @@ import logging
 from typing import Dict, List, Any, Optional
 from django.conf import settings
 import os
+from .biosim_utils import kpa_to_mmhg, kpa_to_psi, get_day_of_year, get_time_string, generate_id
 
 logger = logging.getLogger(__name__)
 
@@ -191,7 +192,7 @@ class BioSimClient:
                 return None
             
             # Extract sensor data from the log
-            sensor_values = self._extract_sensor_values_from_log(log_data, sensor_name)
+            sensor_values, _ = self._extract_sensor_values_from_log(log_data, sensor_name)
             
             if sensor_values:
                 logger.info(f"✅ BioSim Client: Successfully extracted {len(sensor_values)} values for sensor '{sensor_name}'")
@@ -214,79 +215,112 @@ class BioSimClient:
             logger.error(f"   Error type: {type(e).__name__}")
             return None
     
-    def _extract_sensor_values_from_log(self, log_data: Dict[str, Any], sensor_name: str) -> List[float]:
+    def _extract_sensor_values_from_log(self, log_data: Dict[str, Any], sensor_name: str) -> tuple[List[float], List[str]]:
         """
-        Extract sensor values from simulation log data.
+        Extract sensor values and units from simulation log data.
         
         Args:
             log_data: The simulation log data
             sensor_name: Name of the sensor to extract
             
         Returns:
-            List of sensor values
+            Tuple of (sensor_values, sensor_units)
         """
         try:
             logger.info(f"🔍 BioSim Client: Parsing log data structure for sensor '{sensor_name}'")
             logger.info(f"📊 BioSim Client: Log data top-level keys: {list(log_data.keys()) if isinstance(log_data, dict) else 'Not a dict'}")
             
             sensor_values = []
+            sensor_units = []  # Track units for each value
             
-            # Navigate through the log structure to find sensor data
-            # This will depend on the actual structure of BioSim log data
-            if 'data' in log_data and isinstance(log_data['data'], list):
-                logger.info(f"🔍 BioSim Client: Found 'data' array with {len(log_data['data'])} entries")
-                for i, entry in enumerate(log_data['data']):
-                    if isinstance(entry, dict) and 'sensors' in entry:
-                        if sensor_name in entry['sensors']:
-                            value = entry['sensors'][sensor_name].get('value')
-                            if value is not None:
-                                try:
-                                    sensor_values.append(float(value))
-                                    logger.debug(f"✅ BioSim Client: Found value {value} in data[{i}].sensors.{sensor_name}")
-                                except (ValueError, TypeError):
-                                    logger.warning(f"⚠️ BioSim Client: Invalid sensor value for {sensor_name}: {value}")
-                                    continue
-            
-            # If no data found in expected structure, try alternative paths
-            if not sensor_values and 'telemetry' in log_data and isinstance(log_data['telemetry'], list):
-                logger.info(f"🔍 BioSim Client: Trying 'telemetry' array with {len(log_data['telemetry'])} entries")
-                for i, entry in enumerate(log_data['telemetry']):
-                    if isinstance(entry, dict) and sensor_name in entry:
-                        value = entry[sensor_name]
-                        if value is not None:
-                            try:
-                                sensor_values.append(float(value))
-                                logger.debug(f"✅ BioSim Client: Found value {value} in telemetry[{i}].{sensor_name}")
-                            except (ValueError, TypeError):
-                                logger.warning(f"⚠️ BioSim Client: Invalid telemetry value for {sensor_name}: {value}")
-                                continue
-            
-            # Try other possible structures
-            if not sensor_values:
-                logger.info(f"🔍 BioSim Client: Trying alternative log data structures...")
-                for key, value in log_data.items():
-                    if isinstance(value, list) and len(value) > 0:
-                        logger.info(f"🔍 BioSim Client: Checking key '{key}' with {len(value)} entries")
-                        # Look for sensor data in this array
-                        for i, entry in enumerate(value):
-                            if isinstance(entry, dict):
-                                if sensor_name in entry:
-                                    value = entry[sensor_name]
+            # BioSim log data structure: {'ticks': [{'modules': {sensor_name: {...}}}, ...]}
+            if 'ticks' in log_data and isinstance(log_data['ticks'], list):
+                logger.info(f"🔍 BioSim Client: Found 'ticks' array with {len(log_data['ticks'])} entries")
+                
+                for tick_index, tick in enumerate(log_data['ticks']):
+                    if isinstance(tick, dict) and 'modules' in tick:
+                        modules = tick['modules']
+                        if sensor_name in modules:
+                            sensor_module = modules[sensor_name]
+                            if isinstance(sensor_module, dict) and 'properties' in sensor_module:
+                                properties = sensor_module['properties']
+                                if 'value' in properties:
+                                    value = properties['value']
+                                    unit = properties.get('unit', 'unknown')  # Extract unit information
+                                    
                                     if value is not None:
                                         try:
                                             sensor_values.append(float(value))
-                                            logger.debug(f"✅ BioSim Client: Found value {value} in {key}[{i}].{sensor_name}")
+                                            sensor_units.append(unit)  # Store unit with each value
+                                            logger.debug(f"✅ BioSim Client: Found value {value} ({unit}) in tick[{tick_index}].modules.{sensor_name}.properties.value")
                                         except (ValueError, TypeError):
-                                            logger.warning(f"⚠️ BioSim Client: Invalid value for {sensor_name}: {value}")
+                                            logger.warning(f"⚠️ BioSim Client: Invalid sensor value for {sensor_name}: {value}")
                                             continue
+                                    else:
+                                        logger.debug(f"🔍 BioSim Client: No value found in tick[{tick_index}].modules.{sensor_name}.properties")
+                                else:
+                                    logger.debug(f"🔍 BioSim Client: No 'properties' found in tick[{tick_index}].modules.{sensor_name}")
+                            else:
+                                logger.debug(f"🔍 BioSim Client: No 'properties' found in tick[{tick_index}].modules.{sensor_name}")
+                        else:
+                            logger.debug(f"🔍 BioSim Client: Sensor '{sensor_name}' not found in tick[{tick_index}].modules")
+                    else:
+                        logger.debug(f"🔍 BioSim Client: No 'modules' found in tick[{tick_index}]")
             
-            logger.info(f"📊 BioSim Client: Extracted {len(sensor_values)} values for sensor '{sensor_name}'")
-            return sensor_values
+            # If no data found in expected structure, try alternative paths for backward compatibility
+            if not sensor_values:
+                logger.info(f"🔍 BioSim Client: No data found in 'ticks' structure, trying alternative paths...")
+                
+                # Try the old structure that was in the original code
+                if 'data' in log_data and isinstance(log_data['data'], list):
+                    logger.info(f"🔍 BioSim Client: Trying 'data' array with {len(log_data['data'])} entries")
+                    for i, entry in enumerate(log_data['data']):
+                        if isinstance(entry, dict) and 'sensors' in entry:
+                            if sensor_name in entry['sensors']:
+                                value = entry['sensors'][sensor_name].get('value')
+                                unit = entry['sensors'][sensor_name].get('unit', 'unknown')  # Extract unit
+                                if value is not None:
+                                    try:
+                                        sensor_values.append(float(value))
+                                        sensor_units.append(unit)  # Store unit
+                                        logger.debug(f"✅ BioSim Client: Found value {value} ({unit}) in data[{i}].sensors.{sensor_name}")
+                                    except (ValueError, TypeError):
+                                        logger.warning(f"⚠️ BioSim Client: Invalid sensor value for {sensor_name}: {value}")
+                                        continue
+                
+                # Try telemetry structure
+                if not sensor_values and 'telemetry' in log_data and isinstance(log_data['telemetry'], list):
+                    logger.info(f"🔍 BioSim Client: Trying 'telemetry' array with {len(log_data['telemetry'])} entries")
+                    for i, entry in enumerate(log_data['telemetry']):
+                        if isinstance(entry, dict) and sensor_name in entry:
+                            value = entry[sensor_name]
+                            unit = entry.get('unit', 'unknown')  # Extract unit
+                            if value is not None:
+                                try:
+                                    sensor_values.append(float(value))
+                                    sensor_units.append(unit)  # Store unit
+                                    logger.debug(f"✅ BioSim Client: Found value {value} ({unit}) in telemetry[{i}].{sensor_name}")
+                                except (ValueError, TypeError):
+                                    logger.warning(f"⚠️ BioSim Client: Invalid telemetry value for {sensor_name}: {value}")
+                                    continue
+            
+            # Log unit information summary
+            if sensor_values and sensor_units:
+                unique_units = list(set(sensor_units))
+                logger.info(f"📊 BioSim Client: Extracted {len(sensor_values)} values for sensor '{sensor_name}' with units: {unique_units}")
+                
+                # Check if we have consistent units
+                if len(unique_units) == 1:
+                    logger.info(f"✅ BioSim Client: All values have consistent unit: {unique_units[0]}")
+                else:
+                    logger.warning(f"⚠️ BioSim Client: Inconsistent units detected: {unique_units}")
+            
+            return sensor_values, sensor_units
             
         except Exception as e:
             logger.error(f"❌ BioSim Client: Error parsing sensor values from log data: {e}")
             logger.error(f"   Error type: {type(e).__name__}")
-            return []
+            return [], []
     
     def check_server_status(self) -> bool:
         """
@@ -453,3 +487,156 @@ class BioSimClient:
         except Exception as e:
             logger.warning(f"⚠️ BioSim Client: Could not clean up config file {config_file_path}: {e}")
             return False
+
+    def get_sensor_data_with_units(self, sim_id: int, sensor_name: str, duration_seconds: int = None, target_unit: str = 'mmHg') -> Optional[Dict[str, Any]]:
+        """
+        Get sensor data from BioSim simulation with unit conversion support.
+        
+        Args:
+            sim_id: The simulation ID
+            sensor_name: Name of the sensor to extract
+            duration_seconds: Optional duration limit for the data
+            target_unit: Target unit for conversion (default: mmHg)
+            
+        Returns:
+            Dictionary containing:
+            - values: List of converted sensor values
+            - original_units: List of original units
+            - target_unit: Target unit after conversion
+            - conversion_applied: Boolean indicating if conversion was performed
+        """
+        try:
+            logger.info(f"🔍 BioSim Client: Getting sensor data with units for '{sensor_name}' from simulation {sim_id}")
+            logger.info(f"🎯 BioSim Client: Target unit: {target_unit}")
+            
+            # Get the simulation log
+            log_data = self.get_simulation_log(sim_id)
+            if not log_data:
+                logger.warning(f"⚠️ BioSim Client: No log data available for simulation {sim_id}")
+                return None
+            
+            # Extract sensor values and units
+            sensor_values, sensor_units = self._extract_sensor_values_from_log(log_data, sensor_name)
+            
+            if not sensor_values:
+                logger.warning(f"⚠️ BioSim Client: No data found for sensor '{sensor_name}' in simulation {sim_id}")
+                return None
+            
+            # Check if we have consistent units
+            unique_units = list(set(sensor_units))
+            
+            # Handle case where no units are found or all units are 'unknown'
+            if len(unique_units) == 0 or (len(unique_units) == 1 and unique_units[0] == 'unknown'):
+                logger.info(f"🔧 BioSim Client: No unit information found, assuming kPa as default for BioSim data")
+                logger.info(f"🔧 BioSim Client: This is typical for BioSim simulations where units are not explicitly specified")
+                source_unit = 'kPa'
+                # Fill the units list with assumed units
+                sensor_units = ['kPa'] * len(sensor_values)
+                logger.info(f"🔧 BioSim Client: Applied 'kPa' unit to all {len(sensor_values)} sensor values")
+            elif len(unique_units) != 1:
+                logger.warning(f"⚠️ BioSim Client: Inconsistent units detected: {unique_units}")
+                # Use the most common unit
+                from collections import Counter
+                most_common_unit = Counter(sensor_units).most_common(1)[0][0]
+                if most_common_unit == 'unknown':
+                    logger.info(f"🔧 BioSim Client: Most common unit is 'unknown', assuming kPa as default")
+                    logger.info(f"🔧 BioSim Client: This is typical for BioSim simulations where units are not explicitly specified")
+                    source_unit = 'kPa'
+                    # Fill the units list with assumed units
+                    sensor_units = ['kPa'] * len(sensor_values)
+                    logger.info(f"🔧 BioSim Client: Applied 'kPa' unit to all {len(sensor_values)} sensor values")
+                else:
+                    logger.info(f"🔧 BioSim Client: Using most common unit: {most_common_unit}")
+                    source_unit = most_common_unit
+            else:
+                source_unit = unique_units[0]
+                if source_unit == 'unknown':
+                    logger.info(f"🔧 BioSim Client: Unit is 'unknown', assuming kPa as default for BioSim data")
+                    logger.info(f"🔧 BioSim Client: This is typical for BioSim simulations where units are not explicitly specified")
+                    source_unit = 'kPa'
+                    # Fill the units list with assumed units
+                    sensor_units = ['kPa'] * len(sensor_values)
+                    logger.info(f"🔧 BioSim Client: Applied 'kPa' unit to all {len(sensor_values)} sensor values")
+            
+            logger.info(f"📊 BioSim Client: Source unit: {source_unit}, Target unit: {target_unit}")
+            
+            # Apply unit conversion if needed
+            converted_values = sensor_values.copy()
+            conversion_applied = False
+            
+            if source_unit.lower() != target_unit.lower():
+                logger.info(f"🔄 BioSim Client: Converting from {source_unit} to {target_unit}")
+                
+                try:
+                    if source_unit.lower() == 'kpa' and target_unit.lower() == 'mmhg':
+                        # Convert kPa to mmHg using biosim_utils
+                        converted_values = [self.kpa_to_mmhg(value) for value in sensor_values]
+                        conversion_applied = True
+                        logger.info(f"✅ BioSim Client: Successfully converted {len(converted_values)} values from kPa to mmHg")
+                    elif source_unit.lower() == 'kpa' and target_unit.lower() == 'psi':
+                        # Convert kPa to PSI using biosim_utils
+                        converted_values = [self.kpa_to_psi(value) for value in sensor_values]
+                        conversion_applied = True
+                        logger.info(f"✅ BioSim Client: Successfully converted {len(converted_values)} values from kPa to PSI")
+                    else:
+                        logger.warning(f"⚠️ BioSim Client: Unit conversion from {source_unit} to {target_unit} not supported")
+                        # Keep original values
+                        converted_values = sensor_values
+                except Exception as e:
+                    logger.error(f"❌ BioSim Client: Error during unit conversion: {e}")
+                    # Keep original values on conversion error
+                    converted_values = sensor_values
+            else:
+                logger.info(f"✅ BioSim Client: No unit conversion needed (already in {target_unit})")
+            
+            # Apply duration limit if specified
+            if duration_seconds and len(converted_values) > duration_seconds:
+                original_length = len(converted_values)
+                converted_values = converted_values[-duration_seconds:]
+                sensor_units = sensor_units[-duration_seconds:]  # Keep units in sync
+                logger.info(f"🔧 BioSim Client: Limited sensor data from {original_length} to {len(converted_values)} values (last {duration_seconds} seconds)")
+            
+            # Log final summary
+            logger.info(f"📊 BioSim Client: Final result summary:")
+            logger.info(f"   - Sensor: {sensor_name}")
+            logger.info(f"   - Values extracted: {len(converted_values)}")
+            logger.info(f"   - Source unit: {source_unit}")
+            logger.info(f"   - Target unit: {target_unit}")
+            logger.info(f"   - Conversion applied: {conversion_applied}")
+            if conversion_applied:
+                logger.info(f"   - Sample values: {converted_values[:3]}... (converted from {source_unit} to {target_unit})")
+            else:
+                logger.info(f"   - Sample values: {converted_values[:3]}... (no conversion needed)")
+            
+            return {
+                'values': converted_values,
+                'original_units': sensor_units,
+                'target_unit': target_unit,
+                'conversion_applied': conversion_applied,
+                'source_unit': source_unit
+            }
+                
+        except Exception as e:
+            logger.error(f"❌ BioSim Client: Error getting sensor data with units for sensor '{sensor_name}' from simulation {sim_id}: {e}")
+            logger.error(f"   Error type: {type(e).__name__}")
+            return None
+
+    def kpa_to_mmhg(self, kpa_value: float) -> float:
+        """Convert kPa to mmHg using biosim_utils function."""
+        try:
+            from .biosim_utils import kpa_to_mmhg
+            return kpa_to_mmhg(kpa_value)
+        except ImportError:
+            logger.warning(f"⚠️ BioSim Client: Could not import kpa_to_mmhg from biosim_utils")
+            # Fallback conversion: 1 kPa ≈ 7.50062 mmHg
+            return kpa_value * 7.50062
+
+    def kpa_to_psi(self, kpa_value: float) -> float:
+        """Convert kPa to PSI using biosim_utils function."""
+        try:
+            from .biosim_utils import kpa_to_psi
+            return kpa_to_psi(kpa_value)
+        except ImportError:
+            logger.warning(f"⚠️ BioSim Client: Could not import kpa_to_psi from biosim_utils")
+            # Fallback conversion: 1 kPa ≈ 0.145038 PSI
+            return kpa_value * 0.145038

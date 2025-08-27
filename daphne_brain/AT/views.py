@@ -162,59 +162,59 @@ class AstrobeeStatus(APIView):
 class GetCurrentInstruction(APIView):
     def post(self, request, format=None):
 
-        url = "https://10.5.0.3:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
-        payload = {}
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
-        }       
-        response = requests.request("GET", url, headers=headers, data=payload, verify=False)
-        # print("get pride shared variables response procedure id", global_procedure_runtime_ID)
-        if response.status_code == 200:
-            try:
-                instruction_data = response.json()
-                # Extract the important information from the response
-                # current_instruction = {
-                #     'text': instruction_data.get('text', ''),
-                #     'instructionType': instruction_data.get('instructionType', ''),
-                #     'instructionNumber': instruction_data.get('instructionNumber', ''),
-                #     'userResponseType': instruction_data.get('userResponseType', []),
-                #     'status': instruction_data.get('status', '')
-                # }
-                # print("current instruction", instruction_data, response)
+        # url = "https://10.5.0.3:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
+        # payload = {}
+        # headers = {
+        #     'Content-Type': 'application/json',
+        #     'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
+        # }       
+        # response = requests.request("GET", url, headers=headers, data=payload, verify=False)
+        # # print("get pride shared variables response procedure id", global_procedure_runtime_ID)
+        # if response.status_code == 200:
+        #     try:
+        #         instruction_data = response.json()
+        #         # Extract the important information from the response
+        #         # current_instruction = {
+        #         #     'text': instruction_data.get('text', ''),
+        #         #     'instructionType': instruction_data.get('instructionType', ''),
+        #         #     'instructionNumber': instruction_data.get('instructionNumber', ''),
+        #         #     'userResponseType': instruction_data.get('userResponseType', []),
+        #         #     'status': instruction_data.get('status', '')
+        #         # }
+        #         # print("current instruction", instruction_data, response)
             
-                return Response({
-                    "instruction_data": instruction_data
-                })
-            except json.JSONDecodeError:
-                # print("Error decoding JSON response")
-                return Response({"error": "Invalid response format"}, status=500)
+        #         return Response({
+        #             "instruction_data": instruction_data
+        #         })
+        #     except json.JSONDecodeError:
+        #         # print("Error decoding JSON response")
+        #         return Response({"error": "Invalid response format"}, status=500)
             
-        else:
-            # print(f"Error fetching current instruction: {response.status_code}")
-            return Response({"error": f"API request failed with status code: {response.status_code}"}, 
-                           status=response.status_code)
+        # else:
+        #     # print(f"Error fetching current instruction: {response.status_code}")
+        #     return Response({"error": f"API request failed with status code: {response.status_code}"}, 
+        #                    status=response.status_code)
 
 
         #-------if there is no pride server running, return a dummy instruction for testing purposes
         # This is a placeholder for testing purposes. In a real scenario, you would fetch the current instruction from the Pride API.
         # Comment out below to use pride server or Uncomment below to use dummy instruction for testing purposes
         
-        # global global_procedure_runtime_ID
-        # if global_procedure_runtime_ID == "":
-        #     global_procedure_runtime_ID = "dummy_procedure_runtime_id"
-        # dummy_instruction = {
-        #     "text": "This is a dummy instruction for testing.",
-        #     "instructionType": "test",
-        #     "instructionNumber": 1,
-        #     "userResponseType": ["real"],
-        #     "status": "active",
-        #     "instructionIdentifier": "dummy-001"
-        # }
+        global global_procedure_runtime_ID
+        if global_procedure_runtime_ID == "":
+            global_procedure_runtime_ID = "dummy_procedure_runtime_id"
+        dummy_instruction = {
+            "text": "This is a dummy instruction for testing.",
+            "instructionType": "test",
+            "instructionNumber": 1,
+            "userResponseType": ["real"],
+            "status": "active",
+            "instructionIdentifier": "dummy-001"
+        }
 
-        # return Response({
-        #     "instruction_data": dummy_instruction
-        # })
+        return Response({
+            "instruction_data": dummy_instruction
+        })
 
 
     
