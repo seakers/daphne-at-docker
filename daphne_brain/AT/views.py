@@ -499,8 +499,8 @@ class RequestDiagnosis(APIView):
         print("done1-----------------------------------")
 
         # Send request to pride to get all the procedures
-        astrobee_procedure_list = get_astrobee_procedure_list_from_pride()
-        # astrobee_procedure_list = None
+        # astrobee_procedure_list = get_astrobee_procedure_list_from_pride()
+        astrobee_procedure_list = None
         print("astrovee procedure list", astrobee_procedure_list)
         print("done2-----------------------------------")
 

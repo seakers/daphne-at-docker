@@ -21,6 +21,25 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
         'Exceeds_LowerCautionLimit': 1,
         'Exceeds_LowerWarningLimit': 2
     }
+
+    PARAMETER_KEY_MAP = {
+        'ppO2 (L1)': 'ppO2_IHab (IHab)',
+        'ppO2 (L2)': 'ppO2_HALO (HALO)',
+        'ppCO2 (L1)': 'ppCO2_IHab (IHab)',
+        'ppCO2 (L2)': 'ppCO2_HALO (HALO)',
+        'Humidity (L1)': 'Humidity_IHab (IHab)',
+        'Humidity (L2)': 'Humidity_HALO (HALO)',
+        'ppO2 (L1) (t-1)': 'ppO2_IHab (IHab) (t-1)',
+        'ppO2 (L2) (t-1)': 'ppO2_HALO (HALO) (t-1)',
+        'ppCO2 (L1) (t-1)': 'ppCO2_IHab (IHab) (t-1)',
+        'ppCO2 (L2) (t-1)': 'ppCO2_HALO (HALO) (t-1)',
+        'Humidity (L1) (t-1)': 'Humidity_IHab (IHab) (t-1)',
+        'Humidity (L2) (t-1)': 'Humidity_HALO (HALO) (t-1)',
+        'Total Cabin Pressure (L1)': 'Total_Cabin_Pressure_IHab (IHab)',
+        'Total Cabin Pressure (L2)': 'Total_Cabin_Pressure_HALO (HALO)',
+        'Total Cabin Pressure (L1) (t-1)': 'Total_Cabin_Pressure_IHab (IHab) (t-1)',
+        'Total Cabin Pressure (L2) (t-1)': 'Total_Cabin_Pressure_HALO (HALO) (t-1)'
+    }
     
     # Create a new dictionary to store the evidence for a given query
     evidence = {}
@@ -29,7 +48,8 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
     # an entered parameter value falls to be stored as evidence when querying the network
     def discretize_values(parameter, value, measurement_ranges):
         # Get the thresholds for the specific parameter of interest
-        thresholds = measurement_ranges[parameter]
+        mapped_parameter = PARAMETER_KEY_MAP.get(parameter, parameter)
+        thresholds = measurement_ranges[mapped_parameter]
 
         # Check which threshold range the entered value falls into
         matched_threshold = None
@@ -51,17 +71,20 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
     # Prepare evidence based on user input
     for parameter, value in parameter_values.items():
         if value is not None:
+            print("measurement_ranges keys:", measurement_ranges.keys())
+            print("parameter:", parameter)
             threshold = discretize_values(parameter, value, measurement_ranges)
+            mapped_parameter = PARAMETER_KEY_MAP.get(parameter, parameter)
             # Set the evidence based on the threshold returned from 'discrete_values'
             if "Upper" in threshold:
-                evidence[f'high {parameter}'] = high_state_mapping[threshold] # use the corresponding index
+                evidence[f'high {mapped_parameter}'] = high_state_mapping[threshold] # use the corresponding index
                 # evidence[f'low_{parameter}'] = low_state_mapping['Nominal'] # set the complementary lower range value to 'Nominal'
             elif "Lower" in threshold:
                 # evidence[f'high_{parameter}'] = high_state_mapping['Nominal'] # set the complementary higher range value to 'Nominal
-                evidence[f'low {parameter}'] = low_state_mapping[threshold] # use the corresponding index
+                evidence[f'low {mapped_parameter}'] = low_state_mapping[threshold] # use the corresponding index
             else: # entered value is within the 'Nominal' value range
-                evidence[f'high {parameter}'] = high_state_mapping['Nominal']
-                evidence[f'low {parameter}'] = low_state_mapping['Nominal']
+                evidence[f'high {mapped_parameter}'] = high_state_mapping['Nominal']
+                evidence[f'low {mapped_parameter}'] = low_state_mapping['Nominal']
         
     # If the user doesn't enter a value for a given parameter, set its evidence to 'Nominal'
     for parameter in measurement_ranges.keys():
