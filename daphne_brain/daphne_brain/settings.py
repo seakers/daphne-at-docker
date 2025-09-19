@@ -284,6 +284,8 @@ LOGGING = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
+PHYSICS_SIMULATION_MODE = os.environ.get('PHYSICS_SIMULATION_MODE', 'local').lower()
+
 # BioSim Configuration
 BIOSIM_CONFIG = {
     'BASE_URL': 'http://10.5.0.7:8009',  # BioSim container IP in spaceip network

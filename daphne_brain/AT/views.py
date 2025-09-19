@@ -27,6 +27,16 @@ from AT.diagnosis.physics.physics_diagnosis import create_physics_diagnosis_repo
 from AT.diagnosis.physics.telemetry_storage import telemetry_storage
 
 
+def is_biosim_connected():
+    """
+    Check if BioSim is currently connected/active by checking the physics simulation mode.
+    
+    Returns:
+        bool: True if BioSim is connected, False otherwise
+    """
+    from django.conf import settings
+    return settings.PHYSICS_SIMULATION_MODE == 'biosim'
+
 astrobee_status = 'NA'
 response = 'NA'
 countdown = 10
@@ -352,10 +362,16 @@ class HeraFeed(APIView):
                             sensor_key = f"{sensor['Name']} ({sensor.get('ParameterGroup', 'Unknown')})"
                             telemetry_dict[sensor_key] = sensor['currentValue']
                     
-                    print(f"📊 HeraFeed: Telemetry sensors: {list(telemetry_dict.keys())}")
+                    # Determine if we should use BioSim parameter format
+                    use_biosim_format = is_biosim_connected()
+                    data_source = 'BioSim' if use_biosim_format else 'Hera'
                     
-                    # Check if ppCO2 (L1) is in the telemetry data
-                    target_sensor = 'ppCO2 (L1)'
+                    # Convert to BioSim parameter names if BioSim is connected
+
+                    print(f"�📊 HeraFeed: Telemetry sensors: {list(telemetry_dict.keys())}")
+                    
+                    # Check for target sensor (adjust based on format)
+                    target_sensor = 'ppCO2_IHab (IHab)' if use_biosim_format else 'ppCO2 (L1)'
                     if target_sensor in telemetry_dict:
                         print(f"✅ HeraFeed: Found {target_sensor} = {telemetry_dict[target_sensor]}")
                     else:
@@ -364,12 +380,13 @@ class HeraFeed(APIView):
                         co2_sensors = [k for k in telemetry_dict.keys() if 'CO2' in k or 'co2' in k]
                         print(f"🔍 HeraFeed: Available CO2-related sensors: {co2_sensors}")
                     
-                    # Store both the converted dictionary and original data
+                    # Store telemetry data with appropriate source and format
                     telemetry_record = telemetry_storage.store_telemetry(
-                        telemetry_data=telemetry_dict,  # Store the converted dictionary
-                        source='Hera',
+                        telemetry_data=telemetry_dict,
+                        source=data_source,
                         metadata={
                             'api_endpoint': 'HeraFeed',
+                            'parameter_format': 'biosim' if use_biosim_format else 'hera',
                             'original_data': {'Parameters': parameters_list}  # Store original data for sensor info
                         }
                     )
@@ -523,7 +540,8 @@ class RequestPhysicsDiagnosis(APIView):
         print(f"📋 RequestPhysicsDiagnosis: Symptoms list: {symptoms_list}")
         
         # Define target telemetry sensor for physics diagnosis
-        target_telemetry_sensor = 'ppCO2_IHab (IHab)'
+        # target_telemetry_sensor = 'ppCO2_IHab (IHab)'
+        target_telemetry_sensor = 'ppCO2 (L1)'
         print(f"🎯 RequestPhysicsDiagnosis: Target telemetry sensor: {target_telemetry_sensor}")
         
         # Optional simulation controls from frontend

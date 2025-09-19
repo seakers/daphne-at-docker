@@ -14,6 +14,12 @@ from .biosim_client import BioSimClient
 from .cdra_sim_adapter import run_cdra_simulation, resample_series, anomaly_to_failure_config
 
 
+def _get_physics_simulation_config() -> str:
+    """Get the current physics simulation mode from Django settings."""
+    from django.conf import settings
+    return settings.PHYSICS_SIMULATION_MODE
+
+
 def load_npy_telemetry_data(anomaly_name: str, target_sensor: str) -> List[float]:
     """
     Load telemetry data from npy files to supplement missing historical data.
@@ -272,6 +278,8 @@ def generate_physics_diagnosis_data(
     cdra_anoms = get_cdra_component_anomalies_from_neo4j(max_items=5)
     print(f"[PHYS_DIAG] Using {len(cdra_anoms)} anomalies; effective_len={effective_len}")
     print(f"[PHYS_DIAG] Anomaly names: {cdra_anoms}")
+    if _get_physics_simulation_config() == 'biosim':
+        target_telemetry_sensor="ppCO2_IHab"
     
     # First pass: collect all simulation data to establish unified baseline
     all_simulations = []
@@ -279,12 +287,13 @@ def generate_physics_diagnosis_data(
         sim_vals = generate_anomaly_telemetry(
             name,
             score=0.9,  # severity seed; real severity is captured by similarity metric below
-            target_sensor='ppCO2_IHab',
-            duration_seconds=int(sim_duration_seconds/simulation_speed_factor),
+            # target_sensor='ppCO2_IHab (IHab)',
+            target_sensor=target_telemetry_sensor,
+            duration_seconds=int(sim_duration_seconds),
             target_len_override=effective_len,
         )['values']
         all_simulations.append(sim_vals)
-        print(f"[PHYS_DIAG] Generated {len(sim_vals)} simulation values for '{name}'")
+        print(f"[PHYS_DIAG] Generated {len(sim_vals)} simulation values for '{name}', sim_duration={sim_duration_seconds/10}s")
     
     # Calculate unified baseline for consistent normalization
     baseline_min, baseline_max = _get_unified_baseline(actual_telemetry, all_simulations)
@@ -446,8 +455,18 @@ def get_actual_telemetry_from_storage(target_sensor: str, sim_duration_seconds: 
         time_window_seconds = max(1, sim_duration_seconds)  # Ensure at least 1 second
         
         # Get telemetry data within the specified time window
-        print(f"📊 Physics Diagnosis: Querying telemetry storage for Hera source, time window: {time_window_seconds} seconds (target: {sim_duration_seconds} data points)")
-        recent_telemetry = telemetry_storage.get_telemetry_for_physics_diagnosis(source='Hera', time_window_seconds=time_window_seconds)
+        # Try BioSim first (as it uses native parameter names), then fall back to Hera
+        print(f"📊 Physics Diagnosis: Querying telemetry storage for BioSim source first, time window: {time_window_seconds} seconds")
+        recent_telemetry = telemetry_storage.get_telemetry_for_physics_diagnosis(source='BioSim', time_window_seconds=time_window_seconds)
+        data_source = 'BioSim'
+        
+        if not recent_telemetry:
+            print(f"📊 Physics Diagnosis: No BioSim data found, trying Hera source")
+            recent_telemetry = telemetry_storage.get_telemetry_for_physics_diagnosis(source='Hera', time_window_seconds=time_window_seconds)
+            data_source = 'Hera'
+        else:
+            print(f"✅ Physics Diagnosis: Found {len(recent_telemetry)} BioSim telemetry records")
+        
         # print(f"📈 Physics Diagnosis: Retrieved {len(recent_telemetry)} telemetry records from storage")
         
         if recent_telemetry:
@@ -739,13 +758,42 @@ def generate_time_labels(data_length: int) -> List[str]:
 def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: str,
                                duration_seconds: int, target_len_override: int) -> Dict[str, Any]:
     """
-    Generate telemetry data using BioSim instead of hardcoded CDRA simulation.
-    Falls back to CDRA simulation if BioSim is unavailable.
+    Generate telemetry data using BioSim or local CDRA simulation based on configuration.
+    
+    Configuration is controlled by the PHYSICS_SIMULATION_MODE environment variable:
+    - "biosim": Use BioSim server (default), fallback to local CDRA if unavailable
+    - "local": Use local CDRA simulation only, skip BioSim entirely
+    
+    Examples:
+        # Use BioSim with fallback to local CDRA (default)
+        export PHYSICS_SIMULATION_MODE=biosim
+        
+        # Use local CDRA simulation only
+        export PHYSICS_SIMULATION_MODE=local
+    
+    Args:
+        anomaly_name: Name of the anomaly to simulate
+        score: Severity score for the anomaly
+        target_sensor: Target sensor name
+        duration_seconds: Simulation duration in seconds
+        target_len_override: Target length for resampling
+        
+    Returns:
+        Dictionary containing simulation values, source type, and metadata
     """
     print(f"[ANOMALY_TELEMETRY] Generating telemetry for anomaly: '{anomaly_name}'")
     print(f"[ANOMALY_TELEMETRY] Target sensor: {target_sensor}, Duration: {duration_seconds}s, Target length: {target_len_override}")
     
-    # Try BioSim first
+    # Check simulation mode configuration
+    simulation_mode = _get_physics_simulation_config()
+    print(f"[ANOMALY_TELEMETRY] 🔧 Physics simulation mode: {simulation_mode}")
+    
+    # If local mode is explicitly set, skip BioSim entirely
+    if simulation_mode == 'local':
+        print(f"[ANOMALY_TELEMETRY] 🏠 Using local CDRA simulation (mode: {simulation_mode})")
+        return _fallback_cdra_simulation(anomaly_name, score, target_sensor, duration_seconds, target_len_override)
+    
+    # Try BioSim first (only if biosim mode is enabled)
     try:
         print(f"[ANOMALY_TELEMETRY] 🔄 Attempting to use BioSim for anomaly simulation...")
         
@@ -859,8 +907,8 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
 
 def _fallback_cdra_simulation(anomaly_name: str, score: float, target_sensor: str,
                               duration_seconds: int, target_len_override: int) -> Dict[str, Any]:
-    """Fallback to original CDRA simulation if BioSim fails or is unavailable."""
-    print(f"[ANOMALY_TELEMETRY] 🔄 Using fallback CDRA simulation for '{anomaly_name}'")
+    """Local CDRA simulation - used as fallback when BioSim fails or when local mode is configured."""
+    print(f"[ANOMALY_TELEMETRY] 🏠 Using local CDRA simulation for '{anomaly_name}'")
     
     # Original CDRA simulation code
     failure_cfg = anomaly_to_failure_config(anomaly_name, severity=float(score))
@@ -882,9 +930,13 @@ def _fallback_cdra_simulation(anomaly_name: str, score: float, target_sensor: st
     else:
         resampled = raw_series
     
+    # Determine if this is fallback or intentional local mode
+    simulation_mode= _get_physics_simulation_config()
+    source_type = 'cdra_local' if simulation_mode == 'local' else 'cdra_fallback'
+    
     return {
         'values': resampled,
-        'source': 'cdra_fallback',
+        'source': source_type,
         'anomaly_name': anomaly_name
     }
 

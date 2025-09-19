@@ -71,7 +71,7 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
     print("Connecting to the neo4j database...")
     driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
     session = driver.session()
-    print("Connected to the neo4j database.")
+    print("Connected to the neo4j database.") 
 
     # Build the query based on the symptoms list
     query = 'MATCH (m:Measurement)-[r]->(a:Anomaly) WHERE '
@@ -84,7 +84,7 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
     query = query + ' RETURN DISTINCT a.Title;'
     print("Querying the neo4j database with the following query:")
     print(query)
-
+    diagnosis = []
     try:
         # Query the database and parse the result (which is a list of the anomalies which symptoms have non empty
         # intersection with the requested symptoms)

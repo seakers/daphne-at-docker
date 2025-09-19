@@ -112,6 +112,93 @@
                         v-on:click.prevent="showExplanationsForTab(activeSimpleTab)">Show explanations
                 </button>
               </div>
+              
+              <!-- KG Explanations Section -->
+              <div v-if="simpleTabs[activeSimpleTab].explaining" class="horizontal-divider" style="margin-top: 20px; margin-bottom: 20px"></div>
+              
+              <div v-if="simpleTabs[activeSimpleTab].explaining" class="kg-explanations-section">
+                <div class="is-mini-title" style="margin-bottom:5px; font-size: 22px">
+                  Explanations
+                  <u style="float: right; cursor: pointer" v-on:click.prevent="clearExplanationsForTab(activeSimpleTab)">Clear</u>
+                </div>
+
+                <div class="box is-main" style="margin-top: 20px">
+                  <p class="is-mini-title" style="margin-bottom: 10px; text-align: center">Symptom Comparison Table</p>
+                  <p style="text-align: center; margin-bottom: 10px;">Knowledge-driven explanation of the anomalies you have
+                    selected. Hover over the cells to see their description.</p>
+                  <p style="color: red; margin-bottom: 10px; text-align: center"
+                     v-if="symptomsList.length > selectedSymptomsList.length">WARNING! You have selected only
+                    {{ this.selectedSymptomsList.length }} out of {{ this.symptomsList.length }} anomalous symptoms for
+                    diagnosis. </p>
+                  <div class="table-container">
+                    <table class="table is-bordered is-narrow is-hoverable is-fullwidth">
+                      <thead>
+                      <tr style="align-content: center; text-align: center; font-weight: bold;">
+                        <td style="color: #0AFEFF; background: #002E2E" rowspan="2"><p
+                            title="The names of potential anomaly scenarios from the Knowledge Graph.">Anomaly scenario</p>
+                        </td>
+                        <td style="color: #0AFEFF; background: #002E2E" rowspan="2"><p
+                            title="This column provides the total number of off-nominal measurements, also called symptoms, that usually define the signature of an anomaly scenario.">
+                          Total number of symptoms in anomaly</p></td>
+                        <td v-bind:colspan="simpleTabs[activeSimpleTab].diagnosisData['symptoms_list'].length"
+                            style="color: #0AFEFF; background: #002E2E">
+                          <p title="These are the symptoms that you have selected above for diagnosis. Note, that these selected symptoms may or may not be present in the signature of an anomaly scenario present in this table.">
+                            Symptoms selected for diagnosis</p>
+                        </td>
+                        <td style="color: #0AFEFF; background: #002E2E" rowspan="2"><p
+                            title="These are the number of symptoms that are missing from this table. This can mean either that they are not currently anomalous or that they are anomalous but you have not selected them for diagnosis.">
+                          Symptoms missing</p></td>
+                        <td style="color: #0AFEFF; background: #002E2E" rowspan="2"><p
+                            title="This column provides the likelihood of the respective anomaly being the current anomaly scenario. The closer to 1 the score is, the more likely it is the anomaly scenario.">
+                          Likelihood Score</p></td>
+                        <td style="color: #0AFEFF; background: #002E2E" rowspan="2"><p
+                            title="Click on the button to see the procedure corresponding to the anomaly selected.">
+                          Anomaly Procedure</p></td>
+                      </tr>
+                      <tr>
+                        <td v-for="symptom in simpleTabs[activeSimpleTab].diagnosisData['symptoms_list']">{{ symptom['detection_text'] }}</td>
+                      </tr>
+                      </thead>
+                      <tbody>
+                      <tr v-for="(anomaly) in simpleTabs[activeSimpleTab].checked">
+                        <td>{{ anomaly['name'] }}</td>
+                        <td style="text-align: center; vertical-align: middle"><p class="hover" style="cursor: pointer"
+                                                                                  v-bind:title="'The signature of this anomaly is: '+ anomaly['signature']"
+                                                                                  v-on:click="showSignature(anomaly)">
+                          {{ anomaly['signature'].length }}</p></td>
+                        <td v-for="symptom in simpleTabs[activeSimpleTab].diagnosisData['symptoms_list']"
+                            style="text-align: center; vertical-align: middle;">
+                        <span v-if="tickOrCross(anomaly['containsRequestedSymptoms'], symptom['detection_text']) === 'tick'"
+                              class="checkmark">
+                              <div class="checkmark_circle"></div>
+                              <div class="checkmark_stem"></div>
+                              <div class="checkmark_kick"></div>
+                            </span>
+                          <span
+                              v-if="tickOrCross(anomaly['containsRequestedSymptoms'], symptom['detection_text']) === 'cross'"
+                              class="crosssign">
+                              <div class="crosssign_circle"></div>
+                              <div class="crosssign_stem"></div>
+                              <div class="crosssign_stem2"></div>
+                            </span>
+                        </td>
+                        <td style="text-align: center; vertical-align: middle"><p class="hover" style="cursor: pointer"
+                                                                                  v-bind:title="'The symptoms of this anomaly that are not present in this table are : '+ anomaly['missing_symptoms']"
+                                                                                  v-on:click="showMissingSymptoms(anomaly)">
+                          {{ anomaly['missing_symptoms'].length }}</p></td>
+                        <td style="color:black; text-align: center; vertical-align: middle; font-weight: bold"
+                            :style="{'background': 0.66<anomaly['score']<1?(anomaly['score']<0.33 ? 'green' : 'yellow'):'red'}">
+                          {{ anomaly['score'] }}
+                        </td>
+                        <td style="color:black; text-align: center; vertical-align: middle; font-weight: bold">
+                          <button class="button" style="width: 70%; border-color: #0AFEFF; color: #0AFEFF; background: #002E2E" v-on:click.prevent="selectAnomaly(anomaly['name'])"> Select </button>
+                        </td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -130,11 +217,18 @@
               <div v-if="simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'].length > 0" class="most-probable-anomaly" 
                   style="margin-bottom: 20px; padding: 15px; background: #002E2E; border: 1px solid #0AFEFF; border-radius: 4px;">
                 <h3 style="color: #0AFEFF; margin-bottom: 10px;">Most Probable Anomaly:</h3>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                   <span style="font-size: 18px; font-weight: bold;">{{ simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'][0].anomaly }}</span>
                   <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
                     Probability: {{ (simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'][0].probability * 100 ).toFixed(4) }}%
                   </span>
+                </div>
+                <div style="text-align: center;">
+                  <button class="button theme-buttons"
+                          style="border-color: #0AFEFF; color: #0AFEFF; background: #002E2E; padding: 8px 16px; font-size: 14px;"
+                          v-on:click.prevent="runPhysicsDiagnosisForAnomaly(simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'][0].anomaly)">
+                    Run Physics Diagnosis
+                  </button>
                 </div>
               </div>
 
@@ -2248,6 +2342,8 @@ export default {
         } else {
           tab.allSelected = false;
           tab.checked = [];
+          // Clear explanations when unchecking all
+          this.$set(tab, 'explaining', false);
         }
       }
     },
@@ -2255,16 +2351,122 @@ export default {
     showExplanationsForTab(tabIndex) {
       const tab = this.simpleTabs[tabIndex];
       if (tab && tab.checked && tab.checked.length > 0) {
-        this.isLoading = true;
         this.showAlert = false;
-        this.isLoading = false;
-        this.explaining = true;
+        // Set explaining state for this specific tab
+        this.$set(tab, 'explaining', true);
         console.log('Showing explanations for anomalies in tab:', tabIndex, tab.checked);
       } else {
-        this.isLoading = false;
         this.showAlert = true;
-        this.explaining = false;
         console.log("Please select anomalies for investigation in tab:", tabIndex);
+      }
+    },
+    
+    clearExplanationsForTab(tabIndex) {
+      const tab = this.simpleTabs[tabIndex];
+      if (tab) {
+        this.$set(tab, 'explaining', false);
+        tab.checked = [];
+        this.showAlert = false;
+      }
+    },
+    
+    async runPhysicsDiagnosisForAnomaly(anomalyName) {
+      try {
+        this.isLoading = true;
+        
+        // Show loading message
+        // this.$store.commit('addDialoguePiece', {
+        //   "voice_message": `Running physics diagnosis for ${anomalyName}...`,
+        //   "visual_message_type": ["text"],
+        //   "visual_message": [`Running physics diagnosis for ${anomalyName}...`],
+        //   "writer": "daphne"
+        // });
+        
+        // Update store with local physics simulation duration
+        this.$store.commit('mutatePhysicsSimDurationSeconds', this.localPhysicsSimDuration);
+        
+        // Request physics diagnosis from backend
+        await this.$store.dispatch('requestPhysicsDiagnosis', this.selectedSymptomsList);
+        
+        // Get the diagnosis report from store
+        const diagnosisReport = this.$store.getters.getDiagnosisReport;
+        
+        if (diagnosisReport && diagnosisReport.physics_diagnosis_data) {
+          // Convert backend data to frontend format
+          const physicsDiagnosisData = {
+            mostProbableAnomaly: diagnosisReport.physics_diagnosis_data.most_probable_anomaly,
+            probability: diagnosisReport.physics_diagnosis_data.probability,
+            componentAnomalies: diagnosisReport.physics_diagnosis_data.component_anomalies.map(anomaly => ({
+              name: anomaly.name,
+              score: anomaly.score,
+              isHighlighted: anomaly.is_highlighted,
+              faultInjectionTime: anomaly.fault_injection_time,
+              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds
+            }))
+          };
+          this.$store.commit('mutatePhysicsDiagnosisData', physicsDiagnosisData);
+
+          // Convert telemetry data from backend
+          const telemetryGraphData = {
+            actual: diagnosisReport.physics_diagnosis_data.actual_telemetry,
+            simulated: {},
+            timeLabels: diagnosisReport.physics_diagnosis_data.time_labels,
+            telemetry_metadata: diagnosisReport.physics_diagnosis_data.telemetry_metadata || {
+              unit: '',
+              sensor_info: {},
+              target_sensor: ''
+            }
+          };
+
+          // Convert simulated data to the expected format
+          diagnosisReport.physics_diagnosis_data.component_anomalies.forEach((anomaly, index) => {
+            telemetryGraphData.simulated[anomaly.name] = {
+              data: anomaly.telemetry_data,
+              color: this.getAnomalyColor(index),
+              score: parseFloat(anomaly.score),
+              faultInjectionTime: anomaly.fault_injection_time,
+              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds
+            };
+          });
+          this.$store.commit('mutateTelemetryGraphData', telemetryGraphData);
+
+          // Initialize selection to all anomalies
+          this.selectedPhysicsAnomalies = physicsDiagnosisData.componentAnomalies.map(a => a.name);
+
+          // Add a simple tab with physics diagnosis content
+          this.simpleTabs.push({
+            label: `Physics: ${anomalyName}`,
+            type: "physics",
+            content: "Physics diagnosis result goes here.",
+            diagnosisData: diagnosisReport,
+            physicsDiagnosisData: this.$store.getters.getPhysicsDiagnosisData,
+            telemetryGraphData: this.$store.getters.getTelemetryGraphData,
+            sourceAnomaly: anomalyName // Track which anomaly triggered this physics diagnosis
+          });
+          this.activeSimpleTab = this.simpleTabs.length - 1;
+          
+          // Show success message
+          // this.$store.commit('addDialoguePiece', {
+          //   "voice_message": `Physics diagnosis for ${anomalyName} completed and displayed in a new tab.`,
+          //   "visual_message_type": ["text"],
+          //   "visual_message": [`Physics diagnosis for ${anomalyName} completed and displayed in a new tab.`],
+          //   "writer": "daphne"
+          // });
+          
+        } else {
+          throw new Error("No physics diagnosis data received from backend");
+        }
+        
+      } catch (error) {
+        console.error("Error during physics diagnosis for anomaly:", error);
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `Failed to run physics diagnosis for ${anomalyName}. Please try again.`,
+          "visual_message_type": ["text"],
+          "visual_message": [`Failed to run physics diagnosis for ${anomalyName}. Please try again.`],
+          "writer": "daphne"
+        });
+      } finally {
+        this.isLoading = false;
       }
     },
     onSelectedAnomaliesChange() {

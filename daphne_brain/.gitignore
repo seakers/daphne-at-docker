@@ -15,3 +15,5 @@ venv/
 venv_linux/
 experiment_at/results
 dialogue/models
+neo4j_data/*
+neo4j_logs/*
