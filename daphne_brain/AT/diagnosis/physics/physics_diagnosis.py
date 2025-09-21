@@ -835,10 +835,16 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
         
         print(f"[ANOMALY_TELEMETRY] ✅ Successfully started BioSim simulation with ID: {sim_id}")
         
-        # Wait a moment for simulation to run and generate data
-        print(f"[ANOMALY_TELEMETRY] ⏳ Waiting for simulation to generate data...")
-        import time
-        time.sleep(2)  # Give simulation time to run
+        # Wait for simulation to complete using status polling
+        print(f"[ANOMALY_TELEMETRY] ⏳ Waiting for simulation to complete...")
+        simulation_completed = biosim_client.wait_for_simulation_completion(
+            sim_id=sim_id,
+            max_wait_seconds=15,  # 15 seconds max wait
+            poll_interval=0.2      # Check every 200ms
+        )
+        
+        if not simulation_completed:
+            print(f"[ANOMALY_TELEMETRY] ⚠️ Simulation did not complete within timeout, proceeding with available data")
         
         # Now get the sensor data from this specific simulation
         print(f"[ANOMALY_TELEMETRY] 🔍 Retrieving data from simulation ID: {sim_id}")

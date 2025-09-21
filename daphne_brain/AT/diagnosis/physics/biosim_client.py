@@ -640,3 +640,93 @@ class BioSimClient:
             logger.warning(f"⚠️ BioSim Client: Could not import kpa_to_psi from biosim_utils")
             # Fallback conversion: 1 kPa ≈ 0.145038 PSI
             return kpa_value * 0.145038
+
+    def check_simulation_status(self, sim_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Check the current status of a simulation.
+        
+        Args:
+            sim_id: The simulation ID to check
+            
+        Returns:
+            Simulation status data if successful, None otherwise
+        """
+        try:
+            logger.info(f"🔍 BioSim Client: Checking status for simulation {sim_id}")
+            
+            api_url = f"{self.base_url}/api/simulation/{sim_id}"
+            logger.debug(f"🌐 BioSim Client: Making GET request to: {api_url}")
+            
+            response = self.session.get(api_url)
+            
+            if response.status_code == 200:
+                status_data = response.json()
+                simulation_ended = status_data.get('globals', {}).get('simulationEnded', False)
+                logger.info(f"✅ BioSim Client: Simulation {sim_id} status - ended: {simulation_ended}")
+                return status_data
+            else:
+                logger.warning(f"⚠️ BioSim Client: Failed to get simulation status - Status: {response.status_code}")
+                return None
+                
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"❌ BioSim Client: Connection error checking simulation {sim_id} status: {e}")
+            return None
+        except requests.exceptions.Timeout as e:
+            logger.error(f"❌ BioSim Client: Timeout checking simulation {sim_id} status: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"❌ BioSim Client: Error checking simulation {sim_id} status: {e}")
+            return None
+
+    def wait_for_simulation_completion(self, sim_id: int, max_wait_seconds: int = 300, poll_interval: float = 0.5) -> bool:
+        """
+        Wait for a simulation to complete by polling its status.
+        
+        Args:
+            sim_id: The simulation ID to wait for
+            max_wait_seconds: Maximum time to wait in seconds (default: 300)
+            poll_interval: How often to check status in seconds (default: 0.5)
+            
+        Returns:
+            True if simulation completed, False if timeout exceeded
+        """
+        import time
+        
+        logger.info(f"⏳ BioSim Client: Waiting for simulation {sim_id} to complete (max {max_wait_seconds}s)")
+        
+        start_time = time.time()
+        last_log_time = 0
+        
+        while True:
+            current_time = time.time()
+            elapsed_time = current_time - start_time
+            
+            # Check if we've exceeded the maximum wait time
+            if elapsed_time >= max_wait_seconds:
+                logger.warning(f"⏰ BioSim Client: Timeout waiting for simulation {sim_id} after {elapsed_time:.1f}s")
+                return False
+            
+            # Check simulation status
+            status_data = self.check_simulation_status(sim_id)
+            
+            if status_data is None:
+                # If we can't get status, wait a bit and retry
+                logger.debug(f"🔄 BioSim Client: Could not get status for simulation {sim_id}, retrying...")
+                time.sleep(poll_interval)
+                continue
+            
+            # Check if simulation has ended
+            simulation_ended = status_data.get('globals', {}).get('simulationEnded', False)
+            
+            if simulation_ended:
+                completion_time = current_time - start_time
+                logger.info(f"✅ BioSim Client: Simulation {sim_id} completed after {completion_time:.1f}s")
+                return True
+            
+            # Log progress every 5 seconds
+            if current_time - last_log_time >= 5.0:
+                logger.info(f"⏳ BioSim Client: Simulation {sim_id} still running... ({elapsed_time:.1f}s elapsed)")
+                last_log_time = current_time
+            
+            # Wait before next poll
+            time.sleep(poll_interval)
