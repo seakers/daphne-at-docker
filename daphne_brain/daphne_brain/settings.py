@@ -284,7 +284,7 @@ LOGGING = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-PHYSICS_SIMULATION_MODE = os.environ.get('PHYSICS_SIMULATION_MODE', 'local').lower()
+PHYSICS_SIMULATION_MODE = os.environ.get('PHYSICS_SIMULATION_MODE', 'biosim').lower()
 
 # BioSim Configuration
 BIOSIM_CONFIG = {
