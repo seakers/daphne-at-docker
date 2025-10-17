@@ -43,16 +43,17 @@ def noisy_MAX(split_probability_dict, parameter, anomalies):
                 # group_data = split_probability_dict.get(parameter, {}).get(anomaly, {}).get(is_true, {}).get(group, {})
 
 
-                print('---------------LOOKUP TRACE---------------')
-                print(f"Parameter: {parameter}")
-                print(f"Parent: {anomaly}")
-                print(f"Parent Type: {parent_type}")
-                print(f"Group Key: {group}")
-                print('------------------------')
+                # print('---------------LOOKUP TRACE---------------')
+                # print(f"Parameter: {parameter}")
+                # print(f"Parent: {anomaly}")
+                # print(f"Parent Type: {parent_type}")
+                # print(f"Group Key: {group}")
+                # print('------------------------')
+                visited = {}
 
                 # NEW CODE
                 anomaly_block = split_probability_dict.get(parameter, {}).get(anomaly, {})
-                print(f"anomaly block: {anomaly_block}")
+                # print(f"anomaly block: {anomaly_block}")
 
                 # Determine how to access the probabilities based on the type of parent being handled (binary or multivariate)
                 if parent_type in ['False', 'True']:
@@ -62,14 +63,46 @@ def noisy_MAX(split_probability_dict, parameter, anomalies):
                     anomaly_probs = prob_entry.get('probabilities', {})
                     # print(f'[BINARY] Probabilities: {anomaly_probs}')
                 else:
-                    # Multivariate parent
+                    # If currently looking at the probabilities where the anomaly group does not align with
+                    # the parameter group, skip the set of probabilities (leading to zero probabilities error)
+                    # print("groupppppp", group)
+                    if ("Exceeds_Upper" in parent_type and "low" in group) or ("Exceeds_Lower" in parent_type and "high" in group):
+                        # print(f"[SKIP] Excluding {anomaly} when computing {parameter})")
+                        continue
+
+                    if parent_type == "Nominal":
+                        if anomaly in visited:
+                            continue
+                        else:
+                            visited[anomaly] = 1
+
+
                     group_entry = anomaly_block.get(group, {})
+
+             
+                    # Multivariate parent
                     probabilities = group_entry.get('probabilities', {})
+                    # NEW CODE <-- 10/16/2025
+                    # Only access probabilities related to the current parameter group (i.e., high or low)
+                    
+                    # relevant_keys = [k for k in probabilities.keys() if (
+                    #     ('Upper' in k and 'high' in group) or
+                    #     ('Lower' in k and 'low' in group) or
+                    #     (k == 'Nominal')
+                    # )]
+
+                    # filtered_probs = {k: probabilities[k] for k in relevant_keys if k in probabilities}
                     anomaly_probs = probabilities.get(parent_type, {})
 
-                    print(f"[MULTIVARIATE] Group: {group}")
-                    print(f"[MULTIVARIATE] Probabilities keys (parent states): {list(probabilities.keys())}")
-                    print(f"[MULTIVARIATE] Probabilities: {anomaly_probs}")
+                    # if not anomaly_probs and filtered_probs:
+                    #     anomaly_probs = filtered_probs.get(parent_type, {})
+                    #     if not anomaly_probs:
+                    #         anomaly_probs = filtered_probs.get('Nominal, {}')
+
+
+                    # print(f"[MULTIVARIATE] Group: {group}")
+                    # print(f"[MULTIVARIATE] Probabilities keys (parent states): {list(probabilities.keys())}")
+                    # print(f"[MULTIVARIATE] Probabilities: {anomaly_probs}")
                 
 
                 # if not anomaly_probs:

@@ -1,9 +1,10 @@
 # add_cpds.py
 # Author: Joshua Elston
-# Last Edited: 06/10/2025
+# Last Edited: 10/16/2025
 
 # Adds the CPTs computed in noisy_MAX.py as Tabular CPDs to the Bayesian network --> called in the ECLSS_Baysian_Network.py script
 # CPTs for hidden evidence nodes also added here, which are only related to a single anomaly
+# Changes on 10/16/2025 seeking to verify that seperate level CPDs are correctly generated
 
 from AT.diagnosis.bayesian.noisy_MAX import noisy_MAX
 # from noisy_MAX import noisy_MAX
@@ -191,7 +192,10 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
         model.add_cpds(nap_cpd)
 
     # Verify expected parents
-    print("Expected parents:", model.get_parents(f'high 2-butanone (t-1)'))
+    print("Expected parents:", model.get_parents(f'ppCO2 (L1)'))
+    print(model.get_cpds("Biological Filter Saturation (L1)"))
+    print(model.get_cpds("Biological Filter Saturation (L2)"))
+    print(model.get_cpds("Biological Filter Saturation"))
 
     # Verify that the model is valid after adding the CPDs
     #   - Checks if sum of probabilities for each state is equal to 1 (tol = 0.01)
