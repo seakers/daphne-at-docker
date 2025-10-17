@@ -232,6 +232,7 @@ class BioSimClient:
             
             sensor_values = []
             sensor_units = []  # Track units for each value
+            sensor_name = sensor_name.split(' ')[0]  # Use only the sensor name part
             
             # BioSim log data structure: {'ticks': [{'modules': {sensor_name: {...}}}, ...]}
             if 'ticks' in log_data and isinstance(log_data['ticks'], list):
@@ -448,8 +449,16 @@ class BioSimClient:
             config_path = os.path.join(tempfile.gettempdir(), filename)
             
             # Generate configuration content using the template
-            config_content = generate_config(anomaly_name, duration_seconds)
+            # Get physics simulation mode from Django settings
+            try:
+                from django.conf import settings
+                physics_simulation_mode = getattr(settings, 'PHYSICS_SIMULATION_MODE', 'biosim')
+            except ImportError:
+                physics_simulation_mode = 'biosim'
             
+            config_content = generate_config(anomaly_name, duration_seconds)
+            print("config_content:", config_content)
+
             if not config_content:
                 logger.error(f"❌ BioSim Client: Could not generate configuration content for anomaly: '{anomaly_name}'")
                 return None

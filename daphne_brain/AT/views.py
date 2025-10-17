@@ -25,6 +25,7 @@ from daphne_context.models import UserInformation
 from AT.diagnosis.bayesian.ECLSS_Bayesian_Network import get_probabilities
 from AT.diagnosis.physics.physics_diagnosis import create_physics_diagnosis_report
 from AT.diagnosis.physics.telemetry_storage import telemetry_storage
+from django.conf import settings
 
 
 def is_biosim_connected():
@@ -34,8 +35,11 @@ def is_biosim_connected():
     Returns:
         bool: True if BioSim is connected, False otherwise
     """
-    from django.conf import settings
     return settings.PHYSICS_SIMULATION_MODE == 'biosim'
+
+def get_simulation_mode():
+    return settings.PHYSICS_SIMULATION_MODE
+    
 
 astrobee_status = 'NA'
 response = 'NA'
@@ -428,7 +432,8 @@ class RequestKGDiagnosis(APIView):
 
             # Query the neo4j graph (do not delete first line until second one is tested)
             # diagnosis_list = diagnose_symptoms_by_subset_of_anomaly(parsed_symptoms_list)
-            diagnosis_list = diagnose_symptoms_by_intersection_with_anomaly(symptoms_list)
+
+            diagnosis_list = diagnose_symptoms_by_intersection_with_anomaly(symptoms_list, get_simulation_mode())
 
             # Build the diagnosis report and send it to the frontend
             diagnosis_report = {'symptoms_list': symptoms_list, 'diagnosis_list': diagnosis_list}
@@ -536,12 +541,20 @@ class RequestPhysicsDiagnosis(APIView):
         # Retrieve the symptoms list from the request
         symptoms_list = json.loads(request.data['symptomsList'])
         
+        # Retrieve target anomaly if provided (from Bayesian diagnosis)
+        # target_anomaly = request.data.get('target_anomaly', None)
+        target_anomaly = 'CDRA Failure'
+        # if target_anomaly == 'No Anomalies Present':
+        #     target_anomaly = 'CDRA Failure'
+        #     print("No target anomaly provided, defaulting to 'CDRA Failure'")
         print("🔬 RequestPhysicsDiagnosis: Starting physics diagnosis")
         print(f"📋 RequestPhysicsDiagnosis: Symptoms list: {symptoms_list}")
+        if target_anomaly:
+            print(f"🎯 RequestPhysicsDiagnosis: Target anomaly from Bayesian: {target_anomaly}")
         
         # Define target telemetry sensor for physics diagnosis
         # target_telemetry_sensor = 'ppCO2_IHab (IHab)'
-        target_telemetry_sensor = 'ppCO2 (L1)'
+        target_telemetry_sensor = 'ppCO2_IHab (IHab)' if is_biosim_connected() else 'ppCO2 (L1)'
         print(f"🎯 RequestPhysicsDiagnosis: Target telemetry sensor: {target_telemetry_sensor}")
         
         # Optional simulation controls from frontend
@@ -557,8 +570,16 @@ class RequestPhysicsDiagnosis(APIView):
 
         # Generate physics-based diagnosis data using the dedicated module
         print(f"⚙️ RequestPhysicsDiagnosis: Calling create_physics_diagnosis_report (duration={sim_duration_seconds}s)")
+        if target_anomaly:
+            print(f"🎯 RequestPhysicsDiagnosis: Using target anomaly for focused simulation: {target_anomaly}")
         
-        diagnosis_report = create_physics_diagnosis_report(symptoms_list, target_telemetry_sensor, sim_duration_seconds, sampling_rate_seconds)
+        diagnosis_report = create_physics_diagnosis_report(
+            symptoms_list, 
+            target_telemetry_sensor, 
+            sim_duration_seconds, 
+            sampling_rate_seconds,
+            target_anomaly=target_anomaly
+        )
         
         print(f"✅ RequestPhysicsDiagnosis: Diagnosis report generated successfully")
         print(f"📊 Report keys: {list(diagnosis_report.keys())}")
@@ -615,7 +636,7 @@ class UpdateDiagnosisWithEvidence(APIView):
 class LoadAllAnomalies(APIView):
     def post(self, request):
         # Query the neo4j graph
-        anomaly_list = retrieve_all_anomalies()
+        anomaly_list = retrieve_all_anomalies(get_simulation_mode())
 
         return Response(anomaly_list)
 

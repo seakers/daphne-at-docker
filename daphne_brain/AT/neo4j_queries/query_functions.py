@@ -10,17 +10,142 @@ from urllib3.exceptions import InsecureRequestWarning
 import ssl
 
 
-def set_up_connection():
-    # setup neo4j database connection
-    driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
+def get_database_connection(physics_simulation_mode=None):
+    """
+    Get database driver and session based on physics_simulation_mode
+    Returns tuple of (driver, session)
+    """
+    if physics_simulation_mode == "biosim":
+        # Use Aura database for biosim mode
+        driver = GraphDatabase.driver(
+            "neo4j+s://4a24f5d6.databases.neo4j.io", 
+            auth=basic_auth("neo4j", "KijLrgvMWe-hpXCYyLxb2FAr58r3dCQdlrA2D70kzE8")
+        )
+    else:
+        # Use original database for other modes
+        driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
+    
     session = driver.session()
+    return driver, session
+
+
+def set_up_connection(physics_simulation_mode=None):
+    # setup neo4j database connection
+    driver, session = get_database_connection(physics_simulation_mode)
     return session
 
 
-def diagnose_symptoms_by_subset_of_anomaly(symptoms):
+def get_components_from_anomaly(anomaly_name: str, max_items: int = 5, physics_simulation_mode=None):
+    """
+    Get components related to a specific anomaly through subsystems.
+    
+    Query path: Anomaly.Title -[:SUBSYSTEM]-> Subsystem -[:CONTAINS]-> Component
+    
+    Args:
+        anomaly_name: Name/Title of the anomaly to search for
+        max_items: Maximum number of components to return
+        physics_simulation_mode: Simulation mode to determine database connection
+        
+    Returns:
+        List of component names
+    """
+    driver, session = get_database_connection(physics_simulation_mode)
+    
+    try:
+        print(f"[NEO4J] Querying components for anomaly: '{anomaly_name}'")
+        
+        # Query to find the anomaly and get all components from related subsystems
+        query = """
+        MATCH (anomaly:Anomaly {Title: $anomaly_name})-[:SUBSYSTEM]->(subsystem:Subsystem)-[:CONTAINS]->(component)
+        RETURN DISTINCT component.Title AS component_name, subsystem.Title AS subsystem_name
+        ORDER BY subsystem_name, component_name
+        LIMIT $max_items
+        """
+        
+        result = session.run(query, {
+            'anomaly_name': anomaly_name,
+            'max_items': max_items
+        })
+        
+        components = []
+        subsystems_found = set()
+        
+        for record in result:
+            component_name = record['component_name']
+            subsystem_name = record['subsystem_name']
+            
+            if component_name:
+                components.append(component_name)
+                subsystems_found.add(subsystem_name)
+        
+        print(f"[NEO4J] Found {len(components)} components for anomaly '{anomaly_name}': {components}")
+        print(f"[NEO4J] Related subsystems: {list(subsystems_found)}")
+        
+        return components
+        
+    except Exception as e:
+        print(f"[NEO4J] Error querying components for anomaly '{anomaly_name}': {e}")
+        return []
+        
+    finally:
+        session.close()
+        driver.close()
+
+
+def get_target_sensor_from_anomaly_subsystem(anomaly_name: str, physics_simulation_mode=None):
+    """
+    Get the primary sensor for an anomaly by finding its subsystems and their primary sensors.
+    
+    Args:
+        anomaly_name: Name/Title of the anomaly to search for
+        physics_simulation_mode: Simulation mode to determine database connection
+        
+    Returns:
+        Formatted sensor name like "ppCO2_IHab (IHab)" or None
+    """
+    driver, session = get_database_connection(physics_simulation_mode)
+    
+    try:
+        print(f"[NEO4J] Querying primary sensor for anomaly: '{anomaly_name}'")
+        
+        # Query to find the anomaly's subsystems and their primary sensors
+        query = """
+        MATCH (anomaly:Anomaly {Title: $anomaly_name})-[:SUBSYSTEM]->(subsystem:Subsystem)-[:PRIMARY_SENSOR]->(sensor:Measurement)
+        RETURN DISTINCT sensor.Name AS sensor_name, sensor.ParameterGroup AS parameter_group
+        LIMIT 1
+        """
+        
+        result = session.run(query, {'anomaly_name': anomaly_name})
+        
+        for record in result:
+            sensor_name = record['sensor_name']
+            parameter_group = record['parameter_group']
+            
+            if sensor_name:
+                # Format as "SensorName (ParameterGroup)"
+                if parameter_group:
+                    formatted_sensor = f"{sensor_name} ({parameter_group})"
+                else:
+                    formatted_sensor = f"{sensor_name} (IHab)"  # Default fallback
+                
+                print(f"[NEO4J] Found primary sensor for anomaly '{anomaly_name}': {formatted_sensor}")
+                return formatted_sensor
+        
+        print(f"[NEO4J] No primary sensor found for anomaly '{anomaly_name}'")
+        return None
+        
+    except Exception as e:
+        print(f"[NEO4J] Error querying primary sensor for anomaly '{anomaly_name}': {e}")
+        return None
+        
+    finally:
+        session.close()
+        driver.close()
+
+
+def diagnose_symptoms_by_subset_of_anomaly(symptoms, physics_simulation_mode=None):
     # Setup neo4j database connection
-    driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
-    session = driver.session()
+    driver, session = get_database_connection(physics_simulation_mode)
 
     # build the query based on the symptoms list
     query = ''
@@ -37,6 +162,11 @@ def diagnose_symptoms_by_subset_of_anomaly(symptoms):
     # query the database
     result = session.run(query)
     diagnosis = [node[0] for node in result]
+    
+    # Close connections
+    session.close()
+    driver.close()
+    
     return diagnosis
 
 
@@ -57,7 +187,7 @@ def convert_threshold_tag_to_neo4j_relationship(threshold_tag):
     return relationship
 
 
-def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
+def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list, physics_simulation_mode=None):
     parsed_symptoms_list = []
     for item in symptoms_list:
         threshold_tag = item['threshold_tag']
@@ -69,8 +199,7 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
 
     # Setup neo4j database connection
     print("Connecting to the neo4j database...")
-    driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
-    session = driver.session()
+    driver, session = get_database_connection(physics_simulation_mode)
     print("Connected to the neo4j database.") 
 
     # Build the query based on the symptoms list
@@ -109,7 +238,7 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
         # Retrieve symptoms of anomaly
         print("Retrieving symptoms of anomaly:")
         print(anomaly)
-        anomaly_symptoms = retrieve_symptoms_from_anomaly(anomaly)
+        anomaly_symptoms = retrieve_symptoms_from_anomaly(anomaly, physics_simulation_mode)
         print("Anomaly symptoms:")
         print(anomaly_symptoms)
         parsed_symptom_of_anomaly = []
@@ -146,11 +275,12 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
                 paired_key = (key1, key2)
                 temp_pair_dict[paired_key] = values
 
-    # print("TEMP_PAIR_DICT: ", temp_pair_dict)
+    print("TEMP_PAIR_DICT: ", temp_pair_dict)
+
 
     parsed_symptoms_of_each_anomaly.update(temp_pair_dict)
 
-    # print("parsed_symptom_of_each_anomaly", parsed_symptoms_of_each_anomaly)
+    print("parsed_symptom_of_each_anomaly", parsed_symptoms_of_each_anomaly)
 
     # adding pairs of anomalies to diagnosis as they don't exist in knowledge graph
     temp_diagnosis = []
@@ -165,14 +295,33 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
             temp_diagnosis.append(pair)
 
     diagnosis.extend(temp_diagnosis)
-    # print("DIAGNOSIS: ", diagnosis)
+    print("DIAGNOSIS: ", diagnosis)
 
     # Creating pairs of parsed anomalies-End
 
     
     def compare_parsed(anomaly_symptom, parsed_input_symptom):
         measurements_are_equal = (anomaly_symptom['measurement'] == parsed_input_symptom['measurement'])
+        
+        # Check for exact relationship match first
         relationships_are_equal = (anomaly_symptom['relationship'] == parsed_input_symptom['relationship'])
+        
+        # If not exact match, check for hierarchical relationship match
+        if not relationships_are_equal and measurements_are_equal:
+            # Check if the input symptom implies the anomaly symptom through hierarchy
+            # For example: if anomaly has "UpperCaution" and input has "UpperWarning", they should match
+            # because exceeding warning implies exceeding caution
+            
+            anomaly_rel = anomaly_symptom['relationship']
+            input_rel = parsed_input_symptom['relationship']
+            
+            # Upper threshold hierarchy: Warning > Caution
+            if (anomaly_rel == 'Exceeds_UpperCautionLimit' and input_rel == 'Exceeds_UpperWarningLimit'):
+                relationships_are_equal = True
+            # Lower threshold hierarchy: Warning < Caution (more severe when going lower)
+            elif (anomaly_rel == 'Exceeds_LowerCautionLimit' and input_rel == 'Exceeds_LowerWarningLimit'):
+                relationships_are_equal = True
+        
         if measurements_are_equal and relationships_are_equal:
             return True
         else:
@@ -234,10 +383,11 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
         score = round(g, 2)
         # Save it
         scored_diagnosis[anomaly] = score
+    print("SCORED DIAGNOSIS: ", scored_diagnosis)
 
     # Sort the result according to the scores
     ordered_diagnosis = {k: v for k, v in sorted(scored_diagnosis.items(), key=lambda item1: item1[1])}
-
+    print("ORDERED DIAGNOSIS: ", ordered_diagnosis)
     # Convert the dictionary to a list of its keys
     ordered_diagnosis = list(ordered_diagnosis.keys())
     ordered_diagnosis.reverse()
@@ -308,14 +458,14 @@ def diagnose_symptoms_by_intersection_with_anomaly(symptoms_list):
     # pair of anomaly changes end
     # Return result
     final_diagnosis = sorted_top_n_diagnosis
+    print("FINAL DIAGNOSIS: ", final_diagnosis)
 
     return final_diagnosis
 
 
-def retrieve_all_anomalies():
+def retrieve_all_anomalies(physics_simulation_mode=None):
     # Setup neo4j database connection
-    driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
-    session = driver.session()
+    driver, session = get_database_connection(physics_simulation_mode)
 
     # Build and send the query
     query = 'MATCH (n:Anomaly) RETURN DISTINCT n.Title'
@@ -326,13 +476,16 @@ def retrieve_all_anomalies():
     for item in result:
         anomaly_list.append(item[0])
 
+    # Close connections
+    session.close()
+    driver.close()
+
     return anomaly_list
 
 
-def retrieve_all_measurements():
+def retrieve_all_measurements(physics_simulation_mode=None):
     # Setup neo4j database connection
-    driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
-    session = driver.session()
+    driver, session = get_database_connection(physics_simulation_mode)
 
     # Build and send the query
     query = 'MATCH (m:Measurement) RETURN DISTINCT m.Name'
@@ -343,13 +496,16 @@ def retrieve_all_measurements():
     for item in result:
         measurement_list.append(item[0])
 
+    # Close connections
+    session.close()
+    driver.close()
+
     return measurement_list
 
 
-def retrieve_all_measurements_parameter_groups():
+def retrieve_all_measurements_parameter_groups(physics_simulation_mode=None):
     # Setup neo4j database connection
-    driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
-    session = driver.session()
+    driver, session = get_database_connection(physics_simulation_mode)
 
     # Build and send the query
     query = 'MATCH (m:Measurement) RETURN DISTINCT m.ParameterGroup'
@@ -360,6 +516,10 @@ def retrieve_all_measurements_parameter_groups():
     for item in result:
         if item[0] is not None and item[0] != '':
             measurement_list.append(item[0])
+
+    # Close connections
+    session.close()
+    driver.close()
 
     return measurement_list
 
@@ -525,12 +685,11 @@ def retrieve_affected_subsystems_from_anomaly(anomaly_name):
     return subsystems_list
 
 
-def retrieve_symptoms_from_anomaly(anomaly_name):
+def retrieve_symptoms_from_anomaly(anomaly_name, physics_simulation_mode=None):
     # Setup neo4j database connection
     
     print("Connecting to the neo4j database...")
-    driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
-    session = driver.session()
+    driver, session = get_database_connection(physics_simulation_mode)
     print("Connected to the neo4j database.")
 
     # Build and send the query to obtain the affected measurements that exceed the upper caution limit
@@ -622,10 +781,9 @@ def retrieve_symptoms_from_anomaly(anomaly_name):
     return symptoms_list
 
 
-def retrieve_thresholds_from_measurement(measurement_name):
+def retrieve_thresholds_from_measurement(measurement_name, physics_simulation_mode=None):
     # Setup neo4j database connection
-    driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
-    session = driver.session()
+    driver, session = get_database_connection(physics_simulation_mode)
 
     # Build and send the query
     query = "MATCH (m:Measurement) WHERE m.Name='" + measurement_name + \
@@ -649,13 +807,16 @@ def retrieve_thresholds_from_measurement(measurement_name):
         result_info = {'ParameterGroup': 'None', 'LowerWarningLimit': 'None', 'LowerCautionLimit': 'None',
                        'UpperCautionLimit': 'None', 'UpperWarningLimit': 'None'}
 
+    # Close connections
+    session.close()
+    driver.close()
+
     return result_info
 
 
-def retrieve_units_from_measurement(measurement_name):
+def retrieve_units_from_measurement(measurement_name, physics_simulation_mode=None):
     # Setup neo4j database connection
-    driver = GraphDatabase.driver("bolt://13.58.54.49:7687", auth=basic_auth("neo4j", "goSEAKers!"))
-    session = driver.session()
+    driver, session = get_database_connection(physics_simulation_mode)
 
     # Build and send the query
     query = "MATCH (m:Measurement) WHERE m.Name='" + measurement_name + \
@@ -668,6 +829,10 @@ def retrieve_units_from_measurement(measurement_name):
         parsed_result = item
 
     units = parsed_result[0]
+
+    # Close connections
+    session.close()
+    driver.close()
 
     return units
 
@@ -1230,6 +1395,7 @@ def get_astrobee_procedure_list_from_pride():
     if response.status_code == 200:
         response_data = json.loads(response.content)
         procedure_name = []
+        print("response_data", response_data)
         for item in response_data:
             if '_' in item.get('filename', ''):
                 procedure_name.append({
@@ -1252,3 +1418,157 @@ def get_astrobee_procedure_list_from_pride():
     #         procedure_name.append({'title': item['title'], 'staticProcedureID': item['staticProcedureID']})
     # print("procedure_name", procedure_name)
     # return procedure_name
+
+
+def get_subsystems_for_anomaly(anomaly_name: str, physics_simulation_mode=None):
+    """
+    Query Neo4j to get subsystems connected to a specific anomaly.
+    
+    Args:
+        anomaly_name: Name of the anomaly to query for
+        physics_simulation_mode: Simulation mode to determine database connection
+        
+    Returns:
+        List of subsystem names connected to the anomaly
+    """
+    driver, session = get_database_connection(physics_simulation_mode)
+    
+    try:
+        # Query to get subsystems connected to the anomaly
+        query = """
+        MATCH (anomaly:Anomaly)-[:SUBSYSTEM]->(subsystem)
+        WHERE anomaly.Title = $anomaly_name OR anomaly.Name = $anomaly_name
+        RETURN DISTINCT subsystem.Name AS subsystem_name, subsystem.Title AS subsystem_title
+        """
+        
+        result = session.run(query, anomaly_name=anomaly_name)
+        subsystems = []
+        
+        for record in result:
+            subsystem_name = record['subsystem_name'] or record['subsystem_title']
+            if subsystem_name:
+                subsystems.append(subsystem_name)
+        
+        return subsystems
+        
+    finally:
+        session.close()
+        driver.close()
+
+
+def get_components_for_subsystem(subsystem_name: str, physics_simulation_mode=None):
+    """
+    Query Neo4j to get components contained in a specific subsystem.
+    
+    Args:
+        subsystem_name: Name of the subsystem to query for
+        physics_simulation_mode: Simulation mode to determine database connection
+        
+    Returns:
+        List of component names contained in the subsystem
+    """
+    driver, session = get_database_connection(physics_simulation_mode)
+    
+    try:
+        # Query to get components for the subsystem
+        query = """
+        MATCH (subsystem)-[:CONTAINS]->(component)
+        WHERE subsystem.Name = $subsystem_name OR subsystem.Title = $subsystem_name
+        RETURN DISTINCT component.Name AS component_name, component.Title AS component_title
+        """
+        
+        result = session.run(query, subsystem_name=subsystem_name)
+        components = []
+        
+        for record in result:
+            component_name = record['component_name'] or record['component_title']
+            if component_name:
+                components.append(component_name)
+        
+        return components
+        
+    finally:
+        session.close()
+        driver.close()
+
+
+def get_primary_sensor(physics_simulation_mode=None):
+    """
+    Query Neo4j to get the primary/main sensor for physics diagnosis.
+    
+    Args:
+        physics_simulation_mode: Simulation mode to determine database connection
+        
+    Returns:
+        Primary sensor name
+    """
+    driver, session = get_database_connection(physics_simulation_mode)
+    
+    try:
+        # Query for the main sensor node
+        query = """
+        MATCH (sensor:Sensor)
+        WHERE sensor.Type = 'Primary' OR sensor.Name CONTAINS 'CO2' OR sensor.Name CONTAINS 'ppCO2'
+        RETURN sensor.Name AS sensor_name
+        LIMIT 1
+        """
+        
+        result = session.run(query)
+        
+        for record in result:
+            return record['sensor_name']
+            
+        return None
+        
+    finally:
+        session.close()
+        driver.close()
+
+
+def get_components_for_anomaly(anomaly_name: str, physics_simulation_mode=None):
+    """
+    Query Neo4j to get all components related to a specific anomaly through subsystems.
+    
+    Args:
+        anomaly_name: Name of the anomaly to query for
+        physics_simulation_mode: Simulation mode to determine database connection
+        
+    Returns:
+        Dictionary with subsystems and components
+    """
+    driver, session = get_database_connection(physics_simulation_mode)
+    
+    try:
+        # Query to get components for each subsystem connected to the anomaly
+        query = """
+        MATCH (anomaly:Anomaly)-[:SUBSYSTEM]->(subsystem)-[:CONTAINS]->(component)
+        WHERE anomaly.Title = $anomaly_name OR anomaly.Name = $anomaly_name
+        RETURN DISTINCT 
+            subsystem.Name AS subsystem_name, 
+            subsystem.Title AS subsystem_title,
+            component.Name AS component_name, 
+            component.Title AS component_title
+        """
+        
+        result = session.run(query, anomaly_name=anomaly_name)
+        
+        subsystems = set()
+        components = []
+        
+        for record in result:
+            subsystem_name = record['subsystem_name'] or record['subsystem_title']
+            component_name = record['component_name'] or record['component_title']
+            
+            if subsystem_name:
+                subsystems.add(subsystem_name)
+            if component_name:
+                components.append(component_name)
+        
+        return {
+            'subsystems': list(subsystems),
+            'components': components
+        }
+        
+    finally:
+        session.close()
+        driver.close()

@@ -2196,6 +2196,22 @@ export default {
         console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
         console.log("current diagnostic history", this.diagnosticHistory);
 
+        // Add a simple tab with updated Bayesian diagnosis content
+        const evidenceText = Object.keys(this.additionalEvidence).length > 0 
+          ? `Additional Evidence: ${Object.entries(this.additionalEvidence).map(([key, value]) => `${key}: ${this.formatEvidenceValue(value)}`).join(', ')}`
+          : '';
+        
+        this.simpleTabs.push({
+          label: "Bayesian Diagnosis (Updated)",
+          type: "bayesian",
+          content: `Updated Bayesian diagnosis with additional evidence. ${evidenceText}`,
+          diagnosisData: diagnosisReport, // Store the diagnosis data in the tab
+          checked: [], // Store the checked anomalies for this tab
+          allSelected: false, // Store the select all state for this tab
+          additionalEvidence: JSON.parse(JSON.stringify(this.additionalEvidence)) // Store evidence used
+        });
+        this.activeSimpleTab = this.simpleTabs.length - 1;
+
         setTimeout(() => {
           if (this.bestEvidence) {
             this.$store.commit('addDialoguePiece', {
@@ -2315,11 +2331,57 @@ export default {
     tickOrCross(anomaly, symptom) {
       let ticksOrCross = 'cross'
       for (let i = 0; i < anomaly.length; i++) {
-        if (anomaly[i] === symptom) {
+        if (this.symptomsMatch(anomaly[i], symptom)) {
           ticksOrCross = 'tick'
+          break;
         }
       }
       return ticksOrCross;
+    },
+
+    symptomsMatch(anomalySymptom, inputSymptom) {
+      // Exact match first
+      if (anomalySymptom === inputSymptom) {
+        return true;
+      }
+
+      // Extract measurement name and threshold type from both symptoms
+      const anomalyParts = this.parseSymptomString(anomalySymptom);
+      const inputParts = this.parseSymptomString(inputSymptom);
+
+      // If measurements don't match, return false
+      if (!anomalyParts || !inputParts || anomalyParts.measurement !== inputParts.measurement) {
+        return false;
+      }
+
+      // Check hierarchical relationships
+      // Upper threshold hierarchy: Warning > Caution
+      if (anomalyParts.threshold === 'Upper Caution Limit' && inputParts.threshold === 'Upper Warning Limit') {
+        return true;
+      }
+      // Lower threshold hierarchy: Warning < Caution (more severe when going lower)
+      if (anomalyParts.threshold === 'Lower Caution Limit' && inputParts.threshold === 'Lower Warning Limit') {
+        return true;
+      }
+
+      return false;
+    },
+
+    parseSymptomString(symptom) {
+      // Parse symptom string like "Humidity_IHab (IHab) Exceeds Upper Caution Limit"
+      // Returns {measurement: "Humidity_IHab (IHab)", threshold: "Upper Caution Limit"}
+      
+      const exceedsPattern = /^(.+?)\s+Exceeds\s+(.+)$/;
+      const match = symptom.match(exceedsPattern);
+      
+      if (match) {
+        return {
+          measurement: match[1].trim(),
+          threshold: match[2].trim()
+        };
+      }
+      
+      return null;
     },
 
     addSimpleTab(label, content) {
@@ -2385,8 +2447,11 @@ export default {
         // Update store with local physics simulation duration
         this.$store.commit('mutatePhysicsSimDurationSeconds', this.localPhysicsSimDuration);
         
-        // Request physics diagnosis from backend
-        await this.$store.dispatch('requestPhysicsDiagnosis', this.selectedSymptomsList);
+        // Request physics diagnosis from backend with specific anomaly
+        await this.$store.dispatch('requestPhysicsDiagnosis', {
+          selectedSymptomsList: this.selectedSymptomsList,
+          targetAnomaly: anomalyName
+        });
         
         // Get the diagnosis report from store
         const diagnosisReport = this.$store.getters.getDiagnosisReport;

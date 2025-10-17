@@ -1,4 +1,4 @@
-import {fetchPost} from "../../scripts/fetch-helpers";
+import { fetchPost } from "../../scripts/fetch-helpers";
 
 // Sound files
 import startAnomalySound from '../../sounds/woopwoop.mp3';
@@ -26,8 +26,8 @@ const state = {
     lastSelectedSymptomsList: [], // A list of the symptoms that appear in the  last requested diagnosis report
     diagnosisReport: [], // Contains the information related to a requested diagnosis.
     selectedLeftSymptoms: [],
-    selectedRightSymptoms:[],
-    
+    selectedRightSymptoms: [],
+
     // Physics diagnosis related variables
     physicsDiagnosisData: {
         mostProbableAnomaly: '',
@@ -67,57 +67,57 @@ const state = {
 
 const getters = {
     // A getter for each state variable
-    getHeraUser(state) {return state.heraUser},
-    getPlotData(state) {return state.telemetryPlotData},
-    getSelectedVariables(state) {return state.telemetryPlotSelectedVariables},
-    getInputVariables(state) {return state.telemetryInputVariables},
-    getTelemetryIsOngoing(state) {return state.telemetryIsOngoing},
-    getTelemetryValues(state) {return state.telemetryValues},
-    getTelemetryInfo(state) {return state.telemetryInfo},
-    getSymptomsList(state) {return state.symptomsList},
-    getSelectedSymptomsList(state) {return state.selectedSymptomsList},
-    getSelectedLeftSymptomsList(state) {return state.selectedLeftSymptoms},
-    getSelectedRightSymptomsList(state) {return state.selectedRightSymptoms},
-    getLastSelectedSymptomsList(state) {return state.lastSelectedSymptomsList},
-    getDiagnosisReport(state) {return state.diagnosisReport},
-    getSelectedAnomaliesList(state) {return state.selectedAnomaliesList},
-    getSelectedAnomaliesInfo(state) {return state.selectedAnomaliesInfo},
-    getAllAnomaliesList(state) {return state.allAnomaliesList},
-    getSelectedProceduresList(state) {return state.selectedProceduresList},
-    getSelectedProceduresInfo(state) {return state.selectedProceduresInfo},
-    getLoadingNewAnomaly(state) {return state.loadingNewAnomaly},
-    getPlayAlarms(state) {return state.playAlarms},
-    getIsChatVisible(state) {return state.isChatVisible},
-    getSymptomsTimestamp(state) { return state.symptoms_timestamp},
-    getLastUpdatedSymptomsTimestamp(state) {return state.lastUpdatedSymptomsTimestamp},
-    getLastUpdatedAnomaliesTimestamp(state) {return state.lastUpdatedAnomaliesTimestamp},
-    getLastUpdatedProceduresTimestamp(state) {return state.lastUpdatedProceduresTimestamp},
-    getLastUpdatedProceduresInfoTimestamp(state) {return state.lastUpdatedProceduresInfoTimestamp},
-    getLastUpdatedDiagnosisTimestamp(state) {return state.lastUpdatedDiagnosisTimestamp},
-    getAdditionalEvidence(state) {return state.additional_evidence},
-    getPhysicsDiagnosisData(state) {return state.physicsDiagnosisData},
-    getTelemetryGraphData(state) {return state.telemetryGraphData},
-    getPhysicsSimDurationSeconds(state) {return state.physicsSimDurationSeconds},
-    getPhysicsSamplingRateSeconds(state) {return state.physicsSamplingRateSeconds},
+    getHeraUser(state) { return state.heraUser },
+    getPlotData(state) { return state.telemetryPlotData },
+    getSelectedVariables(state) { return state.telemetryPlotSelectedVariables },
+    getInputVariables(state) { return state.telemetryInputVariables },
+    getTelemetryIsOngoing(state) { return state.telemetryIsOngoing },
+    getTelemetryValues(state) { return state.telemetryValues },
+    getTelemetryInfo(state) { return state.telemetryInfo },
+    getSymptomsList(state) { return state.symptomsList },
+    getSelectedSymptomsList(state) { return state.selectedSymptomsList },
+    getSelectedLeftSymptomsList(state) { return state.selectedLeftSymptoms },
+    getSelectedRightSymptomsList(state) { return state.selectedRightSymptoms },
+    getLastSelectedSymptomsList(state) { return state.lastSelectedSymptomsList },
+    getDiagnosisReport(state) { return state.diagnosisReport },
+    getSelectedAnomaliesList(state) { return state.selectedAnomaliesList },
+    getSelectedAnomaliesInfo(state) { return state.selectedAnomaliesInfo },
+    getAllAnomaliesList(state) { return state.allAnomaliesList },
+    getSelectedProceduresList(state) { return state.selectedProceduresList },
+    getSelectedProceduresInfo(state) { return state.selectedProceduresInfo },
+    getLoadingNewAnomaly(state) { return state.loadingNewAnomaly },
+    getPlayAlarms(state) { return state.playAlarms },
+    getIsChatVisible(state) { return state.isChatVisible },
+    getSymptomsTimestamp(state) { return state.symptoms_timestamp },
+    getLastUpdatedSymptomsTimestamp(state) { return state.lastUpdatedSymptomsTimestamp },
+    getLastUpdatedAnomaliesTimestamp(state) { return state.lastUpdatedAnomaliesTimestamp },
+    getLastUpdatedProceduresTimestamp(state) { return state.lastUpdatedProceduresTimestamp },
+    getLastUpdatedProceduresInfoTimestamp(state) { return state.lastUpdatedProceduresInfoTimestamp },
+    getLastUpdatedDiagnosisTimestamp(state) { return state.lastUpdatedDiagnosisTimestamp },
+    getAdditionalEvidence(state) { return state.additional_evidence },
+    getPhysicsDiagnosisData(state) { return state.physicsDiagnosisData },
+    getTelemetryGraphData(state) { return state.telemetryGraphData },
+    getPhysicsSimDurationSeconds(state) { return state.physicsSimDurationSeconds },
+    getPhysicsSamplingRateSeconds(state) { return state.physicsSamplingRateSeconds },
 };
 
 const actions = {
-    async updateTelemetryPlotData({state, commit}, telemetryData) {
+    async updateTelemetryPlotData({ state, commit }, telemetryData) {
         commit('mutateTelemetryPlotData', telemetryData)
     },
-    async updateTelemetryValuesAndInfo({state, commit}, telemetryDict) {
+    async updateTelemetryValuesAndInfo({ state, commit }, telemetryDict) {
         let telemetryValues = JSON.parse(telemetryDict['values']);
         let telemetryInfo = JSON.parse(telemetryDict['info']);
         commit('mutateTelemetryValues', telemetryValues);
         commit('mutateTelemetryInfo', telemetryInfo);
     },
-    async updateSelectedVariables({state, commit}, newVariables) {
+    async updateSelectedVariables({ state, commit }, newVariables) {
         commit('mutateTelemetryPlotSelectedVariables', newVariables);
     },
-    async updateSymptomsList({state, commit}, symptomsList) {
+    async updateSymptomsList({ state, commit }, symptomsList) {
         commit('mutateSymptomsList', symptomsList);
     },
-    async addSelectedSymptom({state, commit}, symptom) {
+    async addSelectedSymptom({ state, commit }, symptom) {
         let currentSelectedSymptoms = JSON.parse(JSON.stringify(state.selectedSymptomsList));
         let already_in_list = false;
         for (let index in currentSelectedSymptoms) {
@@ -138,11 +138,11 @@ const actions = {
                 minute: 'numeric',
                 second: 'numeric',
                 hour12: true    // Use 12-hour format with AM/PM
-              });
+            });
             commit('mutateLastUpdatedSymptomsTimestamp', formattedDate);
         }
     },
-    async removeSelectedSymptom({state, commit}, symptom) {
+    async removeSelectedSymptom({ state, commit }, symptom) {
         let currentSelectedSymptoms = JSON.parse(JSON.stringify(state.selectedSymptomsList));
         let stringifiedSymptom = JSON.stringify(symptom);
         let index = -1;
@@ -164,11 +164,11 @@ const actions = {
             minute: 'numeric',
             second: 'numeric',
             hour12: true    // Use 12-hour format with AM/PM
-          });
+        });
         commit('mutateLastUpdatedSymptomsTimestamp', formattedDate);
-      
+
     },
-    async clearSelectedSymptoms({state, commit}) {
+    async clearSelectedSymptoms({ state, commit }) {
         commit('mutateSelectedSymptomsList', []);
         const now = new Date();
         let formattedDate = now.toLocaleString('en-US', {
@@ -179,10 +179,10 @@ const actions = {
             minute: 'numeric',
             second: 'numeric',
             hour12: true    // Use 12-hour format with AM/PM
-          });
+        });
         commit('mutateLastUpdatedSymptomsTimestamp', formattedDate);
     },
-    async clearDiagnosisReport({state, commit}) {
+    async clearDiagnosisReport({ state, commit }) {
         commit('mutateDiagnosisReport', []);
         const now = new Date();
         let formattedDate = now.toLocaleString('en-US', {
@@ -193,12 +193,12 @@ const actions = {
             minute: 'numeric',
             second: 'numeric',
             hour12: true    // Use 12-hour format with AM/PM
-          });
+        });
         commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
     },
     async retrieveProceduresFromAnomaly(state, anomalyName) {
         let reqData = new FormData();
-        reqData.append('anomaly_name',  JSON.stringify(anomalyName));
+        reqData.append('anomaly_name', JSON.stringify(anomalyName));
         let response = await fetchPost('/api/at/retrieveProcedureFromAnomaly', reqData);
         if (response.ok) {
             let procedureName = await response.json();
@@ -210,7 +210,7 @@ const actions = {
     },
     async retrieveInfoFromProcedure(state, procedureName) {
         let reqData = new FormData();
-        reqData.append('procedure_name',  JSON.stringify(procedureName));
+        reqData.append('procedure_name', JSON.stringify(procedureName));
         let response = await fetchPost('/api/at/retrieveInfoFromProcedure', reqData);
         if (response.ok) {
             let info = await response.json();
@@ -220,7 +220,7 @@ const actions = {
             return ['ERROR']
         }
     },
-    async addSelectedAnomaly({state, commit}, anomalyName) {
+    async addSelectedAnomaly({ state, commit }, anomalyName) {
         // Update the loading bool
         commit('mutateLoadingNewAnomaly', true);
 
@@ -235,7 +235,7 @@ const actions = {
         let procedures = await Promise.resolve(this.dispatch('retrieveProceduresFromAnomaly', anomalyName));
         // Update the copy of the state variables.
         newSelectedAnomaliesList.push(anomalyName);
-        newSelectedAnomaliesInfo[anomalyName] = {'anomalyProcedures': procedures};
+        newSelectedAnomaliesInfo[anomalyName] = { 'anomalyProcedures': procedures };
 
         // For each procedure in the list, check if it is already selected (because it may be related to an other selected anomaly)
         for (let index in procedures) {
@@ -269,13 +269,13 @@ const actions = {
         const now = new Date();
         let formattedDate = now.toLocaleString('en-US', {
             year: 'numeric',
-            month: 'long', 
+            month: 'long',
             day: 'numeric',
             hour: 'numeric',
             minute: 'numeric',
             second: 'numeric',
-            hour12: true 
-          });
+            hour12: true
+        });
         commit('mutateLastUpdatedAnomaliesTimestamp', formattedDate);
         commit('mutateLastUpdatedProceduresTimestamp', formattedDate);
         commit('mutateLastUpdatedProceduresInfoTimestamp', formattedDate);
@@ -284,7 +284,7 @@ const actions = {
         // Update the loading bool
         commit('mutateLoadingNewAnomaly', false);
     },
-    removeProcedures({state, commit}, anomalyAndProcedure) {
+    removeProcedures({ state, commit }, anomalyAndProcedure) {
         let anomalyName = anomalyAndProcedure[0];
         let procedureName = anomalyAndProcedure[1];
         // A copy of each state variable to be modified is made. Modifications will be made upon such copy, and the
@@ -336,14 +336,14 @@ const actions = {
             minute: 'numeric',
             second: 'numeric',
             hour12: true    // Use 12-hour format with AM/PM
-          });
+        });
         commit('mutateLastUpdatedAnomaliesTimestamp', formattedDate);
         commit('mutateLastUpdatedProceduresTimestamp', formattedDate);
         commit('mutateLastUpdatedProceduresInfoTimestamp', formattedDate);
         console.log("mutateeeeeeeee111 updateeeeeeeeee", now, "55555555555555", formattedDate);
 
     },
-    removeSelectedAnomaly({state, commit}, anomalyName) {
+    removeSelectedAnomaly({ state, commit }, anomalyName) {
         // A copy of each state variable to be modified is made. Modifications will be made upon such copy, and the
         // changes will be committed at the end of the action.
         let newSelectedAnomaliesList = JSON.parse(JSON.stringify(state.selectedAnomaliesList));
@@ -416,12 +416,12 @@ const actions = {
             minute: 'numeric',
             second: 'numeric',
             hour12: true    // Use 12-hour format with AM/PM
-          });
+        });
         commit('mutateLastUpdatedAnomaliesTimestamp', formattedDate);
         commit('mutateLastUpdatedProceduresTimestamp', formattedDate);
         commit('mutateLastUpdatedProceduresInfoTimestamp', formattedDate);
     },
-    updateProcedureDict({state, commit}, newProcedureDict) {
+    updateProcedureDict({ state, commit }, newProcedureDict) {
         // A copy of the state variable to be modified is made
         let newSelectedProceduresInfo = JSON.parse(JSON.stringify(state.selectedProceduresInfo));
 
@@ -463,10 +463,10 @@ const actions = {
             minute: 'numeric',
             second: 'numeric',
             hour12: true    // Use 12-hour format with AM/PM
-          });
+        });
         commit('mutateLastUpdatedProceduresInfoTimestamp', formattedDate);
     },
-    async requestKGDiagnosis({state, commit}, selectedSymptomsList) {
+    async requestKGDiagnosis({ state, commit }, selectedSymptomsList) {
         // Clean the current diagnosis report
         commit('mutateDiagnosisReport', []);
 
@@ -479,13 +479,13 @@ const actions = {
             minute: 'numeric',
             second: 'numeric',
             hour12: true    // Use 12-hour format with AM/PM
-          });
+        });
 
-          console.log("formatttttttttttt", formattedDate)
+        console.log("formatttttttttttt", formattedDate)
         commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
 
         console.log("mutateeeeeeeee updateeeeeeeeee", now, "55555555555555");
-    
+
 
         // Update the last selected symptoms list
         let lastSelectedSymptomsList = JSON.parse(JSON.stringify(state.selectedSymptomsList));
@@ -510,7 +510,7 @@ const actions = {
 
         // Make the diagnosis request to the backend
         let reqData = new FormData();
-        reqData.append('symptomsList',  JSON.stringify(parsedSelectedSymptomsList));
+        reqData.append('symptomsList', JSON.stringify(parsedSelectedSymptomsList));
         let response = await fetchPost('/api/at/requestKGDiagnosis', reqData);
         if (response.ok) {
             let diagnosis_report = await response.json();
@@ -524,14 +524,14 @@ const actions = {
                 minute: 'numeric',
                 second: 'numeric',
                 hour12: true    // Use 12-hour format with AM/PM
-              });
-        commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
+            });
+            commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
         } else {
             console.log('Error requesting a diagnosis report.')
         }
     },
 
-    async requestPhysicsDiagnosis({state, commit}, selectedSymptomsList) {
+    async requestPhysicsDiagnosis({ state, commit }, payload) {
         // Clean the current diagnosis report
         commit('mutateDiagnosisReport', []);
 
@@ -549,14 +549,33 @@ const actions = {
         console.log("Physics Diagnosis - Requesting from backend");
         commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
 
+        // Handle both old format (array) and new format (object)
+        let selectedSymptomsList, targetAnomaly;
+        if (Array.isArray(payload)) {
+            // Old format: payload is directly the selectedSymptomsList
+            selectedSymptomsList = payload;
+            targetAnomaly = null;
+        } else {
+            // New format: payload is an object with selectedSymptomsList and targetAnomaly
+            selectedSymptomsList = payload.selectedSymptomsList;
+            targetAnomaly = payload.targetAnomaly;
+        }
+
         // Make the diagnosis request to the backend
         let reqData = new FormData();
         reqData.append('symptomsList', JSON.stringify(selectedSymptomsList));
         // Optional simulation controls
         reqData.append('sim_duration_seconds', String(state.physicsSimDurationSeconds));
         reqData.append('sampling_rate_seconds', String(state.physicsSamplingRateSeconds));
+
+        // Add target anomaly if provided
+        if (targetAnomaly) {
+            reqData.append('target_anomaly', targetAnomaly);
+            console.log("Physics Diagnosis - Target anomaly:", targetAnomaly);
+        }
+
         let response = await fetchPost('/api/at/requestPhysicsDiagnosis', reqData);
-        
+
         if (response.ok) {
             let diagnosis_report = await response.json();
             console.log("Physics Diagnosis - Received from backend:", diagnosis_report);
@@ -566,7 +585,7 @@ const actions = {
             console.log('Error requesting physics diagnosis report.')
         }
     },
-    async requestDiagnosis({state, commit}, selectedSymptomsList) {
+    async requestDiagnosis({ state, commit }, selectedSymptomsList) {
         // Clean the current diagnosis report
         commit('mutateDiagnosisReport', []);
 
@@ -579,13 +598,13 @@ const actions = {
             minute: 'numeric',
             second: 'numeric',
             hour12: true    // Use 12-hour format with AM/PM
-          });
+        });
 
-          console.log("formatttttttttttt", formattedDate)
+        console.log("formatttttttttttt", formattedDate)
         commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
 
         console.log("mutateeeeeeeee updateeeeeeeeee", now, "55555555555555");
-    
+
 
         // Update the last selected symptoms list
         let lastSelectedSymptomsList = JSON.parse(JSON.stringify(state.selectedSymptomsList));
@@ -612,18 +631,18 @@ const actions = {
             parsedSelectedSymptomsList[index]['display_name'] = displayName;
         }
 
-       
+
 
         // Make the diagnosis request to the backend
         let reqData = new FormData();
         let telemetryValuesDict = Object.fromEntries(
             Object.entries(telemetryValues).map(([key, value]) => [key, { ...value }])
         );
-        
+
         let parsedTelemetryValues = {};
         let parsedTelemetryValuest1 = {};
 
-        for (let i in telemetryValuesDict) { 
+        for (let i in telemetryValuesDict) {
             let value = telemetryValuesDict[i];
             let valueDict = telemetryValuesDict[i];
             const reversedArray = Object.entries(valueDict)
@@ -632,16 +651,16 @@ const actions = {
 
             console.log("telemetry reversed array", reversedArray)
 
-                // Convert the array back into an object
+            // Convert the array back into an object
             console.log("telemetry reversed array i", reversedArray[0])
             parsedTelemetryValues[i] = reversedArray[0][1];
-            if (reversedArray.length > 30){
+            if (reversedArray.length > 30) {
                 parsedTelemetryValuest1[i] = reversedArray[29][1];
                 console.log("telemetry reversed dict value", reversedArray[29][1])
             }
-            else{
-                parsedTelemetryValuest1[i] = reversedArray[reversedArray.length-1][1];
-                console.log("telemetry reversed dict value", reversedArray[reversedArray.length-1][1])
+            else {
+                parsedTelemetryValuest1[i] = reversedArray[reversedArray.length - 1][1];
+                console.log("telemetry reversed dict value", reversedArray[reversedArray.length - 1][1])
             }
             // console.log("telemetry reversed dict value", reversedValueDict)
             // for (let j in value) {
@@ -654,13 +673,13 @@ const actions = {
             // console.log("telemetry dict value", value)
         }
 
-        console.log("parsed telemetry values", parsedTelemetryValues); 
+        console.log("parsed telemetry values", parsedTelemetryValues);
         console.log("parsed telemetry values t1", parsedTelemetryValuest1);
 
 
         // for (let key in telemetryValues) {
         //     const plainObj = JSON.parse(JSON.stringify(telemetryValues[key]));
-    
+
         //     // Find the first numeric value in the object (excluding __ob__ property)
         //     let firstValueIndex = null;
         //     for (let i = 0; i < Object.keys(plainObj).length; i++) {
@@ -669,7 +688,7 @@ const actions = {
         //             break;
         //         }
         //     }
-            
+
         //     // Use the found index, or undefined if none found
         //     parsedTelemetryValues[key] = firstValueIndex !== null ? plainObj[firstValueIndex] : undefined;
         //     console.log("telemetry value each", parsedTelemetryValues[key]);
@@ -677,9 +696,9 @@ const actions = {
 
         console.log("parsedTelemetryValues", parsedTelemetryValues)
         console.log("telemetry values", telemetryValues)
-        reqData.append('symptomsList',  JSON.stringify(parsedSelectedSymptomsList));
-        reqData.append('telemetryValues',  JSON.stringify(parsedTelemetryValues));
-        reqData.append('telemetryValuest1',  JSON.stringify(parsedTelemetryValuest1));
+        reqData.append('symptomsList', JSON.stringify(parsedSelectedSymptomsList));
+        reqData.append('telemetryValues', JSON.stringify(parsedTelemetryValues));
+        reqData.append('telemetryValuest1', JSON.stringify(parsedTelemetryValuest1));
         let response = await fetchPost('/api/at/requestDiagnosis', reqData);
         if (response.ok) {
             let diagnosis_report = await response.json();
@@ -695,15 +714,15 @@ const actions = {
                 minute: 'numeric',
                 second: 'numeric',
                 hour12: true    // Use 12-hour format with AM/PM
-              });
-        commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
+            });
+            commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
         } else {
             console.log('Error requesting a diagnosis report.')
             return [];
         }
     },
 
-    async requestDiagnosisWithEvidence({state, commit}, requestPayload) {
+    async requestDiagnosisWithEvidence({ state, commit }, requestPayload) {
         // Clean the current diagnosis report
         commit('mutateDiagnosisReport', []);
 
@@ -716,9 +735,9 @@ const actions = {
             minute: 'numeric',
             second: 'numeric',
             hour12: true    // Use 12-hour format with AM/PM
-          });
+        });
 
-          console.log("formatttttttttttt", formattedDate)
+        console.log("formatttttttttttt", formattedDate)
         commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
 
         console.log("mutateeeeeeeee updateeeeeeeeee", now, "55555555555555");
@@ -748,19 +767,19 @@ const actions = {
             parsedSelectedSymptomsList[index]['display_name'] = displayName;
         }
 
-       
+
 
         // Make the diagnosis request to the backend
         let reqData = new FormData();
         let telemetryValuesDict = Object.fromEntries(
             Object.entries(telemetryValues).map(([key, value]) => [key, { ...value }])
         );
-        
+
         let parsedTelemetryValues = {};
         let parsedTelemetryValuest1 = {};
 
 
-        for (let i in telemetryValuesDict) { 
+        for (let i in telemetryValuesDict) {
             let value = telemetryValuesDict[i];
             let valueDict = telemetryValuesDict[i];
             const reversedArray = Object.entries(valueDict)
@@ -770,24 +789,24 @@ const actions = {
             console.log("telemetry reversed array", reversedArray)
 
             parsedTelemetryValues[i] = reversedArray[0][1];
-            if (reversedArray.length > 30){
+            if (reversedArray.length > 30) {
                 parsedTelemetryValuest1[i] = reversedArray[29][1];
                 console.log("telemetry reversed dict value", reversedArray[29][1])
             }
-            else{
-                parsedTelemetryValuest1[i] = reversedArray[reversedArray.length-1][1];
-                console.log("telemetry reversed dict value", reversedArray[reversedArray.length-1][1])
-            }        
+            else {
+                parsedTelemetryValuest1[i] = reversedArray[reversedArray.length - 1][1];
+                console.log("telemetry reversed dict value", reversedArray[reversedArray.length - 1][1])
+            }
         }
 
-        console.log("parsed telemetry values", parsedTelemetryValues); 
+        console.log("parsed telemetry values", parsedTelemetryValues);
 
         console.log("parsedTelemetryValues", parsedTelemetryValues)
         console.log("telemetry values", telemetryValues)
-        reqData.append('symptomsList',  JSON.stringify(parsedSelectedSymptomsList));
-        reqData.append('telemetryValues',  JSON.stringify(parsedTelemetryValues));
-        reqData.append('telemetryValuest1',  JSON.stringify(parsedTelemetryValuest1));
-        reqData.append('additionalEvidence',  JSON.stringify(requestPayload['additional_evidence']));
+        reqData.append('symptomsList', JSON.stringify(parsedSelectedSymptomsList));
+        reqData.append('telemetryValues', JSON.stringify(parsedTelemetryValues));
+        reqData.append('telemetryValuest1', JSON.stringify(parsedTelemetryValuest1));
+        reqData.append('additionalEvidence', JSON.stringify(requestPayload['additional_evidence']));
         commit('mutateAdditionalEvidence', requestPayload['additional_evidence']);
         let response = await fetchPost('/api/at/requestDiagnosis', reqData);
         if (response.ok) {
@@ -804,14 +823,14 @@ const actions = {
                 minute: 'numeric',
                 second: 'numeric',
                 hour12: true    // Use 12-hour format with AM/PM
-              });
-        commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
+            });
+            commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
         } else {
             console.log('Error requesting a diagnosis report.')
             return [];
         }
     },
-    async loadAllAnomalies({state, commit}) {
+    async loadAllAnomalies({ state, commit }) {
         let reqData = new FormData();
         let response = await fetchPost('/api/at/loadAllAnomalies', reqData);
         if (response.ok) {
@@ -825,7 +844,7 @@ const actions = {
         let reqData = new FormData();
         await fetchPost(API_URL + 'at/completeTutorial', reqData);
     },
-    async recoverSymptomsList({state, commit}) {
+    async recoverSymptomsList({ state, commit }) {
         let lastSymptomsList = state.lastSelectedSymptomsList;
         commit('mutateSelectedSymptomsList', lastSymptomsList);
         const now = new Date();
@@ -837,7 +856,7 @@ const actions = {
             minute: 'numeric',
             second: 'numeric',
             hour12: true    // Use 12-hour format with AM/PM
-          });
+        });
         commit('mutateLastUpdatedSymptomsTimestamp', formattedDate);
     },
     async triggerAlarm(state, alarm) {
@@ -853,47 +872,47 @@ const actions = {
 };
 
 const mutations = {
-    mutateLoginStatus(state, newVal) {state.isLoggedIn = newVal},
-    mutateHeraUser(state, newVal) {state.heraUser = newVal; },
-    mutateTelemetryIsOngoing(state, telemetryIsOngoing) {state.telemetryIsOngoing = telemetryIsOngoing; },
-    mutateTelemetryType(state, telemetryType) {state.telemetryType = telemetryType; },
-    mutateTelemetryPlotData(state, newVal) {state.telemetryPlotData = newVal; },
-    mutateTelemetryValues(state, newVal) {state.telemetryValues = newVal; },
-    mutateTelemetryInfo(state, newVal) {state.telemetryInfo = newVal; },
-    mutateTelemetryInputVariables(state, newVal) {state.telemetryInputVariables = newVal; },
-    mutateTelemetryPlotSelectedVariables(state, newVal) {state.telemetryPlotSelectedVariables = newVal; },
-    mutateSymptomsList(state, newVal) {state.symptomsList = newVal; },
-    mutateSelectedSymptomsList(state, newVal) {state.selectedSymptomsList = newVal; },
-    mutateSelectedLeftSymptomsList(state, newVal) {state.selectedLeftSymptoms = newVal; },
-    mutateSelectedRightSymptomsList(state, newVal) {state.selectedRightSymptoms = newVal; },
-    mutateLastSelectedSymptomsList(state, newVal) {state.lastSelectedSymptomsList = newVal; },
-    mutateDiagnosisReport(state, newVal) {state.diagnosisReport = newVal; },
-    mutateAllAnomaliesList(state, newVal) {state.allAnomaliesList = newVal; },
-    mutateSelectedAnomaliesList(state, newVal) {state.selectedAnomaliesList = newVal; },
-    mutateSelectedAnomaliesInfo(state, newVal) {state.selectedAnomaliesInfo = newVal; },
-    mutateSelectedProceduresList(state, newVal) {state.selectedProceduresList = newVal; },
-    mutateSelectedProceduresInfo(state, newVal) {state.selectedProceduresInfo = newVal; },
-    mutateLoadingNewAnomaly(state, newVal) {state.loadingNewAnomaly = newVal; },
-    setIsTelemetryInitialized(state, isTelemetryInitialized) {state.isTelemetryInitialized = isTelemetryInitialized; },
-    mutatePlayAlarms(state) {state.playAlarms = !state.playAlarms; },
-    setTelemetryType(state, telemetryType) {state.telemetryType = telemetryType; },
-    mutateIsChatVisible(state) {state.isChatVisible = !state.isChatVisible},
+    mutateLoginStatus(state, newVal) { state.isLoggedIn = newVal },
+    mutateHeraUser(state, newVal) { state.heraUser = newVal; },
+    mutateTelemetryIsOngoing(state, telemetryIsOngoing) { state.telemetryIsOngoing = telemetryIsOngoing; },
+    mutateTelemetryType(state, telemetryType) { state.telemetryType = telemetryType; },
+    mutateTelemetryPlotData(state, newVal) { state.telemetryPlotData = newVal; },
+    mutateTelemetryValues(state, newVal) { state.telemetryValues = newVal; },
+    mutateTelemetryInfo(state, newVal) { state.telemetryInfo = newVal; },
+    mutateTelemetryInputVariables(state, newVal) { state.telemetryInputVariables = newVal; },
+    mutateTelemetryPlotSelectedVariables(state, newVal) { state.telemetryPlotSelectedVariables = newVal; },
+    mutateSymptomsList(state, newVal) { state.symptomsList = newVal; },
+    mutateSelectedSymptomsList(state, newVal) { state.selectedSymptomsList = newVal; },
+    mutateSelectedLeftSymptomsList(state, newVal) { state.selectedLeftSymptoms = newVal; },
+    mutateSelectedRightSymptomsList(state, newVal) { state.selectedRightSymptoms = newVal; },
+    mutateLastSelectedSymptomsList(state, newVal) { state.lastSelectedSymptomsList = newVal; },
+    mutateDiagnosisReport(state, newVal) { state.diagnosisReport = newVal; },
+    mutateAllAnomaliesList(state, newVal) { state.allAnomaliesList = newVal; },
+    mutateSelectedAnomaliesList(state, newVal) { state.selectedAnomaliesList = newVal; },
+    mutateSelectedAnomaliesInfo(state, newVal) { state.selectedAnomaliesInfo = newVal; },
+    mutateSelectedProceduresList(state, newVal) { state.selectedProceduresList = newVal; },
+    mutateSelectedProceduresInfo(state, newVal) { state.selectedProceduresInfo = newVal; },
+    mutateLoadingNewAnomaly(state, newVal) { state.loadingNewAnomaly = newVal; },
+    setIsTelemetryInitialized(state, isTelemetryInitialized) { state.isTelemetryInitialized = isTelemetryInitialized; },
+    mutatePlayAlarms(state) { state.playAlarms = !state.playAlarms; },
+    setTelemetryType(state, telemetryType) { state.telemetryType = telemetryType; },
+    mutateIsChatVisible(state) { state.isChatVisible = !state.isChatVisible },
     restoreDaphneAT(state, recoveredState) {
         Object.keys(recoveredState).forEach((key) => {
             state[key] = recoveredState[key];
         });
     },
     mutateSymptomsTimestamp(state, newVal) { state.symptoms_timestamp = newVal },
-    mutateLastUpdatedSymptomsTimestamp(state, newVal) { state.lastUpdatedSymptomsTimestamp = newVal},
-    mutateLastUpdatedAnomaliesTimestamp(state, newVal) { state.lastUpdatedAnomaliesTimestamp = newVal},
-    mutateLastUpdatedProceduresTimestamp(state, newVal) { state.lastUpdatedProceduresTimestamp = newVal},
-    mutateLastUpdatedProceduresInfoTimestamp(state, newVal) { state.lastUpdatedProceduresInfoTimestamp = newVal},
-    mutateLastUpdatedDiagnosisTimestamp(state, newVal) { state.lastUpdatedDiagnosisTimestamp = newVal},
-    mutateAdditionalEvidence(state, newVal) { state.additional_evidence = newVal},
-    mutatePhysicsDiagnosisData(state, newVal) { state.physicsDiagnosisData = newVal},
-    mutateTelemetryGraphData(state, newVal) { state.telemetryGraphData = newVal},
-    mutatePhysicsSimDurationSeconds(state, newVal) { state.physicsSimDurationSeconds = newVal},
-    mutatePhysicsSamplingRateSeconds(state, newVal) { state.physicsSamplingRateSeconds = newVal},
+    mutateLastUpdatedSymptomsTimestamp(state, newVal) { state.lastUpdatedSymptomsTimestamp = newVal },
+    mutateLastUpdatedAnomaliesTimestamp(state, newVal) { state.lastUpdatedAnomaliesTimestamp = newVal },
+    mutateLastUpdatedProceduresTimestamp(state, newVal) { state.lastUpdatedProceduresTimestamp = newVal },
+    mutateLastUpdatedProceduresInfoTimestamp(state, newVal) { state.lastUpdatedProceduresInfoTimestamp = newVal },
+    mutateLastUpdatedDiagnosisTimestamp(state, newVal) { state.lastUpdatedDiagnosisTimestamp = newVal },
+    mutateAdditionalEvidence(state, newVal) { state.additional_evidence = newVal },
+    mutatePhysicsDiagnosisData(state, newVal) { state.physicsDiagnosisData = newVal },
+    mutateTelemetryGraphData(state, newVal) { state.telemetryGraphData = newVal },
+    mutatePhysicsSimDurationSeconds(state, newVal) { state.physicsSimDurationSeconds = newVal },
+    mutatePhysicsSamplingRateSeconds(state, newVal) { state.physicsSamplingRateSeconds = newVal },
 };
 
 export default {

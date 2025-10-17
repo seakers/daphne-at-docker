@@ -23,7 +23,6 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 					desiredFlowRates="0.3" maxFlowRates="0.3"></airConsumer>
 				<dirtyWaterProducer desiredFlowRates="10000"
 					outputs="Dirty_Water_Store" maxFlowRates="10000" />
-				<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="40"/>
 			</Dehumidifier>
 		</environment>
 		<air>
@@ -39,7 +38,6 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 					outputs="IHab" maxFlowRates="10000" />
 				<CO2Producer desiredFlowRates="10000" outputs="CO2_Store"
 					maxFlowRates="10000"></CO2Producer>
-                {vccr_malfunction}
 			</VCCR>
 			<OGS moduleName="OGS">
 				<powerConsumer inputs="General_Power_Store"
@@ -225,37 +223,49 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 
 # Malfunction templates for different anomaly types
 MALFUNCTION_TEMPLATES = {
-    'CO₂ Scrubber Valve Leak': {
-        'description': 'VCCR CO2 scrubber valve malfunction causing CO2 buildup',
-        'vccr_malfunction': '<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
-        'affected_systems': ['VCCR', 'CO2_Store', 'ppCO2_IHab']
-    },
     'CO2 Scrubber Valve Leak': {
         'description': 'VCCR CO2 scrubber valve malfunction causing CO2 buildup',
-        'vccr_malfunction': '<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'component': 'VCCR',
+        'malfunction_xml': '<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
         'affected_systems': ['VCCR', 'CO2_Store', 'ppCO2_IHab']
     },
     'Fan Bearing Wear': {
         'description': 'VCCR fan bearing degradation affecting air circulation',
-        'vccr_malfunction': '<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'component': 'VCCR',
+        'malfunction_xml': '<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
         'affected_systems': ['VCCR', 'air circulation', 'ppCO2_IHab']
     },
     'Absorption Bed Saturated': {
         'description': 'VCCR absorption bed saturation reducing CO2 removal efficiency',
-        'vccr_malfunction': '<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'component': 'VCCR',
+        'malfunction_xml': '<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
         'affected_systems': ['VCCR', 'CO2_Store', 'ppCO2_IHab']
     },
     'Heater Coil Failure': {
         'description': 'VCCR heater coil malfunction affecting temperature control',
-        'vccr_malfunction': '<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'component': 'VCCR',
+        'malfunction_xml': '<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
         'affected_systems': ['VCCR', 'temperature control', 'ppCO2_IHab']
+    },
+    "VCCR": {
+        'description': 'VCCR system malfunction',
+        'component': 'VCCR',
+        'malfunction_xml': '<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'affected_systems': ['VCCR']
+    },
+    "Dehumidifier": {
+        'description': 'Dehumidifier system malfunction',
+        'component': 'Dehumidifier',
+        'malfunction_xml': '<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'affected_systems': ['Dehumidifier']
     }
 }
 
 # Default malfunction template for unknown anomalies
 DEFAULT_MALFUNCTION = {
     'description': 'Generic VCCR malfunction',
-    'vccr_malfunction': '<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
+    'component': 'VCCR',
+    'malfunction_xml': '<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
     'affected_systems': ['VCCR', 'general systems']
 }
 
@@ -270,7 +280,9 @@ def get_malfunction_config(anomaly_name: str) -> dict:
         Dictionary containing malfunction configuration
     """
     # Try exact match first
+    print(f"[PHYS_DIAG] Looking up malfunction config for anomaly: '{anomaly_name}'")
     if anomaly_name in MALFUNCTION_TEMPLATES:
+        print(f"[PHYS_DIAG] Found exact match for anomaly: '{anomaly_name}'")
         return MALFUNCTION_TEMPLATES[anomaly_name]
     
     # Try partial matches
@@ -280,6 +292,45 @@ def get_malfunction_config(anomaly_name: str) -> dict:
     
     # Return default if no match found
     return DEFAULT_MALFUNCTION
+
+def inject_malfunction_into_component(template: str, component_name: str, malfunction_xml: str) -> str:
+    """
+    Inject malfunction XML into the specified component in the BioSim template.
+    
+    Args:
+        template: Base BioSim XML template
+        component_name: Name of the component to add malfunction to (e.g., 'VCCR', 'Dehumidifier')
+        malfunction_xml: Malfunction XML string to inject
+        
+    Returns:
+        Modified template with malfunction injected
+    """
+    import re
+    
+    print(f"[BIOSIM_TEMPLATE] Injecting malfunction into component: {component_name}")
+    
+    # Generic pattern to find any component by name and inject malfunction before its closing tag
+    pattern = rf'(<{component_name}[^>]*>.*?)(></{component_name}>|</{component_name}>)'
+    replacement = r'\1\n\t\t\t\t' + malfunction_xml + r'\n\t\t\t\2'
+    
+    # Apply the replacement
+    modified_template = re.sub(pattern, replacement, template, flags=re.DOTALL)
+    
+    # Check if injection was successful
+    if malfunction_xml in modified_template:
+        print(f"[BIOSIM_TEMPLATE] Successfully injected malfunction into {component_name}")
+    else:
+        print(f"[BIOSIM_TEMPLATE] WARNING: Failed to inject malfunction into {component_name}")
+        
+        # Debug: Show what component sections were found
+        debug_pattern = rf'<{component_name}[^>]*>.*?</{component_name}>'
+        debug_match = re.search(debug_pattern, template, flags=re.DOTALL)
+        if debug_match:
+            print(f"[BIOSIM_TEMPLATE] Found {component_name} section: {debug_match.group()[:200]}...")
+        else:
+            print(f"[BIOSIM_TEMPLATE] No {component_name} section found in template")
+    
+    return modified_template
 
 def generate_config(anomaly_name: str, duration_seconds: int) -> str:
     """
@@ -292,19 +343,16 @@ def generate_config(anomaly_name: str, duration_seconds: int) -> str:
     Returns:
         Complete XML configuration string
     """
+    config_content = BASE_BIOSIM_TEMPLATE.format(max_ticks=int(duration_seconds))
     # Get malfunction configuration
     malfunction_config = get_malfunction_config(anomaly_name)
     
-    # Calculate max ticks based on duration
-    # BioSim runs at 0.1 hour intervals, so duration_seconds / 3600 * 10 = ticks
-    # But now we use the same duration as the CDRA simulation
-    print(f"[PHYS_DIAG] Duration seconds: {duration_seconds}")
-    max_ticks = int(duration_seconds)
-    
-    # Format the configuration
-    config_content = BASE_BIOSIM_TEMPLATE.format(
-        max_ticks=max_ticks,
-        vccr_malfunction=malfunction_config['vccr_malfunction']
+    # Inject the malfunction into the appropriate component
+    config_content = inject_malfunction_into_component(
+        template=config_content,
+        component_name=malfunction_config['component'],
+        malfunction_xml=malfunction_config['malfunction_xml']
     )
     
+    print(f"[BIOSIM_TEMPLATE] Generated config with malfunction in {malfunction_config['component']}")
     return config_content

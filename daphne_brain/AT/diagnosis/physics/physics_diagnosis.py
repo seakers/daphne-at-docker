@@ -57,11 +57,19 @@ SUPPLEMENTATION_ANOMALY = 'Heater Coil Failure'
 
 
 
-def get_cdra_component_anomalies_from_neo4j(max_items: int = 5) -> List[str]:
-    """Return a curated CDRA anomaly list.
-
-    Note: Neo4j is intentionally disabled for now. When ready,
-    uncomment the pseudo-code below to enable live queries.
+def get_cdra_component_anomalies_from_neo4j(anomaly_name: str = None, max_items: int = 5) -> List[str]:
+    """
+    Get CDRA component anomalies from Neo4j knowledge graph.
+    
+    If anomaly_name is provided, queries for subsystems and components related to that specific anomaly.
+    Otherwise, returns a curated list of common CDRA anomalies.
+    
+    Args:
+        anomaly_name: Specific anomaly name to query for (optional)
+        max_items: Maximum number of items to return
+        
+    Returns:
+        List of anomaly/component names
     """
     fallback = [
         'CO₂ Scrubber Valve Leak',
@@ -71,18 +79,69 @@ def get_cdra_component_anomalies_from_neo4j(max_items: int = 5) -> List[str]:
         # ,
         # 'Pressure Sensor Drift'
     ]
-
-    # Pseudo-code for future Neo4j integration (disabled):
-    # if neo4j_q is not None:
-    #     try:
-    #         all_anoms = neo4j_q.retrieve_all_anomalies()
-    #         keywords = ['co2', 'valve', 'fan', 'sorbent', 'bed', 'heater', 'pressure', 'scrubber']
-    #         filtered = [a for a in all_anoms if any(k in a.lower() for k in keywords)]
-    #         return (filtered or fallback)[:max_items]
-    #     except Exception:
-    #         pass
+    
+    # If a specific anomaly is provided, get its components from Neo4j
+    if anomaly_name and neo4j_q is not None:
+        try:
+            print(f"[PHYS_DIAG] Querying Neo4j for anomaly: '{anomaly_name}'")
+            
+            # Get the physics simulation mode
+            physics_simulation_mode = _get_physics_simulation_config()
+            
+            # Use the new Neo4j query function to get components from anomaly
+            components = neo4j_q.get_components_from_anomaly(
+                anomaly_name=anomaly_name, 
+                max_items=max_items,
+                physics_simulation_mode=physics_simulation_mode
+            )
+            
+            if components:
+                print(f"[PHYS_DIAG] Found {len(components)} components from Neo4j for '{anomaly_name}': {components}")
+                return components
+            else:
+                print(f"[PHYS_DIAG] No components found for anomaly '{anomaly_name}' in Neo4j")
+                
+        except Exception as e:
+            print(f"[PHYS_DIAG] Error querying Neo4j for anomaly '{anomaly_name}': {e}")
 
     return fallback[:max_items]
+
+def get_target_sensor_for_anomaly(anomaly_name: str = None) -> str:
+    """
+    Get the target sensor for physics diagnosis based on the anomaly.
+    
+    Args:
+        anomaly_name: Specific anomaly name to get sensor for
+        
+    Returns:
+        Formatted sensor name or default fallback
+    """
+    default_sensor = 'ppCO2 (L1)'
+
+    if anomaly_name and neo4j_q is not None:
+        try:
+            print(f"[PHYS_DIAG] Getting target sensor for anomaly: '{anomaly_name}'")
+            
+            # Get the physics simulation mode
+            physics_simulation_mode = _get_physics_simulation_config()
+            if physics_simulation_mode == 'biosim':
+                # Query Neo4j for the primary sensor of this anomaly's subsystems
+                sensor = neo4j_q.get_target_sensor_from_anomaly_subsystem(
+                    anomaly_name=anomaly_name,
+                    physics_simulation_mode=physics_simulation_mode
+                )
+            
+            if sensor:
+                print(f"[PHYS_DIAG] Found target sensor from Neo4j for '{anomaly_name}': {sensor}")
+                return sensor
+            else:
+                print(f"[PHYS_DIAG] No target sensor found for anomaly '{anomaly_name}', using default")
+                
+        except Exception as e:
+            print(f"[PHYS_DIAG] Error getting target sensor for anomaly '{anomaly_name}': {e}")
+    
+    print(f"[PHYS_DIAG] Using default target sensor: {default_sensor}")
+    return default_sensor,
 
 
 def _generate_simulation_time_labels(sim_duration_seconds: int, target_points: int, simulation_speed_factor: int) -> List[str]:
@@ -228,6 +287,7 @@ def generate_physics_diagnosis_data(
     target_telemetry_sensor: str,
     sim_duration_seconds: int,
     sampling_rate_seconds: int,
+    target_anomaly: str = None,
 ) -> Dict[str, Any]:
     """
     Generate physics-based diagnosis data based on symptoms.
@@ -240,12 +300,17 @@ def generate_physics_diagnosis_data(
     Args:
         symptoms_list: List of symptoms from the frontend
         target_telemetry_sensor: Target telemetry sensor to analyze (default: 'ppCO2')
+        sim_duration_seconds: Duration of simulation in seconds
+        sampling_rate_seconds: Sampling rate in seconds
+        target_anomaly: Specific anomaly to focus simulation on (from Bayesian diagnosis)
         
     Returns:
         Dictionary containing physics diagnosis data with anomalies, telemetry, and time labels
     """
+
     # simulation speed assumption:
-    simulation_speed_factor = 50
+
+    simulation_speed_factor = 360
     # Get real telemetry data from storage for the target sensor
     telemetry_data = get_actual_telemetry_from_storage(target_telemetry_sensor, int(sim_duration_seconds // simulation_speed_factor))
     actual_telemetry = telemetry_data['values']
@@ -274,12 +339,9 @@ def generate_physics_diagnosis_data(
     
     # Generate physics-based diagnosis data
     # This simulates the physics-based analysis that would be done by the backend
-    # Choose anomalies (from Neo4j if available)
-    cdra_anoms = get_cdra_component_anomalies_from_neo4j(max_items=5)
+    cdra_anoms = get_cdra_component_anomalies_from_neo4j(target_anomaly, max_items=5)
     print(f"[PHYS_DIAG] Using {len(cdra_anoms)} anomalies; effective_len={effective_len}")
     print(f"[PHYS_DIAG] Anomaly names: {cdra_anoms}")
-    if _get_physics_simulation_config() == 'biosim':
-        target_telemetry_sensor="ppCO2_IHab"
     
     # First pass: collect all simulation data to establish unified baseline
     all_simulations = []
@@ -287,9 +349,8 @@ def generate_physics_diagnosis_data(
         sim_vals = generate_anomaly_telemetry(
             name,
             score=0.9,  # severity seed; real severity is captured by similarity metric below
-            # target_sensor='ppCO2_IHab (IHab)',
             target_sensor=target_telemetry_sensor,
-            duration_seconds=int(sim_duration_seconds),
+            duration_seconds=int(sim_duration_seconds/simulation_speed_factor),
             target_len_override=effective_len,
         )['values']
         all_simulations.append(sim_vals)
@@ -888,7 +949,7 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
                 print(f"[ANOMALY_TELEMETRY] 🔧 Resampled BioSim data from {original_length} to {len(sensor_data)} points")
             
             # Clean up temporary configuration file
-            biosim_client.cleanup_temp_config(config_file_path)
+            # biosim_client.cleanup_temp_config(config_file_path)
             
             return {
                 'values': sensor_data,
@@ -952,6 +1013,7 @@ def create_physics_diagnosis_report(
     target_telemetry_sensor: str,
     sim_duration_seconds: int,
     sampling_rate_seconds: int,
+    target_anomaly: str = None,
 ) -> Dict[str, Any]:
     """
     Create a complete physics diagnosis report.
@@ -959,11 +1021,21 @@ def create_physics_diagnosis_report(
     Args:
         symptoms_list: List of symptoms from the frontend
         target_telemetry_sensor: Target telemetry sensor to analyze (default: 'ppCO2')
+        sim_duration_seconds: Duration of simulation in seconds
+        sampling_rate_seconds: Sampling rate for simulation
+        target_anomaly: Specific anomaly to focus simulation on (from Bayesian diagnosis)
         
     Returns:
         Complete diagnosis report with physics data
     """
-    physics_diagnosis_data = generate_physics_diagnosis_data(symptoms_list, target_telemetry_sensor, sim_duration_seconds, sampling_rate_seconds)
+    target_telemetry_sensor = get_target_sensor_for_anomaly(target_anomaly)
+    physics_diagnosis_data = generate_physics_diagnosis_data(
+        symptoms_list, 
+        target_telemetry_sensor, 
+        sim_duration_seconds, 
+        sampling_rate_seconds,
+        target_anomaly=target_anomaly
+    )
     
     # Build the diagnosis report and send it to the frontend
     diagnosis_report = {
