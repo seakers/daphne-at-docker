@@ -41,14 +41,22 @@
             </div>
             <!-- Physics Simulation Duration Input -->
             <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
-              <label style="color: #0AFEFF; font-size: 12px; white-space: nowrap;">Sim Duration (s):</label>
+              <label style="color: #0AFEFF; font-size: 12px; white-space: nowrap;">Sim Duration:</label>
               <input 
                 type="number" 
-                v-model="localPhysicsSimDuration" 
+                v-model="durationValue" 
                 min="1" 
                 max="10000"
                 style="width: 80px; padding: 4px 8px; background: #002E2E; border: 1px solid #0AFEFF; color: #0AFEFF; border-radius: 4px; font-size: 12px;"
               >
+              <select 
+                v-model="durationUnit" 
+                @change="updatePhysicsSimDuration"
+                style="padding: 4px 8px; background: #002E2E; border: 1px solid #0AFEFF; color: #0AFEFF; border-radius: 4px; font-size: 12px; min-width: 75px;">
+                <option value="seconds">sec</option>
+                <option value="minutes">min</option>
+                <option value="hours">hrs</option>
+              </select>
             </div>
           </div>
         </div>
@@ -226,7 +234,7 @@
                 <div style="text-align: center;">
                   <button class="button theme-buttons"
                           style="border-color: #0AFEFF; color: #0AFEFF; background: #002E2E; padding: 8px 16px; font-size: 14px;"
-                          v-on:click.prevent="runPhysicsDiagnosisForAnomaly(simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'][0].anomaly)">
+                          v-on:click.prevent="runPhysicsDiagnosisForAnomaly(simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'][0].anomaly, simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'][0].probability)">
                     Run Physics Diagnosis
                   </button>
                 </div>
@@ -240,14 +248,16 @@
                         style="background: transparent; color: white;">
                     <thead>
                       <tr style="background: #002E2E;">
-                        <th style="color: #0AFEFF; width: 60%;">Anomaly</th>
-                        <th style="color: #0AFEFF; width: 40%;">Probability</th>
+                        <th style="color: #0AFEFF; width: 40%;">Anomaly</th>
+                        <th style="color: #0AFEFF; width: 35%;">Probability</th>
+                        <th style="color: #0AFEFF; width: 25%; text-align: center;">Physics Diagnosis</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-for="item in simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list']" 
                           style="background: rgba(0,46,46,0.7);">
                         <td style="padding: 8px; vertical-align: middle;">{{ item.anomaly }}</td>
+                        
                         <td style="padding: 8px;">
                           <div class="progress" 
                               style="background: #001e1e; height: 24px; width: 100%; border-radius: 4px; overflow: hidden; position: relative;">
@@ -260,6 +270,13 @@
                               {{ (item.probability * 100).toFixed(4) }}%
                             </div>
                           </div>
+                        </td>
+                        <td style="padding: 8px; text-align: center; vertical-align: middle;">
+                          <button class="button theme-buttons"
+                                  style="border-color: #0AFEFF; color: #0AFEFF; background: #002E2E; padding: 8px 16px; font-size: 14px;"
+                                  v-on:click.prevent="runPhysicsDiagnosisForAnomaly(item.anomaly, item.probability)">
+                            Run Physics Diagnosis
+                          </button>
                         </td>
                       </tr>
                     </tbody>
@@ -278,7 +295,7 @@
               <div style="background: #001e1e; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                 <p style="color: #ccc; margin-bottom: 15px;">
                   <strong>Status:</strong> 
-                  <span style="color: #4CAF50;">✅ Completed Successfully</span>
+                  <span style="color: #4CAF50;">Completed Successfully</span>
                 </p>
                 <p style="color: #ccc; margin-bottom: 15px;">
                   <strong>Method:</strong> 
@@ -310,7 +327,7 @@
                 <span style="font-weight:bold; color:white; margin-left:10px;">{{ simpleTabs[activeSimpleTab].physicsDiagnosisData ? simpleTabs[activeSimpleTab].physicsDiagnosisData.mostProbableAnomaly : 'N/A' }}</span>
               </div>
               <div style="margin-left:auto; color:#0AFEFF;">
-                Probability: <span style="font-weight:bold; color:white;">{{ simpleTabs[activeSimpleTab].physicsDiagnosisData ? simpleTabs[activeSimpleTab].physicsDiagnosisData.probability : 'N/A' }}</span>
+                Probability: <span style="font-weight:bold; color:white;">{{ simpleTabs[activeSimpleTab].bayesianProbability || (simpleTabs[activeSimpleTab].physicsDiagnosisData ? simpleTabs[activeSimpleTab].physicsDiagnosisData.probability : 'N/A') }}</span>
               </div>
             </div>
             <!-- Content Section -->
@@ -797,7 +814,7 @@
 <script>
 
 import {mapGetters} from 'vuex';
-import { fetchPost } from '../scripts/fetch-helpers';
+import { fetchPost, fetchGet } from '../scripts/fetch-helpers';
 import SymptomSelectionDialog from './SymptomSelectionDialog.vue';
 import VuePlotly from '@statnett/vue-plotly';
 
@@ -825,6 +842,8 @@ export default {
       instructionIdentifier: null,
       lastInstructionProcessed: false,
       userResponseListener: null,
+      currentInstruction: null,
+      manualInstructionListener: false,
       showSymptomDialog: false,
       symptomsToConfirm: [],
       currentSymptomIndex: -1,
@@ -849,7 +868,9 @@ export default {
       showPhysicsExplanation: false,
       physicsDiagnosisError: null,
       selectedPhysicsAnomalies: [],
-      localPhysicsSimDuration: 3000, // Local copy of physics simulation duration
+      localPhysicsSimDuration: 3000, // Local copy of physics simulation duration (in seconds)
+      durationValue: 30, // The numeric value for duration
+      durationUnit: 'hours', // The unit: 'seconds', 'minutes', or 'hours'
 
     }
   },
@@ -1416,33 +1437,56 @@ export default {
             const instructionData = data["instruction_data"];
             const oldStatus = this.astrobeeStatus;
             this.astrobeeStatus = instructionData.text || "No status available";
+            
             console.log("Current instruction id:", this.instructionIdentifier, instructionData.instructionIdentifier, this.lastInstructionProcessed);
-            if (instructionData.userResponseType && 
-                instructionData.userResponseType.length > 0 && 
-                instructionData.userResponseType[0] === "real" &&
-                (this.instructionIdentifier != instructionData.instructionIdentifier || 
-                !this.lastInstructionProcessed)) {
-
-                  if (this.instructionIdentifier != instructionData.instructionIdentifier){
-                    this.$store.commit('addDialoguePiece', {
-                      "voice_message": `${instructionData.text} Please provide a numerical value.`,
-                      "visual_message_type": ["text"],
-                      "visual_message": [`${instructionData.text} Please provide a numerical value.`],
-                      "writer": "daphne"
-                    });
-                  }
-              
-              // Update tracking variables to prevent duplicate prompts
+            console.log("Instruction type:", instructionData.instructionType);
+            
+            // Check if this is a new instruction
+            const isNewInstruction = this.instructionIdentifier != instructionData.instructionIdentifier;
+            const needsProcessing = isNewInstruction || !this.lastInstructionProcessed;
+            
+            if (needsProcessing) {
+              // Update tracking variables
               this.instructionIdentifier = instructionData.instructionIdentifier;
               console.log("Current instruction identifier is set:", this.instructionIdentifier, instructionData.instructionIdentifier);
               this.lastInstructionProcessed = false;
               
-              // Send question to chat
-              
-              
-              // Set up listener for next user response (if not already set)
-              if (!this.userResponseListener) {
-                this.setupUserResponseListener();
+              // Handle different instruction types based on actual JSON structure
+              if (instructionData.instructionType === "manualInstruction") {
+                // Handle manual instructions
+                if (isNewInstruction) {
+                  this.handleManualInstruction(instructionData);
+                }
+              } else if (instructionData.instructionType === "record") {
+                // Handle record instructions  
+                if (isNewInstruction) {
+                  this.handleRecordInstruction(instructionData);
+                  
+                  // Set up listener for user response
+                  if (!this.userResponseListener) {
+                    this.setupUserResponseListener();
+                  }
+                }
+              } else if (instructionData.userResponseType && 
+                        instructionData.userResponseType.length > 0 && 
+                        instructionData.userResponseType[0] === "real") {
+                // Legacy handling for "real" userResponseType
+                if (isNewInstruction) {
+                  this.$store.commit('addDialoguePiece', {
+                    "voice_message": `${instructionData.text} Please provide a numerical value.`,
+                    "visual_message_type": ["text"],
+                    "visual_message": [`${instructionData.text} Please provide a numerical value.`],
+                    "writer": "daphne"
+                  });
+                  
+                  // Set up listener for user response
+                  if (!this.userResponseListener) {
+                    this.setupUserResponseListener();
+                  }
+                }
+              } else {
+                // Unknown instruction type - log for debugging
+                console.log("Unknown instruction type or format:", instructionData);
               }
             }
           }
@@ -1450,6 +1494,30 @@ export default {
       } catch (error) {
         console.error('Error getting Astrobee status:', error);
       }
+    },
+
+    updatePhysicsSimDuration() {
+      // Convert the duration value to seconds based on the selected unit
+      let durationInSeconds;
+      
+      switch (this.durationUnit) {
+        case 'seconds':
+          durationInSeconds = this.durationValue;
+          break;
+        case 'minutes':
+          durationInSeconds = this.durationValue * 60;
+          break;
+        case 'hours':
+          durationInSeconds = this.durationValue * 3600;
+          break;
+        default:
+          durationInSeconds = this.durationValue; // fallback to seconds
+      }
+      
+      // Update the local physics simulation duration
+      this.localPhysicsSimDuration = durationInSeconds;
+      
+      console.log(`Physics simulation duration updated: ${this.durationValue} ${this.durationUnit} = ${durationInSeconds} seconds`);
     },
     
     setupUserResponseListener() {
@@ -1459,9 +1527,11 @@ export default {
           const newMessage = mutation.payload;
           
           // Process only if we're waiting for a response and this is a user message
+          // BUT exclude manual instruction completion responses ("Completed")
           if (!this.lastInstructionProcessed && 
               this.instructionIdentifier !== null &&
-              newMessage.writer === 'user') {
+              newMessage.writer === 'user' &&
+              newMessage.visual_message[0] !== 'Completed') {
             
             this.processUserResponse(newMessage.visual_message[0]);
           }
@@ -1469,6 +1539,7 @@ export default {
       });
     },
 
+    /*
     async processUserResponse(message) {
       try {
         // Try to parse the user's message as a number
@@ -1517,6 +1588,7 @@ export default {
         console.error('Error processing user response:', error);
       }
     },
+    */
 
     getProbabilityColor(probability) {
       // Return color based on probability value
@@ -1526,6 +1598,200 @@ export default {
         return '#ffcc00'; // yellow for medium probabilities
       } else {
         return '#ff3300'; // red for high probabilities
+      }
+    },
+
+    // New instruction handling methods for PRIDE API integration
+    handleManualInstruction(instructionData) {
+      console.log("Handling manual instruction:", instructionData);
+      
+      // Store the current instruction
+      this.currentInstruction = instructionData;
+      
+      // Show manual instruction prompt to user via chat with completion button
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": `${instructionData.text}. Please click the completed button after finishing.`,
+        "visual_message_type": ["text"],
+        "visual_message": [`${instructionData.text}. Please click the completed button after finishing.`],
+        "writer": "daphne",
+        "options": ["Completed"],
+        "optionsCallbackEvent": "manualInstructionCompleted"
+      });
+      
+      // Set up listener for completion button click
+      if (!this.manualInstructionListener) {
+        this.$root.$on('manualInstructionCompleted', this.handleManualInstructionCompletion);
+        this.manualInstructionListener = true;
+      }
+    },
+
+    handleRecordInstruction(instructionData) {
+      console.log("Handling record instruction:", instructionData);
+      
+      // Store the current instruction
+      this.currentInstruction = instructionData;
+      
+      // For record instructions, always expect numerical input
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": `${instructionData.text}. Please provide a numerical value.`,
+        "visual_message_type": ["text"],
+        "visual_message": [`${instructionData.text}. Please provide a numerical value.`],
+        "writer": "daphne"
+      });
+    },
+
+    async completeManualInstruction() {
+      try {
+        console.log("Completing manual instruction");
+        
+        const reqData = new FormData();
+        reqData.append('instruction_data', JSON.stringify(this.currentInstruction));
+        reqData.append('activity', 'complete');
+        
+        const response = await fetchPost('/api/at/complete_instruction', reqData);
+        
+        if (response.ok) {
+          console.log("Manual instruction completed successfully");
+          
+          // Mark as processed
+          this.lastInstructionProcessed = true;
+          
+          // Show confirmation to user
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "Instruction completed successfully.",
+            "visual_message_type": ["text"],
+            "visual_message": ["Instruction completed successfully."],
+            "writer": "daphne"
+          });
+        } else {
+          console.error("Failed to complete manual instruction");
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "Failed to complete instruction. Please try again.",
+            "visual_message_type": ["text"],
+            "visual_message": ["Failed to complete instruction. Please try again."],
+            "writer": "daphne"
+          });
+        }
+      } catch (error) {
+        console.error('Error completing manual instruction:', error);
+      }
+    },
+
+    handleManualInstructionCompletion(response) {
+      if (response === "Completed") {
+        // User clicked the "Completed" button
+        this.completeManualInstruction();
+        
+        // Clean up event listener
+        this.$root.$off('manualInstructionCompleted', this.handleManualInstructionCompletion);
+        this.manualInstructionListener = false;
+      }
+    },
+
+    async processUserResponse(message) {
+      try {
+        // Check if we have a record instruction waiting for user input
+        if (this.currentInstruction && 
+            this.currentInstruction.instructionType === "record" && 
+            !this.lastInstructionProcessed) {
+          
+          // For record instructions, always expect numerical input
+          const numValue = parseFloat(message);
+          if (!isNaN(numValue)) {
+            const userValue = numValue;
+            
+            console.log("Processing user response for record instruction:", userValue);
+            
+            // Mark as processed to avoid duplicate handling
+            this.lastInstructionProcessed = true;
+            
+            // Send completion with record value
+            const reqData = new FormData();
+            reqData.append('instruction_data', JSON.stringify(this.currentInstruction));
+            reqData.append('activity', 'complete');
+            reqData.append('record_value', userValue.toString());
+            
+            const response = await fetchPost('/api/at/complete_instruction', reqData);
+            
+            if (response.ok) {
+              console.log("Record instruction completed successfully");
+              
+              // Confirm receipt to user
+              this.$store.commit('addDialoguePiece', {
+                "voice_message": `Thank you, I've recorded your value: ${userValue}.`,
+                "visual_message_type": ["text"],
+                "visual_message": [`Thank you, I've recorded your value: ${userValue}.`],
+                "writer": "daphne"
+              });
+            } else {
+              console.error("Failed to complete record instruction");
+              this.$store.commit('addDialoguePiece', {
+                "voice_message": "Failed to record your response. Please try again.",
+                "visual_message_type": ["text"],
+                "visual_message": ["Failed to record your response. Please try again."],
+                "writer": "daphne"
+              });
+            }
+          } else {
+            // Not a valid number
+            this.$store.commit('addDialoguePiece', {
+              "voice_message": "I need a numerical value. Please try again.",
+              "visual_message_type": ["text"],
+              "visual_message": ["I need a numerical value. Please try again."],
+              "writer": "daphne"
+            });
+            // Keep instruction as unprocessed so we'll try again
+            this.lastInstructionProcessed = false;
+          }
+          
+          return;
+        }
+
+        // Original logic for legacy "real" userResponseType handling
+        // Try to parse the user's message as a number
+        const userValue = parseFloat(message);
+        
+        if (!isNaN(userValue)) {
+          // Valid number response
+          console.log("Processing user response:", userValue);
+          
+          // Mark as processed to avoid duplicate handling
+          this.lastInstructionProcessed = true;
+          
+          // Prepare and send user response to backend
+          const reqData = new FormData();
+          reqData.append('user_response', userValue.toString());
+          reqData.append('instruction_id', this.instructionIdentifier);
+          
+          const response = await fetchPost('/api/at/user_response', reqData);
+          
+          if (response.ok) {
+            console.log("User response sent successfully");
+            
+            // Confirm receipt to user
+            this.$store.commit('addDialoguePiece', {
+              "voice_message": `Thank you, I've recorded your value of ${userValue}.`,
+              "visual_message_type": ["text"],
+              "visual_message": [`Thank you, I've recorded your value of ${userValue}.`],
+              "writer": "daphne"
+            });
+          } else {
+            console.error("Failed to send user response");
+          }
+        } else {
+          // Not a valid number
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "I need a numerical value. Please try again.",
+            "visual_message_type": ["text"],
+            "visual_message": ["I need a numerical value. Please try again."],
+            "writer": "daphne"
+          });
+          
+          // Keep the instruction as unprocessed so we'll try again
+          this.lastInstructionProcessed = false;
+        }
+      } catch (error) {
+        console.error('Error processing user response:', error);
       }
     },
   
@@ -2432,9 +2698,13 @@ export default {
       }
     },
     
-    async runPhysicsDiagnosisForAnomaly(anomalyName) {
+    async runPhysicsDiagnosisForAnomaly(anomalyName, bayesianProbability = null) {
       try {
         this.isLoading = true;
+        
+        // Format the Bayesian probability if provided
+        const formattedBayesianProbability = bayesianProbability ? 
+          `${(bayesianProbability * 100).toFixed(2)}%` : null;
         
         // Show loading message
         // this.$store.commit('addDialoguePiece', {
@@ -2506,7 +2776,8 @@ export default {
             diagnosisData: diagnosisReport,
             physicsDiagnosisData: this.$store.getters.getPhysicsDiagnosisData,
             telemetryGraphData: this.$store.getters.getTelemetryGraphData,
-            sourceAnomaly: anomalyName // Track which anomaly triggered this physics diagnosis
+            sourceAnomaly: anomalyName, // Track which anomaly triggered this physics diagnosis
+            bayesianProbability: formattedBayesianProbability // Store the Bayesian probability
           });
           this.activeSimpleTab = this.simpleTabs.length - 1;
           
@@ -2540,9 +2811,187 @@ export default {
         this.generateTelemetryGraph();
       }
     },
-    handlePhysicsProcedure(anomalyName) {
-      // Minimal UX for now: simple alert; can be replaced with real procedure launch later
-      alert(`No procedure is available yet for: ${anomalyName}`);
+    async handlePhysicsProcedure(anomalyName) {
+      try {
+        // Show loading message
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `Looking for procedures related to ${anomalyName}...`,
+          "visual_message_type": ["text"],
+          "visual_message": [`Looking for procedures related to ${anomalyName}...`],
+          "writer": "daphne"
+        });
+
+        // Get all available procedures from backend API
+        const response = await fetchGet('/api/at/get_available_procedures');
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch procedures: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        if (responseData.status !== 'success') {
+          throw new Error(`Backend error: ${responseData.message}`);
+        }
+
+        const allProcedures = responseData.procedures;
+        
+        // Filter procedures by anomaly name (case-insensitive search in title)
+        const filteredProcedures = allProcedures.filter(procedure => 
+          procedure.title.toLowerCase().includes(anomalyName.toLowerCase()) ||
+          procedure.filename.toLowerCase().includes(anomalyName.toLowerCase())
+        );
+
+        if (filteredProcedures.length === 0) {
+          // No procedures found
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": `No procedures found for ${anomalyName}. Would you like me to show all available procedures instead?`,
+            "visual_message_type": ["text"],
+            "visual_message": [`No procedures found for ${anomalyName}. Would you like me to show all available procedures instead?`],
+            "writer": "daphne",
+            "options": ["Yes", "No"],
+            "optionsCallbackEvent": "showAllProceduresResponse"
+          });
+
+          // Set up listener for response
+          this.$root.$once('showAllProceduresResponse', (response) => {
+            if (response === "Yes") {
+              this.showProcedureSelection(allProcedures, anomalyName, true); // true indicates showing all procedures
+            } else {
+              this.$store.commit('addDialoguePiece', {
+                "voice_message": "Alright, let me know if you need help with anything else.",
+                "visual_message_type": ["text"],
+                "visual_message": ["Alright, let me know if you need help with anything else."],
+                "writer": "daphne"
+              });
+            }
+          });
+        } else if (filteredProcedures.length === 1) {
+          // Only one procedure found, ask for confirmation
+          const procedure = filteredProcedures[0];
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": `I found one procedure for ${anomalyName}: "${procedure.title}". Would you like me to start this procedure?`,
+            "visual_message_type": ["text"],
+            "visual_message": [`I found one procedure for ${anomalyName}: <br>${procedure.title}.<br><br>Would you like me to start this procedure?`],
+            "writer": "daphne",
+            "options": ["Yes", "No"],
+            "optionsCallbackEvent": "confirmSingleProcedure"
+          });
+
+          // Set up listener for confirmation
+          this.$root.$once('confirmSingleProcedure', (response) => {
+            if (response === "Yes") {
+              this.startSelectedProcedure(procedure.staticProcedureID, procedure.title);
+            } else {
+              this.$store.commit('addDialoguePiece', {
+                "voice_message": "Alright, procedure not started.",
+                "visual_message_type": ["text"],
+                "visual_message": ["Alright, procedure not started."],
+                "writer": "daphne"
+              });
+            }
+          });
+        } else {
+          // Multiple procedures found, let user choose
+          this.showProcedureSelection(filteredProcedures, anomalyName, false); // false indicates showing filtered procedures
+        }
+
+      } catch (error) {
+        console.error("Error fetching procedures:", error);
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `Failed to fetch procedures for ${anomalyName}. Please try again later.`,
+          "visual_message_type": ["text"],
+          "visual_message": [`Failed to fetch procedures for ${anomalyName}. Please check your connection and try again.`],
+          "writer": "daphne"
+        });
+      }
+    },
+
+    showProcedureSelection(procedures, anomalyName, showingAllProcedures = false) {
+      // Create procedure list for display
+      const procedureList = procedures.map((proc, index) => 
+        // `${index + 1}. ${proc.title} (${proc.number}) - ${proc.revision}`
+        `${index + 1}. ${proc.title}`
+      ).join('<br>');
+
+      // Create options for user selection
+      const procedureOptions = procedures.map((proc, index) => 
+        `${index + 1}. ${proc.title}`
+      );
+
+      // Create different messages based on whether we're showing all procedures or filtered ones
+      const voiceMessage = showingAllProcedures 
+        ? `Here are all ${procedures.length} available procedures. Please select which one you'd like to start:`
+        : `I found ${procedures.length} procedures related to ${anomalyName}. Please select which one you'd like to start:`;
+
+      const visualMessage = showingAllProcedures
+        ? `Here are all ${procedures.length} available procedures:<br><br>${procedureList}<br><br>Please select which one you'd like to start:`
+        : `I found ${procedures.length} procedures related to ${anomalyName}:<br><br>${procedureList}<br><br>Please select which one you'd like to start:`;
+
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": voiceMessage,
+        "visual_message_type": ["text"],
+        "visual_message": [visualMessage],
+        "writer": "daphne",
+        "options": procedureOptions,
+        "optionsCallbackEvent": "selectProcedureFromList"
+      });
+
+      // Set up listener for procedure selection
+      this.$root.$once('selectProcedureFromList', (selectedOption) => {
+        // Extract the index from the selected option
+        const selectedIndex = parseInt(selectedOption.split('.')[0]) - 1;
+        const selectedProcedure = procedures[selectedIndex];
+        
+        if (selectedProcedure) {
+          this.startSelectedProcedure(selectedProcedure.staticProcedureID, selectedProcedure.title);
+        } else {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "Invalid selection. Please try again.",
+            "visual_message_type": ["text"],
+            "visual_message": ["Invalid selection. Please try again."],
+            "writer": "daphne"
+          });
+        }
+      });
+    },
+
+    async startSelectedProcedure(procedureID, procedureTitle) {
+      try {
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `Starting procedure: ${procedureTitle}...`,
+          "visual_message_type": ["text"],
+          "visual_message": [`Starting procedure: ${procedureTitle}`],
+          "writer": "daphne"
+        });
+
+        // Call the existing StartAstrobeeProcedure API
+        const reqData = new FormData();
+        reqData.append('procedureID', procedureID);
+        
+        const response = await fetchPost('/api/at/start_astrobee_procedure', reqData);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Procedure started successfully:", data);
+          
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": `Procedure "${procedureTitle}" has been started successfully!`,
+            "visual_message_type": ["text"],
+            "visual_message": [`Procedure "${procedureTitle}" has been started successfully!`],
+            "writer": "daphne"
+          });
+        } else {
+          throw new Error(`Failed to start procedure: ${response.statusText}`);
+        }
+      } catch (error) {
+        console.error("Failed to start procedure:", error);
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `Failed to start procedure "${procedureTitle}". Please try again.`,
+          "visual_message_type": ["text"],
+          "visual_message": [`Failed to start procedure "${procedureTitle}". Please try again.`],
+          "writer": "daphne"
+        });
+      }
     },
 
     formatFaultInjectionTime(dataPoint, seconds) {
@@ -2664,6 +3113,9 @@ export default {
     // Initialize local physics simulation duration with store value
     this.localPhysicsSimDuration = this.physicsSimDurationSeconds;
 
+    // Initialize duration components - default to 50 minutes (3000 seconds)
+    this.updatePhysicsSimDuration();
+
     this.$nextTick(() => {
       if (this.$refs.tabsContainer) {
         this.$refs.tabsContainer.addEventListener('scroll', this.updateScrollButtons);
@@ -2720,6 +3172,11 @@ export default {
     // Watch for changes in store physics simulation duration and update local value
     physicsSimDurationSeconds(newVal) {
       this.localPhysicsSimDuration = newVal;
+    },
+
+    // Watch for changes in duration value and update physics sim duration
+    durationValue() {
+      this.updatePhysicsSimDuration();
     },
 
   }

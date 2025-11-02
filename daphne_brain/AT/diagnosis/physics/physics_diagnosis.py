@@ -344,7 +344,12 @@ def generate_physics_diagnosis_data(
     print(f"[PHYS_DIAG] Anomaly names: {cdra_anoms}")
     
     # First pass: collect all simulation data to establish unified baseline
+    # Include both individual anomalies AND combinations
     all_simulations = []
+    all_anomaly_names = []  # Track corresponding names for each simulation
+    
+    # Generate individual anomaly simulations first
+    print(f"[PHYS_DIAG] === GENERATING INDIVIDUAL ANOMALY SIMULATIONS ===")
     for name in cdra_anoms:
         sim_vals = generate_anomaly_telemetry(
             name,
@@ -354,7 +359,61 @@ def generate_physics_diagnosis_data(
             target_len_override=effective_len,
         )['values']
         all_simulations.append(sim_vals)
+        all_anomaly_names.append(name)
         print(f"[PHYS_DIAG] Generated {len(sim_vals)} simulation values for '{name}', sim_duration={sim_duration_seconds/10}s")
+    
+    # Generate combination scenarios (multiple simultaneous anomalies)
+    print(f"[PHYS_DIAG] === GENERATING COMBINATION SCENARIOS ===")
+    try:
+        # Use the cdra_anoms list for combinations (same list from Neo4j)
+        available_components = cdra_anoms  # Use the actual anomaly list from Neo4j
+        
+        import itertools
+        
+        # Generate some key double combinations (limit to 6 to keep reasonable)
+        combination_count = 0
+        max_combinations = 6
+        
+        for pair in itertools.combinations(available_components, 2):
+            if combination_count >= max_combinations:
+                break
+                
+            # Create combination name using default intensities
+            combo_name = f"{pair[0]} + {pair[1]}"
+            combo_list = [pair[0], pair[1]]  # Pass as list for multi-anomaly generation
+            
+            print(f"[PHYS_DIAG] Generating combination: {combo_name}")
+            
+            try:
+                # Generate simulation for this combination using default intensities
+                combo_sim_vals = generate_multi_anomaly_telemetry(
+                    anomaly_names=combo_list,
+                    intensities=None,  # Use default intensities from templates
+                    target_sensor=target_telemetry_sensor,
+                    duration_seconds=int(sim_duration_seconds/simulation_speed_factor),
+                    target_len_override=effective_len,
+                )['values']
+                
+                all_simulations.append(combo_sim_vals)
+                all_anomaly_names.append(combo_name)
+                combination_count += 1
+                
+                print(f"[PHYS_DIAG] ✅ Generated {len(combo_sim_vals)} values for combination '{combo_name}'")
+                
+            except Exception as e:
+                print(f"[PHYS_DIAG] ❌ Error generating combination '{combo_name}': {e}")
+                # Continue with other combinations
+                continue
+        
+        print(f"[PHYS_DIAG] Generated {combination_count} combination scenarios")
+        
+    except Exception as e:
+        print(f"[PHYS_DIAG] ❌ Error in combination generation: {e}")
+        print(f"[PHYS_DIAG] Continuing with individual anomalies only")
+    
+    # Update the cdra_anoms list to include combinations
+    cdra_anoms = all_anomaly_names
+    print(f"[PHYS_DIAG] Total scenarios to analyze: {len(cdra_anoms)} (individual + combinations)")
     
     # Calculate unified baseline for consistent normalization
     baseline_min, baseline_max = _get_unified_baseline(actual_telemetry, all_simulations)
@@ -970,6 +1029,138 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
         print(f"[ANOMALY_TELEMETRY] ❌ Error using BioSim: {e}")
         print(f"[ANOMALY_TELEMETRY] 🔄 Falling back to CDRA simulation")
         return _fallback_cdra_simulation(anomaly_name, score, target_sensor, duration_seconds, target_len_override)
+
+
+def generate_multi_anomaly_telemetry(anomaly_names: List[str], intensities: List[str], target_sensor: str,
+                                    duration_seconds: int, target_len_override: int) -> Dict[str, Any]:
+    """
+    Generate telemetry data for multiple simultaneous anomalies (combinations).
+    
+    This function creates a BioSim configuration with multiple malfunctions injected
+    simultaneously to simulate compound failure scenarios.
+    
+    Args:
+        anomaly_names: List of anomaly names to simulate simultaneously
+        intensities: List of intensities for each anomaly (same length as anomaly_names)
+        target_sensor: Target sensor name
+        duration_seconds: Simulation duration in seconds
+        target_len_override: Target length for resampling
+        
+    Returns:
+        Dictionary containing simulation values, source type, and metadata
+    """
+    print(f"[MULTI_ANOMALY] Generating telemetry for combination: {anomaly_names} with intensities: {intensities}")
+    print(f"[MULTI_ANOMALY] Target sensor: {target_sensor}, Duration: {duration_seconds}s")
+    
+    # Check simulation mode configuration
+    simulation_mode = _get_physics_simulation_config()
+    print(f"[MULTI_ANOMALY] 🔧 Physics simulation mode: {simulation_mode}")
+    
+    # If local mode is explicitly set, use CDRA fallback for combinations
+    if simulation_mode == 'local':
+        print(f"[MULTI_ANOMALY] 🏠 Using local CDRA simulation for combination (mode: {simulation_mode})")
+        # For local mode, simulate the dominant anomaly (first one)
+        return _fallback_cdra_simulation(anomaly_names[0], 0.9, target_sensor, duration_seconds, target_len_override)
+    
+    # Try BioSim for multi-anomaly simulation
+    try:
+        print(f"[MULTI_ANOMALY] 🔄 Attempting to use BioSim for multi-anomaly simulation...")
+        
+        # Initialize BioSim client
+        biosim_client = BioSimClient()
+        
+        # Check if BioSim server is accessible
+        if not biosim_client.check_server_status():
+            print(f"[MULTI_ANOMALY] ⚠️ BioSim server is not accessible, using CDRA fallback")
+            # Use CDRA simulation for the dominant anomaly
+            return _fallback_cdra_simulation(anomaly_names[0], 0.9, target_sensor, duration_seconds, target_len_override)
+        
+        # Create multi-anomaly configuration using the enhanced generate_config function
+        from .biosim_templates import generate_config
+        
+        # Use the enhanced generate_config with multiple anomaly names and intensities
+        print(f"[MULTI_ANOMALY] Generating config for anomalies: {anomaly_names} with intensities: {intensities}")
+        
+        # Generate configuration with multi-anomaly support
+        import tempfile
+        import time
+        
+        config_content = generate_config(anomaly_names, duration_seconds, intensities)
+        print("config contentttttt:", config_content)
+        
+        if not config_content:
+            print(f"[MULTI_ANOMALY] ⚠️ Could not generate multi-anomaly configuration")
+            return _fallback_cdra_simulation(anomaly_names[0], 0.9, target_sensor, duration_seconds, target_len_override)
+        
+        # Create temporary config file
+        timestamp = int(time.time())
+        safe_combo_name = "_".join(anomaly_names).replace(' ', '_').replace('(', '').replace(')', '')
+        filename = f"biosim_multi_{safe_combo_name}_{timestamp}.biosim"
+        config_path = os.path.join(tempfile.gettempdir(), filename)
+        
+        with open(config_path, 'w') as f:
+            f.write(config_content)
+        
+        print(f"[MULTI_ANOMALY] 📄 Created multi-anomaly configuration: {config_path}")
+        
+        # Start the simulation
+        sim_id = biosim_client.start_simulation(config_path)
+        
+        if not sim_id:
+            print(f"[MULTI_ANOMALY] ⚠️ Failed to start BioSim multi-anomaly simulation")
+            return _fallback_cdra_simulation(anomaly_names[0], 0.9, target_sensor, duration_seconds, target_len_override)
+        
+        print(f"[MULTI_ANOMALY] ✅ Successfully started BioSim multi-anomaly simulation with ID: {sim_id}")
+        
+        # Wait for simulation to complete
+        simulation_completed = biosim_client.wait_for_simulation_completion(
+            sim_id=sim_id,
+            max_wait_seconds=15,
+            poll_interval=0.2
+        )
+        
+        if not simulation_completed:
+            print(f"[MULTI_ANOMALY] ⚠️ Multi-anomaly simulation did not complete within timeout")
+        
+        # Get sensor data
+        sensor_data_result = biosim_client.get_sensor_data_with_units(
+            sim_id=sim_id,
+            sensor_name=target_sensor,
+            duration_seconds=duration_seconds,
+            target_unit='mmHg'
+        )
+        
+        if sensor_data_result:
+            sensor_data = sensor_data_result['values']
+            print(f"[MULTI_ANOMALY] ✅ Retrieved {len(sensor_data)} data points from BioSim multi-anomaly simulation")
+            
+            # Resample if needed
+            if target_len_override and len(sensor_data) != target_len_override:
+                original_length = len(sensor_data)
+                sensor_data = resample_series(sensor_data, target_len_override)
+                print(f"[MULTI_ANOMALY] 🔧 Resampled multi-anomaly data from {original_length} to {len(sensor_data)} points")
+            
+            # Clean up temp file
+            try:
+                os.remove(config_path)
+            except:
+                pass
+            
+            return {
+                'values': sensor_data,
+                'source': 'biosim_multi',
+                'simulation_id': sim_id,
+                'anomaly_names': anomaly_names,
+                'intensities': intensities
+            }
+        else:
+            print(f"[MULTI_ANOMALY] ⚠️ No data available from BioSim multi-anomaly simulation")
+            return _fallback_cdra_simulation(anomaly_names[0], 0.9, target_sensor, duration_seconds, target_len_override)
+            
+    except Exception as e:
+        print(f"[MULTI_ANOMALY] ❌ Error in BioSim multi-anomaly simulation: {e}")
+        print(f"[MULTI_ANOMALY] 🔄 Falling back to CDRA simulation for primary anomaly")
+        return _fallback_cdra_simulation(anomaly_names[0], 0.9, target_sensor, duration_seconds, target_len_override)
 
 
 def _fallback_cdra_simulation(anomaly_name: str, score: float, target_sensor: str,

@@ -5,6 +5,9 @@ This module contains XML templates for different types of BioSim simulations.
 Each template can be customized with specific parameters like duration, malfunctions, etc.
 """
 
+from typing import List, Dict, Union
+import itertools
+
 # Base BioSim configuration template
 BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 <biosim xmlns="http://www.traclabs.com/biosim"
@@ -221,6 +224,78 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 	</Sensors>
 </biosim>"""
 
+# Malfunction intensities for combinations
+MALFUNCTION_INTENSITIES = ['MEDIUM_MALF', 'SEVERE_MALF']
+
+# Malfunction templates for different anomaly types with configurable intensity
+MALFUNCTION_TEMPLATES = {
+    'CO2 Scrubber Valve Leak': {
+        'description': 'VCCR CO2 scrubber valve malfunction causing CO2 buildup',
+        'component': 'VCCR',
+        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'affected_systems': ['VCCR', 'CO2_Store', 'ppCO2_IHab'],
+        'default_intensity': 'SEVERE_MALF'
+    },
+    'Fan Bearing Wear': {
+        'description': 'VCCR fan bearing degradation affecting air circulation',
+        'component': 'VCCR',
+        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'affected_systems': ['VCCR', 'air circulation', 'ppCO2_IHab'],
+        'default_intensity': 'MEDIUM_MALF'
+    },
+    'Absorption Bed Saturated': {
+        'description': 'VCCR absorption bed saturation reducing CO2 removal efficiency',
+        'component': 'VCCR',
+        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'affected_systems': ['VCCR', 'CO2_Store', 'ppCO2_IHab'],
+        'default_intensity': 'SEVERE_MALF'
+    },
+    'Heater Coil Failure': {
+        'description': 'VCCR heater coil malfunction affecting temperature control',
+        'component': 'VCCR',
+        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'affected_systems': ['VCCR', 'temperature control', 'ppCO2_IHab'],
+        'default_intensity': 'SEVERE_MALF'
+    },
+    "VCCR": {
+        'description': 'VCCR system malfunction',
+        'component': 'VCCR',
+        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'affected_systems': ['VCCR'],
+        'default_intensity': 'MEDIUM_MALF'
+    },
+    "Dehumidifier": {
+        'description': 'Dehumidifier system malfunction',
+        'component': 'Dehumidifier',
+        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'affected_systems': ['Dehumidifier'],
+        'default_intensity': 'SEVERE_MALF'
+    },
+    "OGS": {
+        'description': 'Oxygen Generation System malfunction',
+        'component': 'OGS',
+        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'affected_systems': ['OGS', 'O2_Store'],
+        'default_intensity': 'SEVERE_MALF'
+    },
+    "Water_Distiller": {
+        'description': 'Water Recovery System malfunction',
+        'component': 'WaterRS',
+        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'affected_systems': ['WaterRS', 'Potable_Water_Store'],
+        'default_intensity': 'MEDIUM_MALF'
+    }
+}
+
+# Default malfunction template for unknown anomalies
+DEFAULT_MALFUNCTION = {
+    'description': 'Generic VCCR malfunction',
+    'component': 'VCCR',
+    'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="10"/>',
+    'affected_systems': ['VCCR', 'general systems'],
+    'default_intensity': 'MEDIUM_MALF'
+}
+
 # Malfunction templates for different anomaly types
 MALFUNCTION_TEMPLATES = {
     'CO2 Scrubber Valve Leak': {
@@ -332,27 +407,74 @@ def inject_malfunction_into_component(template: str, component_name: str, malfun
     
     return modified_template
 
-def generate_config(anomaly_name: str, duration_seconds: int) -> str:
+def generate_config(anomaly_name: Union[str, List[str]], duration_seconds: int, intensities: List[str] = None) -> str:
     """
-    Generate complete BioSim configuration for an anomaly.
+    Generate complete BioSim configuration for one or more anomalies.
     
     Args:
-        anomaly_name: Name of the anomaly to simulate
+        anomaly_name: Single anomaly name (str) or list of anomaly names for combinations
         duration_seconds: Duration of the simulation in seconds
+        intensities: List of intensities for each anomaly (only used for multi-anomaly)
         
     Returns:
         Complete XML configuration string
     """
     config_content = BASE_BIOSIM_TEMPLATE.format(max_ticks=int(duration_seconds))
-    # Get malfunction configuration
-    malfunction_config = get_malfunction_config(anomaly_name)
     
-    # Inject the malfunction into the appropriate component
-    config_content = inject_malfunction_into_component(
-        template=config_content,
-        component_name=malfunction_config['component'],
-        malfunction_xml=malfunction_config['malfunction_xml']
-    )
+    # Handle single anomaly case (backwards compatibility)
+    if isinstance(anomaly_name, str):
+        malfunction_config = get_malfunction_config(anomaly_name)
+        
+        # Use default intensity from template
+        intensity = malfunction_config.get('default_intensity', 'MEDIUM_MALF')
+        
+        # Format the malfunction XML with the intensity
+        formatted_malfunction_xml = malfunction_config['malfunction_xml'].format(intensity=intensity)
+        
+        # Inject the malfunction into the appropriate component
+        config_content = inject_malfunction_into_component(
+            template=config_content,
+            component_name=malfunction_config['component'],
+            malfunction_xml=formatted_malfunction_xml
+        )
+        
+        print(f"[BIOSIM_TEMPLATE] Generated config with {intensity} malfunction in {malfunction_config['component']}")
+        return config_content
     
-    print(f"[BIOSIM_TEMPLATE] Generated config with malfunction in {malfunction_config['component']}")
+    # Handle multiple anomalies case
+    if isinstance(anomaly_name, list):
+        print(f"[BIOSIM_TEMPLATE] Generating multi-anomaly config for: {anomaly_name}")
+        
+        # Process each anomaly in the combination
+        for i, single_anomaly in enumerate(anomaly_name):
+            try:
+                # Get malfunction config for this anomaly
+                malfunction_config = get_malfunction_config(single_anomaly)
+                
+                # Use provided intensity or default from template
+                if intensities and i < len(intensities):
+                    intensity = intensities[i]
+                else:
+                    intensity = malfunction_config.get('default_intensity', 'MEDIUM_MALF')
+                
+                # Format the malfunction XML with the intensity
+                formatted_malfunction_xml = malfunction_config['malfunction_xml'].format(intensity=intensity)
+                
+                # Inject the malfunction into the appropriate component
+                config_content = inject_malfunction_into_component(
+                    template=config_content,
+                    component_name=malfunction_config['component'],
+                    malfunction_xml=formatted_malfunction_xml
+                )
+                
+                print(f"[BIOSIM_TEMPLATE] Injected {intensity} malfunction for {single_anomaly} into {malfunction_config['component']}")
+                
+            except Exception as e:
+                print(f"[BIOSIM_TEMPLATE] ❌ Failed to inject malfunction for {single_anomaly}: {e}")
+        
+        print(f"[BIOSIM_TEMPLATE] Generated multi-anomaly config with {len(anomaly_name)} malfunctions")
+        return config_content
+    
+    # Fallback case
+    print(f"[BIOSIM_TEMPLATE] ⚠️ Invalid anomaly_name type: {type(anomaly_name)}")
     return config_content

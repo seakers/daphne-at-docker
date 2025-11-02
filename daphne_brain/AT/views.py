@@ -176,59 +176,151 @@ class AstrobeeStatus(APIView):
 class GetCurrentInstruction(APIView):
     def post(self, request, format=None):
 
-        # url = "https://10.5.0.3:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
-        # payload = {}
-        # headers = {
-        #     'Content-Type': 'application/json',
-        #     'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
-        # }       
-        # response = requests.request("GET", url, headers=headers, data=payload, verify=False)
-        # # print("get pride shared variables response procedure id", global_procedure_runtime_ID)
-        # if response.status_code == 200:
-        #     try:
-        #         instruction_data = response.json()
-        #         # Extract the important information from the response
-        #         # current_instruction = {
-        #         #     'text': instruction_data.get('text', ''),
-        #         #     'instructionType': instruction_data.get('instructionType', ''),
-        #         #     'instructionNumber': instruction_data.get('instructionNumber', ''),
-        #         #     'userResponseType': instruction_data.get('userResponseType', []),
-        #         #     'status': instruction_data.get('status', '')
-        #         # }
-        #         # print("current instruction", instruction_data, response)
+        url = "https://10.5.0.3:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
+        payload = {}
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
+        }       
+        response = requests.request("GET", url, headers=headers, data=payload, verify=False)
+        # print("get pride shared variables response procedure id", global_procedure_runtime_ID)
+        if response.status_code == 200:
+            try:
+                instruction_data = response.json()
+                
+                # Extract the important information from the response
+                current_instruction = {
+                    'text': instruction_data.get('text', ''),
+                    'instructionType': instruction_data.get('instructionType', ''),
+                    'instructionIdentifier': instruction_data.get('instructionIdentifier', ''),
+                    'elementID': instruction_data.get('elementID', ''),
+                    'userResponseType': instruction_data.get('userResponseType', []),
+                    'status': instruction_data.get('status', ''),
+                    'instructionNumber': instruction_data.get('instructionNumber', ''),
+                    'dataType': instruction_data.get('dataType', ''),  # For record instructions
+                    'dataNomenclature': instruction_data.get('dataNomenclature', ''),  # For record instructions
+                    'description': instruction_data.get('description', {})
+                }
+                
+                # Handle different instruction types
+                if instruction_data.get('instructionType') == 'manualInstruction':
+                    current_instruction['requires_user_action'] = True
+                    current_instruction['action_type'] = 'manual'
+                elif instruction_data.get('instructionType') == 'record':
+                    current_instruction['requires_user_action'] = True
+                    current_instruction['action_type'] = 'record'
+                elif instruction_data.get('instructionType') == 'step':
+                    current_instruction['requires_user_action'] = True
+                    current_instruction['action_type'] = 'step'
+                else:
+                    current_instruction['requires_user_action'] = False
+                    current_instruction['action_type'] = 'none'
+                
+                print("Current instruction extracted:", current_instruction)
             
-        #         return Response({
-        #             "instruction_data": instruction_data
-        #         })
-        #     except json.JSONDecodeError:
-        #         # print("Error decoding JSON response")
-        #         return Response({"error": "Invalid response format"}, status=500)
+                return Response({
+                    "instruction_data": current_instruction,
+                    "full_response": instruction_data
+                })
+            except json.JSONDecodeError:
+                # print("Error decoding JSON response")
+                return Response({"error": "Invalid response format"}, status=500)
             
-        # else:
-        #     # print(f"Error fetching current instruction: {response.status_code}")
-        #     return Response({"error": f"API request failed with status code: {response.status_code}"}, 
-        #                    status=response.status_code)
+        else:
+            # print(f"Error fetching current instruction: {response.status_code}")
+            return Response({"error": f"API request failed with status code: {response.status_code}"}, 
+                           status=response.status_code)
 
 
         #-------if there is no pride server running, return a dummy instruction for testing purposes
         # This is a placeholder for testing purposes. In a real scenario, you would fetch the current instruction from the Pride API.
         # Comment out below to use pride server or Uncomment below to use dummy instruction for testing purposes
         
-        global global_procedure_runtime_ID
-        if global_procedure_runtime_ID == "":
-            global_procedure_runtime_ID = "dummy_procedure_runtime_id"
-        dummy_instruction = {
-            "text": "This is a dummy instruction for testing.",
-            "instructionType": "test",
-            "instructionNumber": 1,
-            "userResponseType": ["real"],
-            "status": "active",
-            "instructionIdentifier": "dummy-001"
-        }
+        # global global_procedure_runtime_ID
+        # if global_procedure_runtime_ID == "":
+        #     global_procedure_runtime_ID = "dummy_procedure_runtime_id"
+        # dummy_instruction = {
+        #     "text": "This is a dummy instruction for testing.",
+        #     "instructionType": "test",
+        #     "instructionNumber": 1,
+        #     "userResponseType": ["real"],
+        #     "status": "active",
+        #     "instructionIdentifier": "dummy-001"
+        # }
 
-        return Response({
-            "instruction_data": dummy_instruction
-        })
+        # return Response({
+        #     "instruction_data": dummy_instruction
+        # })
+
+
+class CompleteInstruction(APIView):
+    def post(self, request, format=None):
+        global global_procedure_runtime_ID
+        
+        try:
+            instruction_data = json.loads(request.data['instruction_data'])
+            activity = request.data['activity']
+            record_value = request.data.get('record_value', None)
+            
+            # Get instruction identifier
+            instruction_id = (instruction_data.get('instructionIdentifier') or 
+                            instruction_data.get('elementID'))
+            
+            if not instruction_id:
+                return Response({
+                    "status": "error",
+                    "message": "No instruction identifier found"
+                }, status=400)
+            
+            print(f"Completing instruction with ID: {instruction_id}")
+            print(f"Instruction type: {instruction_data.get('instructionType')}")
+            
+            # Prepare request body for PRIDE API
+            request_body = {
+                "user": "test",
+                "loginID": "test",
+                "date": datetime.now().isoformat(),
+                "elementID": instruction_id,
+                "activity": activity
+            }
+            
+            # Add record value if this is a record instruction
+            if record_value is not None:
+                request_body["record"] = record_value
+                print(f"Adding record value: {record_value}")
+            
+            print(f"Sending request to PRIDE: {request_body}")
+            
+            # Call PRIDE API to complete the instruction
+            url = f"https://10.5.0.3:8000/api/procedures/running/{global_procedure_runtime_ID}"
+            headers = {
+                'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a',
+                'Content-Type': 'application/json'
+            }
+            
+            response = requests.post(url, headers=headers, json=request_body, verify=False)
+            
+            if response.ok:
+                print(f"Instruction {instruction_id} completed successfully")
+                return Response({
+                    "status": "success",
+                    "message": f"Instruction completed successfully",
+                    "pride_response": response.text
+                })
+            else:
+                print(f"Failed to complete instruction. Status: {response.status_code}, Response: {response.text}")
+                return Response({
+                    "status": "error",
+                    "message": f"Failed to complete instruction: {response.status_code}",
+                    "pride_response": response.text
+                }, status=response.status_code)
+                
+        except Exception as e:
+            print(f"Error completing instruction: {e}")
+            return Response({
+                "status": "error",
+                "message": f"Error completing instruction: {str(e)}"
+            }, status=500)
 
 
     
@@ -266,7 +358,6 @@ class StartAstrobeeProcedure(APIView):
         print("procedure static id is set", procedure_staticID)
 
         # start/open a procedure to send astrobee
-        # url = "https://0.0.0.0:8000/api/procedures/available/" + procedure_staticID
         url = "https://10.5.0.3:8000/api/procedures/available/" + procedure_staticID
 
         payload = json.dumps({
@@ -279,37 +370,48 @@ class StartAstrobeeProcedure(APIView):
             'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
         }
 
-        response = requests.request("POST", url, headers=headers, data=payload, verify=False)
-        procedure_runtime_ID = response.text.replace('"', '')
-        global_procedure_runtime_ID = procedure_runtime_ID
-        # print("in start astrobee procedure", response.text)
-        print("started astrobee procedure", response)
+        try:
+            response = requests.request("POST", url, headers=headers, data=payload, verify=False)
+            
+            if response.ok:
+                procedure_runtime_ID = response.text.replace('"', '')
+                global_procedure_runtime_ID = procedure_runtime_ID
+                print("started astrobee procedure", response)
 
-        if response.ok:
-            # start automation of the procedure
-            url = 'https://pride-dev:8000/api/procedures/' + procedure_runtime_ID + '/startAutomation'
-            payload = json.dumps({
-                "user": "test",
-            })
-            headers = {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
-            }
+                # start automation of the procedure
+                automation_url = f'https://10.5.0.3:8000/api/procedures/{procedure_runtime_ID}/startAutomation'
+                automation_payload = json.dumps({"user": "test"})
+                
+                automation_response = requests.request("PUT", automation_url, headers=headers, data=automation_payload, verify=False)
+                print("Starting automation for procedure:", procedure_runtime_ID)
+                print("Automation response status:", automation_response.status_code)
+                
+                global astrobee_status
+                astrobee_status = f"Astrobee procedure {procedure_runtime_ID} started."
 
-            automation_response = requests.request("PUT", url, headers=headers, data=payload, verify=False)
-            print("Starting automation for procedure:", procedure_runtime_ID)
-            print("Automation response status:", automation_response.status_code)
-            global astrobee_status
-            astrobee_status = "Astrobee procedure " + procedure_runtime_ID + " started."
-
-            return Response({
-                "status": astrobee_status
-            })
-        else:
+                return Response({
+                    "status": astrobee_status,
+                    "procedure_runtime_id": procedure_runtime_ID
+                })
+            else:
+                print(f"Failed to start procedure. Status: {response.status_code}, Response: {response.text}")
+                return Response({
+                    "status": "error",
+                    "message": f"ERROR starting the procedure. Status: {response.status_code}"
+                }, status=400)
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Request exception when starting procedure: {e}")
             return Response({
                 "status": "error",
-                "message": "ERROR starting the procedure"
-            })
+                "message": f"Network error when starting procedure: {str(e)}"
+            }, status=500)
+        except Exception as e:
+            print(f"Unexpected error when starting procedure: {e}")
+            return Response({
+                "status": "error",
+                "message": f"Unexpected error: {str(e)}"
+            }, status=500)
 
 
 class HeraFeed(APIView):
@@ -740,3 +842,46 @@ class CompleteTutorial(APIView):
         user_info.atcontext.seen_tutorial = seen_tutorial
         user_info.atcontext.save()
         return Response()
+
+
+class GetAvailableProcedures(APIView):
+    def get(self, request, format=None):
+        """
+        Fetch all available procedures from Pride API
+        """
+        try:
+            url = "https://10.5.0.3:8000/api/procedures/available/"
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
+            }
+            
+            response = requests.request("GET", url, headers=headers, verify=False)
+            
+            if response.ok:
+                procedures_data = response.json()
+                print(f"Successfully fetched {len(procedures_data)} procedures from Pride")
+                return Response({
+                    "status": "success",
+                    "procedures": procedures_data
+                })
+            else:
+                print(f"Failed to fetch procedures from Pride. Status: {response.status_code}, Response: {response.text}")
+                return Response({
+                    "status": "error",
+                    "message": f"Failed to fetch procedures from Pride. Status: {response.status_code}"
+                }, status=response.status_code)
+                
+        except requests.exceptions.RequestException as e:
+            print(f"Request exception when fetching procedures: {e}")
+            return Response({
+                "status": "error",
+                "message": f"Network error when fetching procedures: {str(e)}"
+            }, status=500)
+        except Exception as e:
+            print(f"Unexpected error when fetching procedures: {e}")
+            return Response({
+                "status": "error",
+                "message": f"Unexpected error: {str(e)}"
+            }, status=500)
+

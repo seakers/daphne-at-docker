@@ -14,6 +14,7 @@ urlpatterns = [
     path('pride_status', views.PrideStatus.as_view(), name='pride_status'),
     path('astrobee_status', views.AstrobeeStatus.as_view(), name='astrobee_status'),
     path('start_astrobee_procedure', views.StartAstrobeeProcedure.as_view(), name='start_astrobee_procedure'),
+    path('get_available_procedures', views.GetAvailableProcedures.as_view(), name='get_available_procedures'),
      #-------------------------------------------------------------------------
     path('requestDiagnosis', views.RequestDiagnosis.as_view(), name='RequestDiagnosis'),
     path('requestKGDiagnosis', views.RequestKGDiagnosis.as_view(), name='RequestKGDiagnosis'),
@@ -21,6 +22,7 @@ urlpatterns = [
      path('update_diagnosis_with_evidence', views.UpdateDiagnosisWithEvidence.as_view(), name='update_diagnosis_with_evidence'),
     path('get_pride_shared_variables', views.GetPrideSharedVariables.as_view(), name='get_pride_shared_variables'),
     path('get_current_instruction', views.GetCurrentInstruction.as_view(), name='get_current_instruction'),
+    path('complete_instruction', views.CompleteInstruction.as_view(), name='complete_instruction'),
     path('loadAllAnomalies', views.LoadAllAnomalies.as_view(), name='LoadAllAnomalies'),
     path('retrieveProcedureFromAnomaly', views.RetrieveProcedureFromAnomaly.as_view(),
          name='retrieveProcedureFromAnomaly'),
