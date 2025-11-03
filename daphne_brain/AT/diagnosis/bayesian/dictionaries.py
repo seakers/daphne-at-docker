@@ -1,9 +1,69 @@
 # dictionaries.py
 # Author: Joshua Elston
-# Last Updated: 03/27/2025
+# Last Updated: 10/17/2025
 
 # Stores dictionaries with relationships between subgroups and their related anomalies. Additionally stores No Anomalies Present and its relationship to the different subgroups.
 # Called in add_cpds to compute the CPDs to be added to the Bayesian network.
+# Changes on 10/17/2025 to include combined failures across multiple levels
+
+combined_failure_dict = {
+    "Biological Filter Saturation": [
+        "Biological Filter Saturation (L1)",
+        "Biological Filter Saturation (L2)"
+    ],
+    "CDRA Failure": [
+        "CDRA Failure (L1)",
+        "CDRA Failure (L2)"
+    ],
+    "CDRA LiOH Canister Saturation": [
+        "CDRA LiOH Canister Saturation (L1)",
+        "CDRA LiOH Canister Saturation (L2)"
+    ],
+    "Electrolysis System Failure": [
+        "Electrolysis System Failure (L1)",
+        "Electrolysis System Failure (L2)"
+    ],
+    "Emergency O2 System Maintenance": [
+        "Emergency O2 System Maintenance (L1)",
+        "Emergency O2 System Maintenance (L2)"
+    ],
+    "Excess CO2 in Cabin": [
+        "Excess CO2 in Cabin (L1)",
+        "Excess CO2 in Cabin (L2)"
+    ],
+    "Excess Gas Leak": [
+        "Excess Gas Leak (L1)",
+        "Excess Gas Leak (L2)"
+    ],
+    "Excess Water Vapor Pressure in Cabin": [
+        "Excess Water Vapor Pressure in Cabin (L1)",
+        "Excess Water Vapor Pressure in Cabin (L2)"
+    ],
+    "Loss of Pressure": [
+        "Loss of Pressure (L1)",
+        "Loss of Pressure (L2)"
+    ],
+    "Main Cabin Fan Failure": [
+        "Main Cabin Fan Failure (L1)",
+        "Main Cabin Fan Failure (L2)"
+    ],
+    "N2 Tank Burst": [
+        "N2 Tank Burst (L1)",
+        "N2 Tank Burst (L2)"
+    ],
+    "PDU 4 Failure": [
+        "PDU 4 Failure (L1)",
+        "PDU 4 Failure (L2)"
+    ],
+    "PDU 5 Failure": [
+        "PDU 5 Failure (L1)",
+        "PDU 5 Failure (L2)"
+    ],
+    "RWGSR Malfunction": [
+        "RWGSR Malfunction (L1)",
+        "RWGSR Malfunction (L2)"
+    ]
+}
 
 subgroup_dict = {
      "Group 1": [

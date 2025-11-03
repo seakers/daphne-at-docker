@@ -1,6 +1,6 @@
 # ECLSS_Bayesian_Network.py
 # Author: Joshua Elston
-# Last Edited: 03/28/2025
+# Last Edited: 10/29/2025
 
 """
 This main script is used to generate a Bayesian network for an ECLSS environment containing anomalies (parent nodes) and parameters (child nodes).
@@ -93,7 +93,7 @@ def get_probabilities(telemetry_values, additional_evidence=None):
         print(f'Initial entropy: {initial_entropy}')
         print()
       
-        best_evidence = select_best_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
+        best_evidence = select_best_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
     else:
         print('No evidence entered. Exiting script.')
         best_evidence = None
@@ -145,7 +145,9 @@ def update_probabilities_additional(telemetry_values, additional_evidence):
     # Add the CPDs for the parameters conditioned on multiple anomalies
     add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_cardinality)
 
-  
+    # To perform inference on the Bayesian Network, the Variable Elimination algorithm is used.
+    # For more information on VariableElimination within the pgmpy library, refer here:
+    # https://pgmpy.org/exact_infer/ve.html
     infer = VariableElimination(model)
 
     # Add user-provided evidence to the Bayesian network and update the beliefs about the presence of anomalies
@@ -162,9 +164,9 @@ def update_probabilities_additional(telemetry_values, additional_evidence):
         # Determine which piece of additional evidence the crew member(s) could collect to
         # cause the greatest reduction in the entropy of the probability distribution
         # (corresponding to the largest information gain)
-        best_evidence = select_best_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
+        best_evidence = select_best_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
 
-        updated_probabilities = query_additional_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence, additional_evidence)
+        updated_probabilities = query_additional_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence, additional_evidence)
         updated_probabilities = list(updated_probabilities.values())
         final_entropy = calculate_entropy(updated_probabilities)
         print(f'Final entropy: {final_entropy}')
@@ -209,3 +211,7 @@ HIDDEN_COMPONENTS = load_hidden_components()
 print("Hidden Components:")
 for component in HIDDEN_COMPONENTS:
     print(f" - {component}")
+
+test_model = BayesianNetwork(network)
+print("Number of nodes:", test_model.number_of_nodes())
+print("Number of edges:", test_model.number_of_edges())

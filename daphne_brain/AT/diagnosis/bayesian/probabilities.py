@@ -1,6 +1,6 @@
 # probabilities.py
 # Author: Joshua Elston
-# Last Edited: 10/16/2025
+# Last Edited: 10/23/2025
 
 # Stores the probabilities dictionary --> called in the ECLSS_Baysian_Network.py script
 # Updated to include parameters that are measured separately on L1 and L2
@@ -22,6 +22,9 @@ import os
 # of the Bayesian network, with the CPDs becoming much larger to capture the 5-state temporal and spatial parameters
 # Changes on 10/16/2025 update the probabilities to be linked to specific level anomalies when parameters are measured
 # individually on L1 and L2
+# Changes on 10/22/2025 and 10/23/2025 updated processing code to split temporal and spatial probabilities
+# into high/low 3-level structures. Changes also make it such that high X (L2) (t-1) and high X (L1) are only added
+# as parents of high X (L2), with the same structure for low X (L2)
 
 probability_dict = {
     "2-butanone": {
@@ -4907,7 +4910,7 @@ probability_dict = {
 }
 
 # Add probabilities for all (t-1) versions of the parameters, ensuring that the value ranges are correctly tied
-# to those for the (t-1) parameter (even though they are currently identical to the current' parameter ranges)
+# to those for the (t-1) parameter (even though they are currently identical to the current parameter ranges)
 def add_temporal_probabilities(probability_dict, measurement_ranges):
     new_entries = {} # create an empty dictionary for (t-1) parameter probabilities
     for parameter, anomalies in probability_dict.items():
@@ -4916,7 +4919,9 @@ def add_temporal_probabilities(probability_dict, measurement_ranges):
             new_entries[temporal_parameter] = {} # set up an empty dictionary entry for each (t-1) parameter
             for anomaly, data in anomalies.items():
                 # Don't add an anomaly if it is for the temporal probabilities between a parameter and its value at (t-1)
-                if "(t-1)" in anomaly or "(L1)" in anomaly:
+                if "(t-1)" in anomaly: # or "(L1)" in anomaly:
+                    continue
+                if "(L1)" in anomaly and "(L2)" in parameter:
                     continue
                 new_entries[temporal_parameter] [anomaly] = {
                     'probabilities': data['probabilities'],
@@ -4929,7 +4934,7 @@ def add_temporal_probabilities(probability_dict, measurement_ranges):
 # Add (t-1) parameter probabilities to dictionary
 add_temporal_probabilities(probability_dict, measurement_ranges)
 
-# Ensure that all of the probabilities added above sum to 1.0
+# Ensure that all of the temporal probabilities added above sum to 1.0
 def check_probabilities_sum(probability_dict):
     # Initialize flag
     all_valid = True
@@ -5073,9 +5078,8 @@ def process_probability_dict(probability_dict):
             probabilities = data['probabilities']
             value_ranges = data['value_ranges']
 
-
-            # NEW CODE!!!
-            if anomaly.strip() == f"{parameter} (t-1)":
+            # Add temporal probabilities
+            if "(t-1)" in anomaly:
                 # Essentially duplicate the split_CPT function specifically for the (t-1) parents of parameters
                 all_states = ['Exceeds_UpperWarningLimit', 'Exceeds_UpperCautionLimit', 'Nominal', 'Exceeds_LowerCautionLimit', 'Exceeds_LowerWarningLimit']
                 high_states = ['Nominal', 'Exceeds_UpperCautionLimit', 'Exceeds_UpperWarningLimit']
@@ -5089,13 +5093,18 @@ def process_probability_dict(probability_dict):
                 adjusted_high = {ps: adjusted_probabilities(high_states, all_states, child_probs) for ps, child_probs in high_parent_probs.items()}
                 adjusted_low = {ps: adjusted_probabilities(low_states, all_states, child_probs) for ps, child_probs in low_parent_probs.items()}
 
-                split_probability_dict[parameter][anomaly] = {
+                # UPDATED ON 10/22/2025
+                # Extract the probabilities related to the high X variable
+                split_probability_dict[parameter][f"high {anomaly}"] = {
                     f"high {parameter}": {
                         'probabilities' : adjusted_high,
                         'value_ranges': {
                             s: value_ranges[s] for s in high_states
                         }
-                    },
+                    }
+                }
+                # Extract the probabilities related to the low X variable
+                split_probability_dict[parameter][f"low {anomaly}"] = {
                     f"low {parameter}": {
                         'probabilities' : adjusted_low,
                         'value_ranges': {
@@ -5103,11 +5112,52 @@ def process_probability_dict(probability_dict):
                         }
                     }
                 }
-
                 continue
 
-       
-            
+            # UPDATED ON 10/23/2025
+            # Add spatial probabilities
+            if parameter.endswith("(L2)") and anomaly.endswith("(L1)"):
+
+                parameter_base = parameter.replace("(L2)", "").strip()
+                anomaly_base = anomaly.replace("(L1)", "").strip()
+
+                # Confirm that the parameter and anomaly correspond to the same measurement
+                if parameter_base == anomaly_base:
+                    print(f"Processing (L1) parent for (L2) parameter: {parameter} <-- {anomaly}")
+
+                    # Essentially duplicate the split_CPT function specifically for the (t-1) parents of parameters
+                    all_states = ['Exceeds_UpperWarningLimit', 'Exceeds_UpperCautionLimit', 'Nominal', 'Exceeds_LowerCautionLimit', 'Exceeds_LowerWarningLimit']
+                    high_states = ['Nominal', 'Exceeds_UpperCautionLimit', 'Exceeds_UpperWarningLimit']
+                    low_states = ['Nominal', 'Exceeds_LowerCautionLimit', 'Exceeds_LowerWarningLimit']
+
+                    # Split the original nested CPT by only keeping the relevant parent states
+                    high_parent_probs = {k: v for k, v in probabilities.items() if k in high_states}
+                    low_parent_probs = {k: v for k, v in probabilities.items() if k in low_states}
+
+                    # Adjust the probabilities for each child node to fit under the new high/low parent structure
+                    adjusted_high = {ps: adjusted_probabilities(high_states, all_states, child_probs) for ps, child_probs in high_parent_probs.items()}
+                    adjusted_low = {ps: adjusted_probabilities(low_states, all_states, child_probs) for ps, child_probs in low_parent_probs.items()}
+
+                    # Extract the probabilities related to the high X variable
+                    split_probability_dict[parameter][f"high {anomaly}"] = {
+                        f"high {parameter}": {
+                            'probabilities' : adjusted_high,
+                            'value_ranges': {
+                                s: value_ranges[s] for s in high_states
+                            }
+                        }
+                    }
+                    # Extract the probabilities related to the low X variable
+                    split_probability_dict[parameter][f"low {anomaly}"] = {
+                        f"low {parameter}": {
+                            'probabilities' : adjusted_low,
+                            'value_ranges': {
+                                s: value_ranges[s] for s in low_states
+                            }
+                        }
+                    }
+                    continue
+
             # Split the CPTs for each anomaly being present (True) or absent (False)
             split_CPTs = split_CPT(probabilities, value_ranges, parameter)
 
@@ -5123,7 +5173,6 @@ def process_probability_dict(probability_dict):
                 split_probability_dict[parameter][anomaly] = split_CPTs
 
     return split_probability_dict
-
 
 # Split the original probability dictionary into high and low dictionaries for each parameter
 split_probability_dict = process_probability_dict(probability_dict)
