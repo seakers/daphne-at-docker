@@ -1,9 +1,10 @@
 # reduce_entropy.py
 # Author: Joshua Elston
-# Last Edited: 03/28/2025
+# Last Edited: 10/29/2025
 
 # Allows VA to intelligently select pieces of additional evidence to obtain to reduce the entropy in the current
 # probabilitiy distribution (to maximize information gain)
+# Changes on 10/29/2025 remove parameters from list of query variables (i.e., purely retaining them as evidence)
 
 import time
 import math
@@ -11,7 +12,7 @@ import math
 # Function queries the Bayesian network for each additional piece of evidence
 # at each value that the evidence can take (avoids the print statements present
 # in query_network/query_parameters)
-def hidden_queries(infer, split_probability_dict, evidence, potential_evidence, evidence_state):
+def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, potential_evidence, evidence_state):
 
     additional_evidence = {}
 
@@ -28,10 +29,22 @@ def hidden_queries(infer, split_probability_dict, evidence, potential_evidence, 
     evidence.update(additional_evidence)
     # print(f'Updated evidence: {evidence}')
 
-    # Extract unique anomalies from the probabilities_dict
+    # NEW CODE ON 10/29/2025
+    # Create a set of all parameter variable names to ensure correct parameters are removed as variables prior to inference
+    all_parameters = set()
+    for param in measurement_ranges.keys():
+        all_parameters.add(f"high {param}")
+        all_parameters.add(f"low {param}")
+
     unique_anomalies = set() # using a set handles duplicate anomalies
-    for _, anomaly in split_probability_dict.items():
-        unique_anomalies.update(anomaly.keys()) # add anomalies
+
+    for _, anomaly_dict in split_probability_dict.items():
+        for anomaly_name in anomaly_dict.keys():
+            # Skip anomalies that are themselves parameters in the network
+            if anomaly_name in all_parameters:
+                continue
+            else:
+                unique_anomalies.add(anomaly_name) # add anomalies
 
     anomalies_to_query = list(unique_anomalies)
     # Add the No Anomalies Present node to the set of anomalies to be queried based on the telemetry feed evidence
@@ -84,14 +97,16 @@ def calculate_entropy(probabilities):
         if prob == 0:
             print(f"Probability equal to zero.")
         entropy_distribution += -1 * prob * math.log(prob)
-        entropy_distribution = round(entropy_distribution, 8) # MAY DELETE LATER, MORE FOR READABILITY
+        entropy_distribution = round(entropy_distribution, 8) # MAY DELETE ROUNDING LATER, MORE FOR READABILITY
 
     return entropy_distribution
 
-def select_best_evidence(infer, split_probability_dict, hidden_probabilities_dict, current_evidence, initial_entropy, probabilities):
+def select_best_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, current_evidence, initial_entropy, probabilities):
     # Initialize variables for the reduction in entropy and additional evidence being iterated through
     best_entropy_reduction = float('-inf')
     best_evidence = None
+
+    tic = time.time()
 
     # Iterate over all hidden nodes
     for potential_evidence, associated_anomaly in hidden_probabilities_dict.items():
@@ -106,18 +121,18 @@ def select_best_evidence(infer, split_probability_dict, hidden_probabilities_dic
         evidence = current_evidence.copy()
 
         for outcome in ['False', 'True']:
-            new_probabilities = hidden_queries(infer, split_probability_dict, evidence, potential_evidence, outcome)
+            new_probabilities = hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, potential_evidence, outcome)
             entropy = calculate_entropy(new_probabilities.values())
-            entropy = round(entropy, 8) # MAY DELETE LATER, MORE FOR READABILITY
+            entropy = round(entropy, 8) # MAY DELETE ROUNDING LATER, MORE FOR READABILITY
             entropies.append(entropy)
 
         average_entropy = ((1 - hp_equals_1) * entropies[0]) + (hp_equals_1 * entropies[1])
-        average_entropy = round(average_entropy, 8) # MAY DELETE LATER, MORE FOR READABILITY
+        average_entropy = round(average_entropy, 8) # MAY DELETE ROUNDING LATER, MORE FOR READABILITY
         delta_h = initial_entropy - average_entropy
-        delta_h = round(delta_h, 8) # MAY DELETE LATER, MORE FOR READABILITY
+        delta_h = round(delta_h, 8) # MAY DELETE ROUNDING LATER, MORE FOR READABILITY
 
         if delta_h > best_entropy_reduction:
             best_entropy_reduction = delta_h
             best_evidence = potential_evidence
 
-    return best_evidence, best_entropy_reduction
+    return best_evidence

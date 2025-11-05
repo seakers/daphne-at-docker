@@ -1,6 +1,6 @@
 # ECLSS_Bayesian_Network.py
 # Author: Joshua Elston
-# Last Edited: 03/28/2025
+# Last Edited: 10/29/2025
 
 """
 This main script is used to generate a Bayesian network for an ECLSS environment containing anomalies (parent nodes) and parameters (child nodes).
@@ -44,24 +44,6 @@ from AT.diagnosis.bayesian.user_input import query_parameters, query_additional_
 from AT.diagnosis.bayesian.reduce_entropy import calculate_entropy, select_best_evidence
 
 def get_probabilities(telemetry_values, additional_evidence=None):
-    updated_telemetry_values = {}
-    for i in telemetry_values:
-        if ("Cabin Temperature" in i or "Humidity" in i or "ppCO2" in i or "ppH2" in i or 
-        "ppO2" in i or "ppN2" in i or "Pressure" in i or "Total Cabin Pressure" in i or "H2O" in i):
-            # print("telemetry x", i)
-            x = i
-            # print("telemetry x" , x, i)
-            updated_telemetry_values[i] = float(telemetry_values[i])
-
-        else:
-            x = i.split('(')[0].strip()
-            updated_telemetry_values[x] = float(telemetry_values[i])
-
-    telemetry_values = updated_telemetry_values
-
-    print("additional evidence added", additional_evidence)
-
-
     current_dir = os.path.dirname(os.path.abspath(__file__))
     split_probability_dict = os.path.join(current_dir, "split_probability_dict.json")
     hidden_probabilities_dict = os.path.join(current_dir, "hidden_probabilities_dict.json")
@@ -111,13 +93,84 @@ def get_probabilities(telemetry_values, additional_evidence=None):
         print(f'Initial entropy: {initial_entropy}')
         print()
       
-        best_evidence, best_entropy_reduction = select_best_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
-        print("best evidence and entropy reduction", best_evidence, best_entropy_reduction)
+        best_evidence = select_best_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
+    else:
+        print('No evidence entered. Exiting script.')
+        best_evidence = None
+    
+    hidden_components = load_hidden_components()
+
+    return probabilities, best_evidence, hidden_components
+
+def update_probabilities_additional(telemetry_values, additional_evidence):
+    # Read .json files with probability dictionary (such that these do not need to computed each time the script is ran)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    split_probability_dict = os.path.join(current_dir, "split_probability_dict.json")
+    hidden_probabilities_dict = os.path.join(current_dir, "hidden_probabilities_dict.json")
+    with open(split_probability_dict, "r") as file:
+        split_probability_dict = json.load(file)
+    with open(hidden_probabilities_dict, "r") as file:
+        hidden_probabilities_dict = json.load(file)
+
+    # Define the cardinality of each measurement as 5, representing the 5 possible states that a parameter measurement can be within:
+    thresholds = [
+        'Exceeds_UpperWarningLimit',
+        'Exceeds_UpperCautionLimit',
+        'Nominal',
+        'Exceeds_LowerCautionLimit',
+        'Exceeds_LowerWarningLimit'
+    ]
+    measurement_cardinality = len(thresholds)
+
+    # Define the cardinality of each anomaly as 2, where 0 represents the anomaly not being present (False) and 1 represents the anomaly being present (True)
+    anomaly_cardinality = 2
+
+    # Create the Bayesian Network
+    model = BayesianNetwork(network)
+
+    # NOTE: Given that the anomalies are no longer the top layer in the network, they
+    # do not have prior probabilities defined given their subgroup parents
+
+    prior_cpds_dict = {}
+
+    # From the prior probabilities, add CPDs for the anomalies
+    for anomaly, prior_probability in prior_probabilities.items():
+        model.add_cpds(TabularCPD(
+                                variable = anomaly, 
+                                variable_card = anomaly_cardinality, 
+                                values = [[1 - prior_probability], [prior_probability]] # ordered as [False, True]
+                                ))
+        prior_cpds_dict[anomaly] = {'False': 1 - prior_probability, 'True': prior_probability}
+
+    # Add the CPDs for the parameters conditioned on multiple anomalies
+    add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_cardinality)
+
+    # To perform inference on the Bayesian Network, the Variable Elimination algorithm is used.
+    # For more information on VariableElimination within the pgmpy library, refer here:
+    # https://pgmpy.org/exact_infer/ve.html
+    infer = VariableElimination(model)
+
+    # Add user-provided evidence to the Bayesian network and update the beliefs about the presence of anomalies
+    # print(query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict))
+    probabilities, evidence = query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict)
+
+    if probabilities:
+        # Calculate the initial entropy of the probability distribution based on only readings from the telemetry feed
+        initial_probabilities = list(probabilities.values())
+        initial_entropy = calculate_entropy(initial_probabilities)
+        print(f'Initial entropy: {initial_entropy}')
+        print()
+
+        # Determine which piece of additional evidence the crew member(s) could collect to
+        # cause the greatest reduction in the entropy of the probability distribution
+        # (corresponding to the largest information gain)
+        best_evidence = select_best_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
+
+        updated_probabilities = query_additional_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence, additional_evidence)
+        updated_probabilities = list(updated_probabilities.values())
+        final_entropy = calculate_entropy(updated_probabilities)
+        print(f'Final entropy: {final_entropy}')
         
-        if best_entropy_reduction <=10**-1:
-            best_evidence = None
-
-
     else:
         print('No evidence entered. Exiting script.')
         best_evidence = None
@@ -158,3 +211,7 @@ HIDDEN_COMPONENTS = load_hidden_components()
 print("Hidden Components:")
 for component in HIDDEN_COMPONENTS:
     print(f" - {component}")
+
+test_model = BayesianNetwork(network)
+print("Number of nodes:", test_model.number_of_nodes())
+print("Number of edges:", test_model.number_of_edges())
