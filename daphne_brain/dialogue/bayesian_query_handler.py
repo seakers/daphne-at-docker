@@ -10,13 +10,14 @@ class BayesianQueryHandler:
     """
     def __init__(self):
         self.current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.parent_dir = os.path.dirname(os.path.dirname(self.current_dir))
+        # Get the root directory (daphne_brain app root)
+        self.app_root = os.path.dirname(self.current_dir)
         
-        # Load probability dictionaries
+        # Load probability dictionaries using paths relative to app root
         self.split_probability_dict_path = os.path.join(
-            self.parent_dir, "daphne_brain/AT/diagnosis/bayesian/split_probability_dict.json")
+            self.app_root, "AT/diagnosis/bayesian/split_probability_dict.json")
         self.hidden_probabilities_dict_path = os.path.join(
-            self.parent_dir, "daphne_brain/AT/diagnosis/bayesian/hidden_probabilities_dict.json")
+            self.app_root, "AT/diagnosis/bayesian/hidden_probabilities_dict.json")
         
         with open(self.split_probability_dict_path, "r") as file:
             self.split_probability_dict = json.load(file)
@@ -75,8 +76,12 @@ class BayesianQueryHandler:
         """
         # Check if component is valid
         print("component for bayesian query", additional_evidence_user)
+        
 
         # Get current probabilities without the new evidence
+        print("current evidence for bayesian query", current_evidence)
+        print("current telemetry for bayesian query", current_telemetry)
+        
         current_probs, _, _ = get_probabilities(current_telemetry, current_evidence)
         print("current probs for bayesian query", current_probs)
         

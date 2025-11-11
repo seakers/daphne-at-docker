@@ -286,40 +286,8 @@
             </div>
           </div>
           
-          <!-- Chatbot Physics Diagnosis Results -->
-          <div v-else-if="simpleTabs[activeSimpleTab].isChatbotResult" class="chatbot-physics-results">
-            <div style="text-align: center; padding: 20px;">
-              <h3 style="color: #0AFEFF; margin-bottom: 20px;">Physics Diagnosis Results (via Chatbot)</h3>
-              
-              <!-- Show basic info from the tab data -->
-              <div style="background: #001e1e; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                <p style="color: #ccc; margin-bottom: 15px;">
-                  <strong>Status:</strong> 
-                  <span style="color: #4CAF50;">Completed Successfully</span>
-                </p>
-                <p style="color: #ccc; margin-bottom: 15px;">
-                  <strong>Method:</strong> 
-                  <span style="color: #0AFEFF;">Chatbot Command</span>
-                </p>
-                <p style="color: #ccc; margin-bottom: 15px;">
-                  <strong>Results:</strong> 
-                  <span style="color: #0AFEFF;">Available in Physics Diagnosis Data</span>
-                </p>
-              </div>
-              
-              <!-- Link to view full results -->
-              <div style="text-align: center;">
-                <button class="button theme-buttons"
-                        style="border-color: #0AFEFF; color: #0AFEFF; background: #002E2E; padding: 12px 24px; font-size: 16px;"
-                        @click="viewFullPhysicsResults">
-                  View Full Physics Diagnosis Results
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Regular Physics Diagnosis Report -->
-          <div v-else-if="simpleTabs[activeSimpleTab].type === 'physics'" class="physics-diagnosis-report">
+          <!-- Chatbot Physics Diagnosis Results - Show full physics diagnosis like manual request -->
+          <div v-else-if="simpleTabs[activeSimpleTab].isChatbotResult || simpleTabs[activeSimpleTab].type === 'physics'" class="physics-diagnosis-report">
             <!-- Title Section -->
             <div class="physics-title-section">
               <div>
@@ -348,7 +316,7 @@
                   <tbody>
                     <tr v-for="anomaly in (simpleTabs[activeSimpleTab].physicsDiagnosisData ? simpleTabs[activeSimpleTab].physicsDiagnosisData.componentAnomalies : [])" 
                         :key="anomaly.name"
-                        :style="anomaly.isHighlighted ? 'background:#c0392b; color:white; font-weight:bold;' : ''">
+                        :style="(anomaly.isHighlighted || anomaly.is_highlighted) ? 'background:#c0392b; color:white; font-weight:bold;' : ''">
                       <td class="checkbox-cell">
                         <label class="checkbox-full">
                           <input type="checkbox"
@@ -359,11 +327,11 @@
                         </label>
                       </td>
                       <td>{{ anomaly.name }}</td>
-                      <td>{{ anomaly.score }}</td>
+                      <td>{{ anomaly.similarity || anomaly.probability || anomaly.score || 'N/A' }}</td>
                       <td style="text-align:center; font-size: 12px;">
-                        <span v-if="anomaly.faultInjectionTime !== undefined" 
-                              :title="`Fault injected at data point ${anomaly.faultInjectionTime} (${anomaly.faultInjectionTimeSeconds}s)`">
-                          {{ formatFaultInjectionTime(anomaly.faultInjectionTime, anomaly.faultInjectionTimeSeconds) }}
+                        <span v-if="anomaly.faultInjectionTime !== undefined || anomaly.fault_injection_time !== undefined" 
+                              :title="`Fault injected at data point ${anomaly.faultInjectionTime || anomaly.fault_injection_time} (${anomaly.faultInjectionTimeSeconds || anomaly.fault_injection_time_seconds}s)`">
+                          {{ formatFaultInjectionTime(anomaly.faultInjectionTime || anomaly.fault_injection_time, anomaly.faultInjectionTimeSeconds || anomaly.fault_injection_time_seconds) }}
                         </span>
                         <span v-else style="color: #666;">N/A</span>
                       </td>
@@ -892,7 +860,11 @@ export default {
 
     // Vue Plotly data for physics diagnosis graph
     physicsPlotData() {
+      console.log("🔍 physicsPlotData computed property called");
+      console.log("🔍 telemetryGraphData:", this.telemetryGraphData);
+      
       if (!this.telemetryGraphData || !this.telemetryGraphData.actual) {
+        console.log("⚠️ No telemetry graph data available");
         return [];
       }
 
@@ -1185,6 +1157,11 @@ export default {
         
         if (diagnosisReport && physicsDiagnosisData) {
           console.log("📊 Processing physics diagnosis data from chatbot...");
+          console.log("📊 physicsDiagnosisData received:", physicsDiagnosisData);
+          console.log("📊 componentAnomalies:", physicsDiagnosisData.componentAnomalies);
+          if (physicsDiagnosisData.componentAnomalies && physicsDiagnosisData.componentAnomalies.length > 0) {
+            console.log("📊 First anomaly:", physicsDiagnosisData.componentAnomalies[0]);
+          }
           
           // Check if a physics diagnosis tab already exists
           const existingPhysicsTabIndex = this.simpleTabs.findIndex(tab => 
@@ -1198,7 +1175,8 @@ export default {
               label: "Physics Diagnosis (Chatbot)",
               content: "Physics diagnosis completed via chatbot. Results are displayed below.",
               isChatbotResult: true,
-              diagnosisReport: diagnosisReport
+              diagnosisReport: diagnosisReport,
+              physicsDiagnosisData: physicsDiagnosisData
             };
             this.activeSimpleTab = existingPhysicsTabIndex;
           } else {
@@ -1208,7 +1186,8 @@ export default {
               label: "Physics Diagnosis (Chatbot)",
               content: "Physics diagnosis completed via chatbot. Results are displayed below.",
               isChatbotResult: true,
-              diagnosisReport: diagnosisReport
+              diagnosisReport: diagnosisReport,
+              physicsDiagnosisData: physicsDiagnosisData
             });
             this.activeSimpleTab = this.simpleTabs.length - 1;
           }
@@ -2024,6 +2003,14 @@ export default {
 
     togglePhysicsExplanation() {
       this.showPhysicsExplanation = !this.showPhysicsExplanation;
+      
+      // Debug logging
+      if (this.showPhysicsExplanation) {
+        console.log("📊 Showing physics explanation...");
+        console.log("📊 telemetryGraphData:", this.telemetryGraphData);
+        console.log("📊 selectedPhysicsAnomalies:", this.selectedPhysicsAnomalies);
+        console.log("📊 physicsPlotData:", this.physicsPlotData);
+      }
     },
 
     generateTelemetryDataForAnomalies() {

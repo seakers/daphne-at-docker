@@ -11,6 +11,10 @@ from rest_framework.response import Response
 from auth_API.helpers import get_or_create_user_information
 from daphne_context.models import DialogueHistory, DialogueContext
 from dialogue.bayesian_query_handler import BayesianQueryHandler
+from AT.diagnosis.bayesian.ECLSS_Bayesian_Network import get_probabilities
+from AT.neo4j_queries.query_functions import get_astrobee_procedure_list_from_pride, \
+    retrieve_fancy_steps_from_procedure, retrieve_objective_from_procedure
+from AT.views import StartAstrobeeProcedure, RequestPhysicsDiagnosis
 
 # Begin of langchain
 from dotenv import load_dotenv
@@ -131,9 +135,32 @@ class Command(APIView):
             load_dotenv()
             api_key = os.environ['OPENAI_API_KEY'] = os.getenv('api_key')
 
+# Question: What are the procedures for anomaly X?
+#                                                 Question: What is the procedure for X?
+#                                                 Question: Are there any procedures for anomaly X?
+#                                                 Question: Are there any procedures for X?
+#                                                 Question: Provide anomaly X procedures.
+#                                                 Question: Show me the procedure to solve X.
+#                                                 Question: Procedure X.
+#                                                 Question: Anomaly X procedure.
+#                                                 Question: Give me the procedure for X.
+#                                                 Question: Next
+#                                                 Question: provide the pdf for procedure 3.104
+#                                                 Question: give me the pdf for CDRA Zeolite Filter Swapout
+#                                                 Question: give the pdf for procedure
+#                                                 Question: Will procedure X impact other components?
+#                                                 Question: Which components will procedure X impact?
+#                                                 Question: Show the affected components by procedure X.
+#                                                 Question: How much time will it take to apply procedure X?
+#                                                 Question: What is the estimated time of completion for procedure X?
+#                                                 Question: How long will it take to do X.
+#                                                 Question: How long is procedure X?
+#                                                 Question: Provide procedure X.
+#                                                 Question: Show me procedure X.
+                                    
             intent_classification_template = """
-                                                You are an AI assistant. Your job is to classify the following question as either a 'parameter query', 'knowledge graph query', 'image request', 'storage query', 'bayesian query' or a general question.
-                                                Answer only with 'parameter query', 'knowledge graph query', 'image request', 'storage query', 'bayesian query' or 'general query'.
+                                                You are an AI assistant. Your job is to classify the following question as either a 'parameter query', 'knowledge graph query', 'image request', 'storage query', 'bayesian query', 'bayesian diagnosis query', 'physics diagnosis query', 'pride procedures query', 'start procedure query' or a general question.
+                                                Answer only with 'parameter query', 'knowledge graph query', 'image request', 'storage query', 'bayesian query', 'bayesian diagnosis query', 'physics diagnosis query', 'pride procedures query', 'start procedure query' or 'general query'.
                                                 Below are some examples:
 
                                                 # PARAMETER QUERY Questions
@@ -218,29 +245,7 @@ class Command(APIView):
                                                 Question: Anomaly X components.
                                                 Question: X subsystems.
                                                 Question: X components.
-                                                Question: What are the procedures for anomaly X?
-                                                Question: What is the procedure for X?
-                                                Question: Are there any procedures for anomaly X?
-                                                Question: Are there any procedures for X?
-                                                Question: Provide anomaly X procedures.
-                                                Question: Show me the procedure to solve X.
-                                                Question: Procedure X.
-                                                Question: Anomaly X procedure.
-                                                Question: Give me the procedure for X.
-                                                Question: Next
-                                                Question: provide the pdf for procedure 3.104
-                                                Question: give me the pdf for CDRA Zeolite Filter Swapout
-                                                Question: give the pdf for procedure
-                                                Question: Will procedure X impact other components?
-                                                Question: Which components will procedure X impact?
-                                                Question: Show the affected components by procedure X.
-                                                Question: How much time will it take to apply procedure X?
-                                                Question: What is the estimated time of completion for procedure X?
-                                                Question: How long will it take to do X.
-                                                Question: How long is procedure X?
-                                                Question: Provide procedure X.
-                                                Question: Show me procedure X.
-                                                Question: Provide X pdf.
+                                                            Question: Provide X pdf.
                                                 Question: Show me X pdf.
                                                 Question: Display pdf for X.
                                                 Question: What anomaly would cause high ppCO2 and low ppO2?
@@ -281,7 +286,7 @@ class Command(APIView):
                                                 Question: Where is the X?                              
                                                 Answer: storage query
 
-                                                # BAYESIAN QUERY Questions
+                                                # BAYESIAN QUERY Questions (hypothetical what-if scenarios)
                                                 Question: How did you calculate the anomaly probabilities?
                                                 Question: What if i add this X?
                                                 Question: Why is anomaly X the most likely?
@@ -300,6 +305,50 @@ class Command(APIView):
                                                 Question: What if I add evidence that component X is damaged?
                                                 Question: How would the diagnosis change with evidence for component X?
                                                 Answer: bayesian query
+
+                                                # BAYESIAN DIAGNOSIS QUERY Questions (actually run diagnosis)
+                                                Question: Run Bayesian diagnosis
+                                                Question: Diagnose anomalies using Bayesian network
+                                                Question: Perform Bayesian diagnosis
+                                                Question: Execute Bayesian diagnosis
+                                                Question: Run anomaly diagnosis
+                                                Question: Diagnose the system
+                                                Question: What anomalies are present?
+                                                Question: Perform diagnosis
+                                                Answer: bayesian diagnosis query
+
+                                                # PHYSICS DIAGNOSIS QUERY Questions
+                                                Question: Run physics diagnosis
+                                                Question: Perform physics-based diagnosis
+                                                Question: Execute physics diagnosis
+                                                Question: Run physics-based anomaly detection
+                                                Question: Diagnose using physics model
+                                                Question: Check physics simulation
+                                                Answer: physics diagnosis query
+
+                                                # PRIDE PROCEDURES QUERY Questions
+                                                Question: Get procedures from PRIDE
+                                                Question: Show me PRIDE procedures
+                                                Question: List procedures from PRIDE
+                                                Question: What procedures are available in PRIDE?
+                                                Question: Show procedures for component X
+                                                Question: Get PRIDE procedures for X
+                                                Question: Filter PRIDE procedures by component
+                                                Question: Search PRIDE procedures
+                                                Answer: pride procedures query
+
+                                                # START PROCEDURE QUERY Questions
+                                                Question: Start procedure X
+                                                Question: Begin procedure X
+                                                Question: Execute procedure X
+                                                Question: Run procedure X
+                                                Question: Initiate procedure X
+                                                Question: Launch procedure X
+                                                Question: Start the procedure for X
+                                                Question: Begin the X procedure
+                                                Question: I want to start procedure X
+                                                Question: Can you start procedure X?
+                                                Answer: start procedure query
 
                                                 All other questions are classified as 'general query'. 
                                                 Now, classify the following question:
@@ -649,61 +698,6 @@ class Command(APIView):
 
             enhanced_query = self.enhance_query_with_context(request.data['command'], dialogue_history, client)
 
-            # Check for physics diagnosis command
-            if enhanced_query.lower().strip() == "run physics diagnosis":
-                # Set session state to waiting for duration
-                self.session_state['waiting_for_physics_duration'] = True
-                return Response({"response": {
-                    "voice_message": "How long time duration in seconds?",
-                    "visual_message_type": ["text"],
-                    "visual_message": ["How long time duration in seconds?"],
-                    "writer": "daphne"
-                }})
-            
-            # Check if waiting for physics duration and user provided a number
-            if self.session_state.get('waiting_for_physics_duration', False):
-                try:
-                    duration = int(enhanced_query.strip())
-                    if duration > 0:
-                        # Reset the flag
-                        self.session_state['waiting_for_physics_duration'] = False
-                        
-                        # Import and run physics diagnosis
-                        from AT.dialogue.dialogue_functions import run_physics_diagnosis
-                        result = run_physics_diagnosis(duration)
-                        
-                        if result["status"] == "success":
-                            # Store the diagnosis report in session for later use
-                            self.session_state['physics_diagnosis_report'] = result["diagnosis_report"]
-                            
-                            return Response({"response": {
-                                "voice_message": f"Physics diagnosis completed for {duration} seconds. The results are now available in the Anomaly Diagnosis window.",
-                                "visual_message_type": ["text"],
-                                "visual_message": [f"Physics diagnosis completed for {duration} seconds. The results are now available in the Anomaly Diagnosis window."],
-                                "writer": "daphne"
-                            }})
-                        else:
-                            return Response({"response": {
-                                "voice_message": f"Physics diagnosis failed: {result['error_message']}",
-                                "visual_message_type": ["text"],
-                                "visual_message": [f"Physics diagnosis failed: {result['error_message']}"],
-                                "writer": "daphne"
-                            }})
-                    else:
-                        return Response({"response": {
-                            "voice_message": "Please provide a positive number for the time duration in seconds.",
-                            "visual_message_type": ["text"],
-                            "visual_message": ["Please provide a positive number for the time duration in seconds."],
-                            "writer": "daphne"
-                        }})
-                except ValueError:
-                    return Response({"response": {
-                        "voice_message": "Please provide a valid number for the time duration in seconds.",
-                        "visual_message_type": ["text"],
-                        "visual_message": ["Please provide a valid number for the time duration in seconds."],
-                        "writer": "daphne"
-                    }})
-
             response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
@@ -758,9 +752,30 @@ class Command(APIView):
             elif classify_answer == 'bayesian query':
                 # Get current telemetry values from the store
                 try:
-                    # This assumes telemetry values are stored in the session or elsewhere
-                    current_telemetry = json.loads(request.data.get('telemetry_values', '{}'))
-                    current_evidence = json.loads(request.data.get('additional_evidence', '{}'))
+                    # Debug: Print all request data keys
+                    print("DEBUG: Request data keys:", request.data.keys())
+                    print("DEBUG: Request POST keys:", request.POST.keys() if hasattr(request, 'POST') else "No POST")
+                    
+                    # Get telemetry values (current and t-1) - use request.POST for FormData
+                    telemetry_values = json.loads(request.POST.get('telemetry_values', '{}'))
+                    telemetry_values_t1 = json.loads(request.POST.get('telemetry_values_t1', '{}'))
+                    print("telemetry values (current):", telemetry_values)
+                    print("telemetry values t1:", telemetry_values_t1)
+                    current_evidence = json.loads(request.POST.get('additional_evidence', '{}'))
+                    
+                    # Process telemetry values - add both current and t-1 values generically
+                    updated_telemetry_values = {}
+                    
+                    # Add current telemetry values (t=0)
+                    for key, value in telemetry_values.items():
+                        updated_telemetry_values[key] = float(value)
+                    
+                    # Add t-1 values with (t-1) suffix
+                    for key, value in telemetry_values_t1.items():
+                        t1_key = f"{key} (t-1)"
+                        updated_telemetry_values[t1_key] = float(value)
+                    
+                    current_telemetry = updated_telemetry_values
                     
                     # Initialize the Bayesian query handler
                     bayesian_handler = BayesianQueryHandler()
@@ -806,6 +821,453 @@ class Command(APIView):
                     }
                     return Response({
                         "response": error_message
+                    })
+            
+            ##################################################################################################################
+            # BAYESIAN DIAGNOSIS QUERY - Actually run diagnosis and allow adding to history
+            ##################################################################################################################
+            elif classify_answer == 'bayesian diagnosis query':
+                try:
+                    # Get telemetry values (current and t-1) - use request.POST for FormData
+                    telemetry_values = json.loads(request.POST.get('telemetry_values', '{}'))
+                    telemetry_values_t1 = json.loads(request.POST.get('telemetry_values_t1', '{}'))
+                    current_evidence = json.loads(request.POST.get('additional_evidence', '{}'))
+                    
+                    # Process telemetry values - add both current and t-1 values generically
+                    updated_telemetry_values = {}
+                    
+                    # Add current telemetry values (t=0)
+                    for key, value in telemetry_values.items():
+                        updated_telemetry_values[key] = float(value)
+                    
+                    # Add t-1 values with (t-1) suffix
+                    for key, value in telemetry_values_t1.items():
+                        t1_key = f"{key} (t-1)"
+                        updated_telemetry_values[t1_key] = float(value)
+                    
+                    # Run Bayesian diagnosis
+                    probabilities, best_evidence, hidden_components = get_probabilities(
+                        updated_telemetry_values, 
+                        additional_evidence=current_evidence
+                    )
+                    
+                    # Get top 5 probabilities
+                    top_5_probabilities = dict(sorted(probabilities.items(), 
+                                         key=lambda item: item[1], 
+                                         reverse=True)[:5])
+                    
+                    final_report = []
+                    for anomaly, probability in top_5_probabilities.items():
+                        final_report.append({
+                            'anomaly': anomaly,
+                            'probability': probability,
+                        })
+                    
+                    # Format the probabilities for display
+                    formatted_probabilities = "\n".join([f"{anomaly}: {prob:.4f}" for anomaly, prob in top_5_probabilities.items()])
+                    visual_message = [f"Bayesian Diagnosis Results:\n\n{formatted_probabilities}"]
+                    
+                    if best_evidence:
+                        visual_message.append(f"\nMost informative evidence to collect: {best_evidence}")
+                    
+                    response = {
+                        "voice_message": "Bayesian diagnosis completed.",
+                        "visual_message_type": ["text"],
+                        "visual_message": visual_message,
+                        "writer": "daphne",
+                        "options": ["Add to Diagnosis History"],
+                        "optionsCallbackEvent": "addBayesianDiagnosis",
+                        "diagnosis_data": {
+                            "probabilities": probabilities,
+                            "best_evidence": best_evidence,
+                            "hidden_components": hidden_components,
+                            "diagnosis_list": final_report,
+                            "telemetry_values": updated_telemetry_values
+                        }
+                    }
+                    
+                    self.session_state['user_input'].append(enhanced_query)
+                    self.session_state['generated'].append(response)
+                    self.generate_context(response, 'generated')
+                    
+                    return Response({"response": response})
+                    
+                except Exception as e:
+                    print(f"Error handling Bayesian diagnosis query: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    return Response({
+                        "response": {
+                            "voice_message": "I'm sorry, but I encountered an error running Bayesian diagnosis.",
+                            "visual_message_type": ["text"],
+                            "visual_message": ["I'm sorry, but I encountered an error running Bayesian diagnosis. Please try again."],
+                            "writer": "daphne"
+                        }
+                    })
+            
+            ##################################################################################################################
+            # PHYSICS DIAGNOSIS QUERY - Run physics-based diagnosis
+            ##################################################################################################################
+            elif classify_answer == 'physics diagnosis query':
+                try:
+                    # Extract target anomaly and duration from the query using GPT
+                    extract_response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": "Extract the target anomaly name and duration (in seconds) from the user's query about running physics diagnosis. Return in format: 'anomaly_name|duration'. If no anomaly specified, use 'CDRA Failure'. If no duration specified, use '120000'. Examples: 'CDRA Failure|30000', 'Main Cabin Fan Failure|120000'"},
+                            {"role": "user", "content": enhanced_query}
+                        ],
+                        temperature=0,
+                    )
+                    
+                    extraction = extract_response.choices[0].message.content.strip()
+                    
+                    # Parse the extraction
+                    if '|' in extraction:
+                        target_anomaly, duration_str = extraction.split('|')
+                        target_anomaly = target_anomaly.strip()
+                        try:
+                            duration = int(duration_str.strip())
+                        except:
+                            duration = 120000  # Default
+                    else:
+                        target_anomaly = extraction.strip() if extraction.strip() else 'CDRA Failure'
+                        duration = 120000  # Default
+                    
+                    # Ensure positive duration
+                    if duration <= 0:
+                        duration = 120000
+                    
+                    print(f"Running physics diagnosis: anomaly={target_anomaly}, duration={duration}s")
+                    
+                    # Create mock request for RequestPhysicsDiagnosis
+                    from django.http import QueryDict, HttpRequest
+                    from rest_framework.request import Request
+                    
+                    mock_django_request = HttpRequest()
+                    mock_django_request.method = 'POST'
+                    
+                    # Create mock request data
+                    mock_request = Request(mock_django_request)
+                    mock_request._full_data = {
+                        'symptomsList': json.dumps([]),  # Empty symptoms list
+                        'target_anomaly': target_anomaly,
+                        'sim_duration_seconds': duration,
+                        'sampling_rate_seconds': 1  # Default sampling rate
+                    }
+                    
+                    # Call RequestPhysicsDiagnosis directly
+                    physics_diagnosis_view = RequestPhysicsDiagnosis()
+                    diagnosis_response = physics_diagnosis_view.post(mock_request)
+                    
+                    if diagnosis_response.status_code == 200:
+                        diagnosis_report = diagnosis_response.data
+                        
+                        # Store in session for later retrieval
+                        self.session_state['physics_diagnosis_report'] = diagnosis_report
+                        
+                        # Format response message
+                        response_text = f"✅ Physics Diagnosis Completed!\n\n"
+                        response_text += f"Target Anomaly: {target_anomaly}\n"
+                        response_text += f"Simulation Duration: {duration} seconds\n\n"
+                        response_text += "The detailed results are now available in the Anomaly Diagnosis window."
+                        
+                        # diagnosis_report already contains 'physics_diagnosis_data', so just pass it as is
+                        response = {
+                            "voice_message": f"Physics diagnosis completed for {target_anomaly} over {duration} seconds.",
+                            "visual_message_type": ["text"],
+                            "visual_message": [response_text],
+                            "writer": "daphne",
+                            "diagnosis_report": diagnosis_report
+                        }
+                        
+                        self.session_state['user_input'].append(enhanced_query)
+                        self.session_state['generated'].append(response)
+                        self.generate_context(response, 'generated')
+                        
+                        return Response({"response": response})
+                    else:
+                        return Response({"response": {
+                            "voice_message": "I encountered an error running physics diagnosis.",
+                            "visual_message_type": ["text"],
+                            "visual_message": ["❌ I encountered an error running physics diagnosis. Please try again."],
+                            "writer": "daphne"
+                        }})
+                    
+                except Exception as e:
+                    print(f"Error handling Physics diagnosis query: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    return Response({
+                        "response": {
+                            "voice_message": "I'm sorry, but I encountered an error running physics diagnosis.",
+                            "visual_message_type": ["text"],
+                            "visual_message": ["I'm sorry, but I encountered an error running physics diagnosis. Please try again."],
+                            "writer": "daphne"
+                        }
+                    })
+            
+            ##################################################################################################################
+            # PRIDE PROCEDURES QUERY - Get and filter procedures from PRIDE API
+            ##################################################################################################################
+            elif classify_answer == 'pride procedures query':
+                try:
+                    # Get procedures from PRIDE
+                    pride_procedures = get_astrobee_procedure_list_from_pride()
+                    
+                    if not pride_procedures:
+                        return Response({"response": {
+                            "voice_message": "No procedures available from PRIDE at the moment.",
+                            "visual_message_type": ["text"],
+                            "visual_message": ["No procedures available from PRIDE at the moment."],
+                            "writer": "daphne"
+                        }})
+                    
+                    # Try to extract component/filter from the query using GPT
+                    filter_response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": "Extract the component name or filter keyword from the user's query about PRIDE procedures. If no specific filter is mentioned, return 'none'. Only return the keyword, nothing else."},
+                            {"role": "user", "content": enhanced_query}
+                        ],
+                        temperature=0,
+                    )
+                    
+                    filter_keyword = filter_response.choices[0].message.content.strip().lower()
+                    
+                    # Filter procedures if keyword is provided
+                    if filter_keyword != 'none':
+                        filtered_procedures = [
+                            proc for proc in pride_procedures 
+                            if filter_keyword in str(proc).lower()
+                        ]
+                        procedures_to_show = filtered_procedures if filtered_procedures else pride_procedures
+                        filter_msg = f" (filtered by '{filter_keyword}')" if filtered_procedures else " (no matches found for filter, showing all)"
+                    else:
+                        procedures_to_show = pride_procedures
+                        filter_msg = ""
+                    
+                    # Format procedures for display
+                    if isinstance(procedures_to_show, list):
+                        if len(procedures_to_show) > 20:
+                            procedures_text = "\n".join([str(proc) for proc in procedures_to_show[:20]])
+                            procedures_text += f"\n\n... and {len(procedures_to_show) - 20} more procedures"
+                        else:
+                            procedures_text = "\n".join([str(proc) for proc in procedures_to_show])
+                    else:
+                        procedures_text = str(procedures_to_show)
+                    
+                    response = {
+                        "voice_message": f"Here are the PRIDE procedures{filter_msg}.",
+                        "visual_message_type": ["text"],
+                        "visual_message": [f"PRIDE Procedures{filter_msg}:\n\n{procedures_text}"],
+                        "writer": "daphne"
+                    }
+                    
+                    self.session_state['user_input'].append(enhanced_query)
+                    self.session_state['generated'].append(response)
+                    self.generate_context(response, 'generated')
+                    
+                    return Response({"response": response})
+                    
+                except Exception as e:
+                    print(f"Error handling PRIDE procedures query: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    return Response({
+                        "response": {
+                            "voice_message": "I'm sorry, but I encountered an error retrieving PRIDE procedures.",
+                            "visual_message_type": ["text"],
+                            "visual_message": ["I'm sorry, but I encountered an error retrieving PRIDE procedures. Please try again."],
+                            "writer": "daphne"
+                        }
+                    })
+            
+            ##################################################################################################################
+            # START PROCEDURE QUERY - Start executing a procedure using StartAstrobeeProcedure API
+            ##################################################################################################################
+            elif classify_answer == 'start procedure query':
+                try:
+                    # Extract procedure name or ID from the query using GPT
+                    extract_response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": "Extract the procedure name or ID from the user's query about starting a procedure. Return only the procedure name or ID, nothing else. If you can't find a specific procedure, return 'unknown'."},
+                            {"role": "user", "content": enhanced_query}
+                        ],
+                        temperature=0,
+                    )
+                    
+                    procedure_identifier = extract_response.choices[0].message.content.strip()
+                    
+                    if procedure_identifier.lower() == 'unknown':
+                        return Response({"response": {
+                            "voice_message": "Please specify which procedure you'd like to start.",
+                            "visual_message_type": ["text"],
+                            "visual_message": ["Please specify which procedure you'd like to start. For example: 'Start procedure VCCR Excess Cabin Gases' or 'Start procedure [procedure-id]'"],
+                            "writer": "daphne"
+                        }})
+                    
+                    # Check if it's a UUID (static ID) or a procedure name
+                    import re
+                    is_uuid = bool(re.match(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', procedure_identifier, re.IGNORECASE))
+                    
+                    procedure_static_id = None
+                    procedure_name = None
+                    
+                    if is_uuid:
+                        # It's already a static ID
+                        procedure_static_id = procedure_identifier
+                        procedure_name = procedure_identifier  # Will try to get actual name later
+                    else:
+                        # It's a procedure name, need to look up the static ID from PRIDE
+                        try:
+                            pride_procedures = get_astrobee_procedure_list_from_pride()
+                            
+                            if pride_procedures:
+                                # Search for matching procedure by name
+                                matching_procedure = None
+                                procedure_identifier_lower = procedure_identifier.lower()
+                                
+                                for proc in pride_procedures:
+                                    if isinstance(proc, dict):
+                                        proc_title = proc.get('title', '').lower()
+                                        # Exact match or contains match
+                                        if proc_title == procedure_identifier_lower or procedure_identifier_lower in proc_title:
+                                            matching_procedure = proc
+                                            break
+                                
+                                if matching_procedure:
+                                    procedure_static_id = matching_procedure.get('staticProcedureID')
+                                    procedure_name = matching_procedure.get('title')
+                                else:
+                                    # No match found
+                                    return Response({"response": {
+                                        "voice_message": f"I couldn't find a procedure named '{procedure_identifier}' in PRIDE.",
+                                        "visual_message_type": ["text"],
+                                        "visual_message": [f"❌ I couldn't find a procedure named '{procedure_identifier}' in PRIDE. Please verify the procedure name and try again."],
+                                        "writer": "daphne"
+                                    }})
+                            else:
+                                return Response({"response": {
+                                    "voice_message": "I couldn't retrieve the procedure list from PRIDE.",
+                                    "visual_message_type": ["text"],
+                                    "visual_message": ["❌ I couldn't retrieve the procedure list from PRIDE. Please try again later."],
+                                    "writer": "daphne"
+                                }})
+                                
+                        except Exception as pride_error:
+                            print(f"Error fetching PRIDE procedures: {pride_error}")
+                            import traceback
+                            traceback.print_exc()
+                            return Response({"response": {
+                                "voice_message": "I encountered an error looking up the procedure in PRIDE.",
+                                "visual_message_type": ["text"],
+                                "visual_message": ["❌ I encountered an error looking up the procedure in PRIDE. Please try using the procedure ID directly."],
+                                "writer": "daphne"
+                            }})
+                    
+                    if not procedure_static_id:
+                        return Response({"response": {
+                            "voice_message": "I couldn't find the procedure ID.",
+                            "visual_message_type": ["text"],
+                            "visual_message": ["❌ I couldn't find the procedure ID. Please try again."],
+                            "writer": "daphne"
+                        }})
+                    
+                    # Call the StartAstrobeeProcedure view directly (avoid HTTP loop)
+                    try:
+                        print(f"Starting procedure directly via StartAstrobeeProcedure class")
+                        print(f"Procedure Name: {procedure_name}")
+                        print(f"Procedure Static ID: {procedure_static_id}")
+                        
+                        # Create a mock request object with the procedure ID
+                        from django.http import QueryDict
+                        from rest_framework.request import Request
+                        from django.http import HttpRequest
+                        
+                        # Create a mock Django request
+                        mock_django_request = HttpRequest()
+                        mock_django_request.method = 'POST'
+                        mock_django_request.POST = QueryDict('', mutable=True)
+                        mock_django_request.POST['procedureID'] = f'"{procedure_static_id}"'
+                        
+                        # Wrap it in a DRF Request
+                        mock_request = Request(mock_django_request)
+                        mock_request._full_data = {'procedureID': f'"{procedure_static_id}"'}
+                        
+                        # Call the StartAstrobeeProcedure view directly
+                        start_procedure_view = StartAstrobeeProcedure()
+                        api_response = start_procedure_view.post(mock_request)
+                        
+                        print(f"Procedure start response status: {api_response.status_code}")
+                        print(f"Procedure start response data: {api_response.data}")
+                        
+                        if api_response.status_code == 200:
+                            procedure_runtime_id = api_response.data.get('procedure_runtime_id', 'unknown')
+                            
+                            procedure_info = f"✅ Procedure Started Successfully!\n\n"
+                            if procedure_name:
+                                procedure_info += f"Procedure: {procedure_name}\n"
+                            procedure_info += f"Static ID: {procedure_static_id}\n"
+                            procedure_info += f"Runtime ID: {procedure_runtime_id}"
+                            
+                            response = {
+                                "voice_message": f"Procedure {procedure_name or procedure_static_id} has been started successfully.",
+                                "visual_message_type": ["text"],
+                                "visual_message": [procedure_info],
+                                "writer": "daphne",
+                                "procedure_data": {
+                                    "procedure_name": procedure_name,
+                                    "procedure_static_id": procedure_static_id,
+                                    "procedure_runtime_id": procedure_runtime_id,
+                                    "status": "started"
+                                }
+                            }
+                            
+                            self.session_state['user_input'].append(enhanced_query)
+                            self.session_state['generated'].append(response)
+                            self.session_state['current_procedure'] = {
+                                "name": procedure_name,
+                                "static_id": procedure_static_id,
+                                "runtime_id": procedure_runtime_id,
+                                "status": "started"
+                            }
+                            self.generate_context(response, 'generated')
+                            
+                            return Response({"response": response})
+                            
+                        else:
+                            error_msg = api_response.json().get('message', 'Unknown error')
+                            return Response({"response": {
+                                "voice_message": f"Failed to start procedure: {error_msg}",
+                                "visual_message_type": ["text"],
+                                "visual_message": [f"❌ Failed to start procedure.\n\nError: {error_msg}"],
+                                "writer": "daphne"
+                            }})
+                        
+                    except Exception as api_error:
+                        print(f"Error calling StartAstrobeeProcedure API: {api_error}")
+                        import traceback
+                        traceback.print_exc()
+                        return Response({"response": {
+                            "voice_message": f"I encountered an error starting the procedure.",
+                            "visual_message_type": ["text"],
+                            "visual_message": [f"❌ I encountered an error starting the procedure. Please try again or use the manual procedure start interface."],
+                            "writer": "daphne"
+                        }})
+                    
+                except Exception as e:
+                    print(f"Error handling start procedure query: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    return Response({
+                        "response": {
+                            "voice_message": "I'm sorry, but I encountered an error starting the procedure.",
+                            "visual_message_type": ["text"],
+                            "visual_message": ["I'm sorry, but I encountered an error starting the procedure. Please try again."],
+                            "writer": "daphne"
+                        }
                     })
             
             ##################################################################################################################

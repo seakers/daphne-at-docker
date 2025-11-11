@@ -1220,6 +1220,7 @@ def create_physics_diagnosis_report(
         Complete diagnosis report with physics data
     """
     target_telemetry_sensor = get_target_sensor_for_anomaly(target_anomaly)
+    print(f"🔍 Physics Diagnosis: Target telemetry sensor set to '{target_telemetry_sensor}' for anomaly '{target_anomaly}'")
     physics_diagnosis_data = generate_physics_diagnosis_data(
         symptoms_list, 
         target_telemetry_sensor, 

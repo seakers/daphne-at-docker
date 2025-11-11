@@ -1,7 +1,7 @@
 services:
   db:
     container_name: daphne-at-db
-    image: postgres
+    image: postgres:16
     restart: unless-stopped
     shm_size: 128mb
     environment:

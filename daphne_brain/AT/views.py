@@ -457,7 +457,7 @@ class HeraFeed(APIView):
             if 'Parameters' in parsed_sensor_data:
                 try:
                     parameters_list = parsed_sensor_data['Parameters']
-                    print(f"🔄 HeraFeed: Storing telemetry data with {len(parameters_list)} parameters")
+                    # print(f"🔄 HeraFeed: Storing telemetry data with {len(parameters_list)} parameters")
                     #print(f"📊 HeraFeed: Raw Parameters data: {json.dumps(parameters_list, indent=2)}")
                     
                     # Convert list of sensor objects to dictionary for easier access
@@ -474,17 +474,18 @@ class HeraFeed(APIView):
                     
                     # Convert to BioSim parameter names if BioSim is connected
 
-                    print(f"�📊 HeraFeed: Telemetry sensors: {list(telemetry_dict.keys())}")
+                    # print(f"�📊 HeraFeed: Telemetry sensors: {list(telemetry_dict.keys())}")
                     
                     # Check for target sensor (adjust based on format)
                     target_sensor = 'ppCO2_IHab (IHab)' if use_biosim_format else 'ppCO2 (L1)'
                     if target_sensor in telemetry_dict:
-                        print(f"✅ HeraFeed: Found {target_sensor} = {telemetry_dict[target_sensor]}")
+                        pass
+                        # print(f"✅ HeraFeed: Found {target_sensor} = {telemetry_dict[target_sensor]}")
                     else:
                         print(f"❌ HeraFeed: {target_sensor} not found in telemetry data")
                         # Look for any CO2-related sensors
                         co2_sensors = [k for k in telemetry_dict.keys() if 'CO2' in k or 'co2' in k]
-                        print(f"🔍 HeraFeed: Available CO2-related sensors: {co2_sensors}")
+                        # print(f"🔍 HeraFeed: Available CO2-related sensors: {co2_sensors}")
                     
                     # Store telemetry data with appropriate source and format
                     telemetry_record = telemetry_storage.store_telemetry(
@@ -496,7 +497,7 @@ class HeraFeed(APIView):
                             'original_data': {'Parameters': parameters_list}  # Store original data for sensor info
                         }
                     )
-                    print(f"💾 HeraFeed: Successfully stored telemetry record ID: {telemetry_record.id}")
+                    # print(f"💾 HeraFeed: Successfully stored telemetry record ID: {telemetry_record.id}")
                     
                 except Exception as e:
                     print(f"❌ HeraFeed: Error storing telemetry data: {e}")
