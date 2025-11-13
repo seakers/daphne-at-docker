@@ -1,14 +1,16 @@
 # query_network.py
 # Author: Joshua Elston
-# Last Edited: 03/28/2025
+# Last Edited: 10/29/2025
 
 # Used to query the Bayesian network to compute posterior probabilities based on user inputs
 # for parameter values --> called in ECLSS_Bayesian_Network.py
+# Changes on 10/29/2025 remove parameters from list of query variables (i.e., purely retaining them as evidence)
 
 import time
 
 def query_network(infer, parameter_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
     # Start timing the network query
+    tic = time.time()
     
     # Create state mappings for the high and low parameter variables
     high_state_mapping = {
@@ -96,19 +98,31 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
     # Verify that evidence is correctly added when querying the network
     print('Evidence:', evidence)
 
+    # NEW CODE ON 10/29/2025
+    # Create a set of all parameter variable names to ensure correct parameters are removed as variables prior to inference
+    all_parameters = set()
+    for param in measurement_ranges.keys():
+        all_parameters.add(f"high {param}")
+        all_parameters.add(f"low {param}")
+
     # Extract unique anomalies from the probabilities_dict
     unique_anomalies = set() # using a set handles duplicate anomalies
-    for _, anomaly in split_probability_dict.items():
-        unique_anomalies.update(anomaly.keys()) # add anomalies
+
+    for _, anomaly_dict in split_probability_dict.items():
+        for anomaly_name in anomaly_dict.keys():
+            # Skip anomalies that are themselves parameters in the network
+            if anomaly_name in all_parameters:
+                continue
+            else:
+                unique_anomalies.add(anomaly_name) # add anomalies
 
     anomalies_to_query = list(unique_anomalies)
     # Add the No Anomalies Present node to the set of anomalies to be queried based on the telemetry feed evidence
     anomalies_to_query.append("No Anomalies Present")
-    # print('Anomalies to query:', anomalies_to_query)
+    print('Anomalies to query:', anomalies_to_query)
 
     # Initialize a dictionary to store the probability of each anomaly being present
     anomaly_probabilities = {}
-
 
     # Perform the inference one anomaly at a time
     # NOTE: Trying to perform inference on all anomalies at once leads to a runtime error, as it is too big of problem;
@@ -138,10 +152,11 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
     for anomaly, probability in anomaly_probabilities.items():
         normalized_probabilities[anomaly] = probability / total_anomaly_probabilities
 
+    toc = time.time()
+    runtime = toc - tic
 
     # Return results and evidence
-    return normalized_probabilities, evidence, 0
-
+    return normalized_probabilities, evidence, runtime
 
 def get_evidence_info(hidden_probabilities_dict):
     # Extract the names of the additional evidence variables (used to verify if variables entered correctly)

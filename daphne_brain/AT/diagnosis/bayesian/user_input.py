@@ -1,13 +1,14 @@
 # user_input.py
 # Author: Joshua Elston
-# Last Edited: 03/28/2025
+# Last Edited: 10/29/2025
 
 # Used to process user inputs and display updated Bayesian network beliefs based on provided evidence --> called in ECLSS_Bayesian_Network.py
+# Changes on 10/29/2025 remove parameters from list of query variables (i.e., purely retaining them as evidence)
 
 import time
 from AT.diagnosis.bayesian.query_network import query_network
 
-def get_parameter_input(telemetry_values,measurement_ranges):
+def get_parameter_input(telemetry_values, measurement_ranges):
     # Prompt the user to enter a parameter and its value
     parameter = input("Enter a parameter to update its value (or 'exit' to quit): ")
     # Check the exit criteria
@@ -76,23 +77,15 @@ def query_parameters(infer, telemetry_values, measurement_ranges, split_probabil
             print()
         
             formatted_probabilities = {key: float(value) for key, value in normalized_probabilities.items()}
-            print("Formatted probabilities: ", formatted_probabilities)
+            # print("Formatted probabilities: ", formatted_probabilities)
             # Return the formatted probabilities to calculate the entropy of the probability distribution
             return formatted_probabilities, evidence
 
         except RuntimeError as e:
             print(f"Error during querying: {e}")
 
-        # # Ask the user if they wish to continue updating parameters
-        # # NOTE: WITH NEW CALL TO QUERY ADDITIONAL EVIDENCE, DOESN'T APPEAR THAT THIS
-        # # BLOCK IS BEING USED
-        # if input("Would you like to continue updating parameter values? (yes/no): ").strip().lower() != 'yes':
-        #     print()
-        #     print("Exiting parameter updating process.")
-        #     break
-
-
 #################### User inputs for additional evidence ####################
+# NOTE: Confirm with Mahima whether or not this function is still useful given the UI scale implemented for the hidden parameters
 def get_evidence_info(hidden_probabilities_dict):
     # Extract the names of the additional evidence variables (used to verify if variables entered correctly)
     additional_evidence_variables = []
@@ -102,8 +95,7 @@ def get_evidence_info(hidden_probabilities_dict):
 
     # Collect additional evidence from the crew
     hidden_parameter = input(f"Enter the additional evidence being collected: ").strip()
-    # Verify that the variable name entered by the crew matches one of the hidden variables
-    # defined in the Bayesian network
+    # Verify that the variable name entered by the crew matches one of the hidden variables defined in the Bayesian network
     if hidden_parameter not in additional_evidence_variables:
         print("Invalid additional evidence. Please try again.")
         return get_evidence_info(hidden_probabilities_dict) # recursively prompt user to correctly enter additional evidence
@@ -116,10 +108,11 @@ def get_evidence_info(hidden_probabilities_dict):
 
     return hidden_parameter, hidden_state
 
-def query_additional_evidence(infer, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence, additional_evidence):
+def query_additional_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence, additional_evidence):
     # Function takes elements from query_network without the need to remap evidence that should have previous been set and stored there
 
     while True:
+        # NOTE: Commented block used for manually providing additional evidence; may no longer be necessary with Daphne integration
         # Create a dictionary to store additional evidence added by the crew
         # additional_evidence = {}
 
@@ -148,10 +141,25 @@ def query_additional_evidence(infer, split_probability_dict, hidden_probabilitie
 
             print(f'Mapped evidence: {evidence}')
 
+            # NEW CODE ON 10/29/2025
+            # Create a set of all parameter variable names to ensure correct parameters are removed as variables prior to inference
+            all_parameters = set()
+            for param in measurement_ranges.keys():
+                all_parameters.add(f"high {param}")
+                all_parameters.add(f"low {param}")
+
             # Extract unique anomalies from the probabilities_dict
             unique_anomalies = set() # using a set handles duplicate anomalies
-            for _, anomaly in split_probability_dict.items():
-                unique_anomalies.update(anomaly.keys()) # add anomalies
+                        
+            for _, anomaly_dict in split_probability_dict.items():
+                for anomaly_name in anomaly_dict.keys():
+                    # Skip anomalies that are themselves parameters in the network
+                    if anomaly_name in all_parameters:
+                        print(f"Skipping anomaly (it's a parameter): {anomaly_name}")
+                        continue
+                    else:
+                        print(f"Adding anomaly: {anomaly_name}")
+                        unique_anomalies.add(anomaly_name) # add anomalies
 
             anomalies_to_query = list(unique_anomalies)
             # Add the No Anomalies Present node to the set of anomalies to be queried based on the telemetry feed evidence

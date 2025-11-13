@@ -1,17 +1,33 @@
 # hidden_probabilities.py
 # Author: Joshua Elston
-# Last Edited: 03/02/2025
+# Last Edited: 11/05/2025
 
 # Stores probabilities of hidden nodes being in different qualititative states (translated to True or False),
 # conditioned on the presence (or absence) of their specific parent anomaly. The hidden nodes serve as
 # additional evidence to reduce the uncertainty in an initial diagnosis.
 # Mathematically, these probabilities are: Pr(AE=ae|A)
+# Updated on 10/17/2025 to include probabilities for level-specific failures
+# Changes on 11/05/2025 to reflect naming convention for Gateway (L1 -- > IHab, L2 --> HALO)
+# NOTE: For some reason, this script does not get automatically put into the bayesian folder, and is instead stored at
+# the highest level of the repository. Will have to drag in from the bottom of the scripts in the scroll down menu.
 
 import json
 
 hidden_probabilities_dict = {
     "[HIDDEN] BFS Component": {
-        "Biological Filter Saturation": {
+        "Biological Filter Saturation (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.985,
+                    'False': 0.015
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "Biological Filter Saturation (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.985,
@@ -25,7 +41,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] CDRA Failure Component": {
-        "CDRA Failure": {
+        "CDRA Failure (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.9988,
+                    'False': 0.0012
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "CDRA Failure (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9988,
@@ -39,7 +67,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] CDRA LiOH Canister Saturation Component": {
-        "CDRA LiOH Canister Saturation": {
+        "CDRA LiOH Canister Saturation (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.9755,
+                    'False': 0.0245
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "CDRA LiOH Canister Saturation (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9755,
@@ -53,7 +93,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Electrolysis System Failure Component": {
-        "Electrolysis System Failure": {
+        "Electrolysis System Failure (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.982,
+                    'False': 0.018
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "Electrolysis System Failure (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.982,
@@ -67,7 +119,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Emergency O2 System Maintenance Component": {
-        "Emergency O2 System Maintenance": {
+        "Emergency O2 System Maintenance (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.9762,
+                    'False': 0.0238
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "Emergency O2 System Maintenance (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9762,
@@ -81,7 +145,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Excess CO2 in Cabin Component": {
-        "Excess CO2 in Cabin": {
+        "Excess CO2 in Cabin (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.973,
+                    'False': 0.027
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "Excess CO2 in Cabin (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.973,
@@ -95,7 +171,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Excess Gas Leak Component": {
-        "Excess Gas Leak": {
+        "Excess Gas Leak (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.9886,
+                    'False': 0.0114
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "Excess Gas Leak (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9886,
@@ -109,7 +197,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Excess Water Vapor Pressure in Cabin Component": {
-        "Excess Water Vapor Pressure in Cabin": {
+        "Excess Water Vapor Pressure in Cabin (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.986,
+                    'False': 0.014
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "Excess Water Vapor Pressure in Cabin (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.986,
@@ -179,7 +279,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Loss of Pressure Component": {
-        "Loss of Pressure": {
+        "Loss of Pressure (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.998,
+                    'False': 0.002
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "Loss of Pressure (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.998,
@@ -193,7 +305,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Main Cabin Fan Failure Component": {
-        "Main Cabin Fan Failure": {
+        "Main Cabin Fan Failure (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.961,
+                    'False': 0.039
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "Main Cabin Fan Failure (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.961,
@@ -249,7 +373,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] N2 Tank Burst Component": {
-        "N2 Tank Burst": {
+        "N2 Tank Burst (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.986,
+                    'False': 0.014
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "N2 Tank Burst (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.986,
@@ -263,7 +399,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] PDU 4 Failure Component": {
-        "PDU 4 Failure": {
+        "PDU 4 Failure (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.9681,
+                    'False': 0.0319
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "PDU 4 Failure (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9681,
@@ -277,7 +425,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] PDU 5 Failure Component": {
-        "PDU 5 Failure": {
+        "PDU 5 Failure (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.965,
+                    'False': 0.035
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "PDU 5 Failure (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.965,
@@ -305,7 +465,19 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] RWGSR Malfunction Component": {
-        "RWGSR Malfunction": {
+        "RWGSR Malfunction (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'True': 0.973,
+                    'False': 0.027
+                },
+                False: { # probabilities when the anomaly is absent
+                    'True': 0.08,
+                    'False': 0.92
+                },
+            },
+        },
+        "RWGSR Malfunction (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.973,
@@ -402,6 +574,9 @@ hidden_probabilities_dict = {
             },
         },
     },
+    # NOTE: At present, only the final three hidden components are related to actual failure components
+    # that may cause a specific failure (instead of the generic 'components' added). In future, need to
+    # update other components to related to specific failure points in the different subsystems.
     "[HIDDEN] WPA Pump Flow Rate": {
         "WRS Failure": {
             'probabilities': {

@@ -1,9 +1,70 @@
 # dictionaries.py
 # Author: Joshua Elston
-# Last Updated: 03/27/2025
+# Last Updated: 11/05/2025
 
-# Stores dictionaries with relationships between subgorups and their related anomalies. Additionally stores No Anomalies Present and its relationship to the different subgroups.
+# Stores dictionaries with relationships between subgroups and their related anomalies. Additionally stores No Anomalies Present and its relationship to the different subgroups.
 # Called in add_cpds to compute the CPDs to be added to the Bayesian network.
+# Changes on 10/17/2025 to include combined failures across multiple levels
+# Changes on 11/05/2025 to reflect naming convention for Gateway (L1 -- > IHab, L2 --> HALO)
+
+combined_failure_dict = {
+    "Biological Filter Saturation": [
+        "Biological Filter Saturation (IHab)",
+        "Biological Filter Saturation (HALO)"
+    ],
+    "CDRA Failure": [
+        "CDRA Failure (IHab)",
+        "CDRA Failure (HALO)"
+    ],
+    "CDRA LiOH Canister Saturation": [
+        "CDRA LiOH Canister Saturation (IHab)",
+        "CDRA LiOH Canister Saturation (HALO)"
+    ],
+    "Electrolysis System Failure": [
+        "Electrolysis System Failure (IHab)",
+        "Electrolysis System Failure (HALO)"
+    ],
+    "Emergency O2 System Maintenance": [
+        "Emergency O2 System Maintenance (IHab)",
+        "Emergency O2 System Maintenance (HALO)"
+    ],
+    "Excess CO2 in Cabin": [
+        "Excess CO2 in Cabin (IHab)",
+        "Excess CO2 in Cabin (HALO)"
+    ],
+    "Excess Gas Leak": [
+        "Excess Gas Leak (IHab)",
+        "Excess Gas Leak (HALO)"
+    ],
+    "Excess Water Vapor Pressure in Cabin": [
+        "Excess Water Vapor Pressure in Cabin (IHab)",
+        "Excess Water Vapor Pressure in Cabin (HALO)"
+    ],
+    "Loss of Pressure": [
+        "Loss of Pressure (IHab)",
+        "Loss of Pressure (HALO)"
+    ],
+    "Main Cabin Fan Failure": [
+        "Main Cabin Fan Failure (IHab)",
+        "Main Cabin Fan Failure (HALO)"
+    ],
+    "N2 Tank Burst": [
+        "N2 Tank Burst (IHab)",
+        "N2 Tank Burst (HALO)"
+    ],
+    "PDU 4 Failure": [
+        "PDU 4 Failure (IHab)",
+        "PDU 4 Failure (HALO)"
+    ],
+    "PDU 5 Failure": [
+        "PDU 5 Failure (IHab)",
+        "PDU 5 Failure (HALO)"
+    ],
+    "RWGSR Malfunction": [
+        "RWGSR Malfunction (IHab)",
+        "RWGSR Malfunction (HALO)"
+    ]
+}
 
 subgroup_dict = {
      "Group 1": [
