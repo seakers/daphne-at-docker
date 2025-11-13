@@ -2137,52 +2137,89 @@ export default {
 
       const diagnosisReport = this.$store.getters.getDiagnosisReport;
       
-      this.unconfirmedSymptoms = diagnosisReport.hidden_components;
+      // Set initial values (best evidence may be null initially)
+      this.unconfirmedSymptoms = diagnosisReport.hidden_components || [];
       this.bestEvidence = diagnosisReport.best_evidence;     
-      this.currentTelemetryValues = diagnosisReport.current_telemetry_values
+      this.currentTelemetryValues = diagnosisReport.current_telemetry_values;
       this.activeDiagnosticTab = this.diagnosticHistory.length;
       
       this.diagnosticHistory.push(diagnosisReport);
       console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
-      // console.log("current diagnostic history 1111111", this.diagnosticHistory);
-      // console.log("current diagnostic history 2222222", this.diagnosticHistory[this.activeDiagnosticTab]);
       
       // Add a simple tab with Bayesian diagnosis content
       this.simpleTabs.push({
         label: "Bayesian Diagnosis",
         type: "bayesian",
         content: "Bayesian diagnosis result goes here.",
-        diagnosisData: diagnosisReport, // Store the diagnosis data in the tab
-        checked: [], // Store the checked anomalies for this tab
-        allSelected: false // Store the select all state for this tab
+        diagnosisData: diagnosisReport,
+        checked: [],
+        allSelected: false
       });
       this.activeSimpleTab = this.simpleTabs.length - 1;
       
-      // After getting diagnosis report, ask if user has additional evidence
-      setTimeout(() => {
-      if (this.bestEvidence) {
+      this.isLoading = false;
+      
+      // If best evidence is being calculated, show a message and wait for it
+      if (diagnosisReport.calculating_best_evidence) {
         this.$store.commit('addDialoguePiece', {
-          "voice_message": `I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
+          "voice_message": "Calculating the most informative evidence to collect...",
           "visual_message_type": ["text"],
-          "visual_message": [`I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
-          "writer": "daphne",
-          "options": ["Yes", "No"],
-          "optionsCallbackEvent": "bestEvidenceResponse"
+          "visual_message": ["Calculating the most informative evidence to collect..."],
+          "writer": "daphne"
         });
         
-        // Set up listener for response
-        this.setupBestEvidenceListener();
-      }
-    }, 1000);
-
-    if(this.bestEvidence == null) {
-      this.$store.commit('addDialoguePiece', {
+        // Set up a watcher to detect when best evidence is calculated
+        const unwatch = this.$watch(
+          () => this.$store.getters.getDiagnosisReport.best_evidence,
+          (newBestEvidence) => {
+            if (newBestEvidence) {
+              this.bestEvidence = newBestEvidence;
+              this.unconfirmedSymptoms = this.$store.getters.getDiagnosisReport.hidden_components;
+              
+              // Update the diagnostic history with best evidence
+              this.diagnosticHistory[this.activeDiagnosticTab].best_evidence = newBestEvidence;
+              this.diagnosticHistory[this.activeDiagnosticTab].hidden_components = this.unconfirmedSymptoms;
+              
+              // Show best evidence message
+              this.$store.commit('addDialoguePiece', {
+                "voice_message": `I could improve my diagnosis confidence if you could assess the condition of ${newBestEvidence}. Would you like to provide this information?`,
+                "visual_message_type": ["text"],
+                "visual_message": [`I could improve my diagnosis confidence if you could assess the condition of ${newBestEvidence}. Would you like to provide this information?`],
+                "writer": "daphne",
+                "options": ["Yes", "No"],
+                "optionsCallbackEvent": "bestEvidenceResponse"
+              });
+              
+              this.setupBestEvidenceListener();
+              
+              // Stop watching
+              unwatch();
+            }
+          }
+        );
+      } else if (this.bestEvidence) {
+        // Best evidence already available (shouldn't happen with new flow, but keeping for safety)
+        setTimeout(() => {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": `I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
+            "visual_message_type": ["text"],
+            "visual_message": [`I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
+            "writer": "daphne",
+            "options": ["Yes", "No"],
+            "optionsCallbackEvent": "bestEvidenceResponse"
+          });
+          
+          this.setupBestEvidenceListener();
+        }, 1000);
+      } else {
+        // No best evidence needed
+        this.$store.commit('addDialoguePiece', {
           "voice_message": `No additional evidence can improve my diagnostic confidence. Please proceed with the anomaly resolution.`,
           "visual_message_type": ["text"],
           "visual_message": [`No additional evidence can improve my diagnostic confidence. Please proceed with the anomaly resolution.`],
           "writer": "daphne",
         });
-    }
+      }
 
       // Display Astrobee procedures in chat after diagnosis
       console.log("diagnosos report",diagnosisReport, diagnosisReport.astrobee_procedure_list);
@@ -2211,7 +2248,6 @@ export default {
         console.log("Setting anomalous procedures detected flag to true");
         this.$store.commit('setAnomalousProceduresDetected', true);
       }
-      this.isLoading = false;
     },
 
     showSymptomSelectionDialog() {
@@ -2379,20 +2415,85 @@ export default {
         diagnosis_list: lastMessage.hypothetical_data.diagnosis_list,
         additional_evidence: lastMessage.hypothetical_data.additional_evidence,
         is_hypothetical: true,
-        hypothetical_evidence: lastMessage.hypothetical_data.additional_evidence
+        hypothetical_evidence: lastMessage.hypothetical_data.additional_evidence,
+        symptoms_list: lastMessage.hypothetical_data.symptoms_list || [],
+        best_evidence: lastMessage.hypothetical_data.best_evidence || null,
+        hidden_components: lastMessage.hypothetical_data.hidden_components || [],
+        current_telemetry_values: lastMessage.hypothetical_data.current_telemetry_values || {}
       };
       
-      // Add to diagnostic history
+      // Add to diagnostic history (old tabs - keep for compatibility)
       this.diagnosticHistory.push(hypotheticalDiagnosis);
+      
+      // Add a simple tab with the hypothetical diagnosis
+      this.simpleTabs.push({
+        label: "Hypothetical Diagnosis",
+        type: "bayesian",
+        content: "Hypothetical Bayesian diagnosis result.",
+        diagnosisData: hypotheticalDiagnosis,
+        checked: [],
+        allSelected: false,
+        isHypothetical: true // Flag to style differently if needed
+      });
       
       // Switch to the new tab
       this.activeDiagnosticTab = this.diagnosticHistory.length - 1;
+      this.activeSimpleTab = this.simpleTabs.length - 1;
       
       // Confirm to the user
       this.$store.commit('addDialoguePiece', {
         "voice_message": "I've added this hypothetical scenario to your diagnosis history tabs.",
         "visual_message_type": ["text"],
         "visual_message": ["I've added this hypothetical scenario to your diagnosis history tabs. You can switch between tabs to compare different evidence scenarios."],
+        "writer": "daphne"
+      });
+    },
+
+    handleAddBayesianDiagnosis(eventData) {
+      // Get the last message which contains the Bayesian diagnosis data
+      const dialogueHistory = this.$store.state.daphne.dialogueHistory;
+      const lastMessage = dialogueHistory[dialogueHistory.length - 2];
+      console.log("Adding Bayesian diagnosis from chat - last message", lastMessage);
+      console.log("Diagnosis data", lastMessage.diagnosis_data);
+      
+      if (!lastMessage || !lastMessage.diagnosis_data) {
+        console.error("No diagnosis data found in the last message");
+        return;
+      }
+      
+      // Create a new diagnosis report object from the chat-based diagnosis
+      const bayesianDiagnosis = {
+        diagnosis_list: lastMessage.diagnosis_data.diagnosis_list,
+        best_evidence: lastMessage.diagnosis_data.best_evidence || null,
+        hidden_components: lastMessage.diagnosis_data.hidden_components || [],
+        current_telemetry_values: lastMessage.diagnosis_data.telemetry_values || {},
+        symptoms_list: [],
+        additional_evidence: null,
+        is_from_chat: true // Flag to indicate this came from chat
+      };
+      
+      // Add to diagnostic history (old tabs - keep for compatibility)
+      this.diagnosticHistory.push(bayesianDiagnosis);
+      
+      // Add a simple tab with the Bayesian diagnosis
+      this.simpleTabs.push({
+        label: "Bayesian Diagnosis (Chat)",
+        type: "bayesian",
+        content: "Bayesian diagnosis result from chat.",
+        diagnosisData: bayesianDiagnosis,
+        checked: [],
+        allSelected: false
+      });
+      
+      // Switch to the new tab
+      this.activeDiagnosticTab = this.diagnosticHistory.length - 1;
+      this.activeSimpleTab = this.simpleTabs.length - 1;
+      
+      // Confirm to the user
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": "I've added this Bayesian diagnosis to your diagnosis history tabs.",
+        "visual_message_type": ["text"],
+        "visual_message": ["I've added this Bayesian diagnosis to your diagnosis history tabs. You can review the results in the new tab."],
         "writer": "daphne"
       });
     },
@@ -3111,6 +3212,7 @@ export default {
       }
     });
     this.$root.$on('addHypotheticalDiagnosis', this.handleAddHypotheticalDiagnosis);
+    this.$root.$on('addBayesianDiagnosis', this.handleAddBayesianDiagnosis);
     
     // Add event listener for physics diagnosis completion from chatbot
     window.addEventListener('physicsDiagnosisCompleted', this.handlePhysicsDiagnosisFromChatbot);
@@ -3135,6 +3237,7 @@ export default {
     this.$root.$off('bestEvidenceResponse', this.handleBestEvidenceResponse);
   }
   this.$root.$off('addHypotheticalDiagnosis', this.handleAddHypotheticalDiagnosis);
+  this.$root.$off('addBayesianDiagnosis', this.handleAddBayesianDiagnosis);
   this.$root.$off('damageAssessmentResponse', this.handleDamageAssessmentResponse);
 
   if (this.$refs.tabsContainer) {

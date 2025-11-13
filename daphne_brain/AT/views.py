@@ -601,8 +601,14 @@ class RequestDiagnosis(APIView):
         # diagnosis_list = diagnose_symptoms_by_subset_of_anomaly(parsed_symptoms_list)
         # diagnosis_list = diagnose_symptoms_by_intersection_with_anomaly(symptoms_list)
         diagnosis_list = []
-        entropy_reduction = True
-        probabilities, best_evidence, hidden_components = get_probabilities(telemetry_values, additional_evidence=addtional_evidence)
+        
+        # Get initial probabilities WITHOUT calculating best evidence (for faster response)
+        probabilities, _, hidden_components = get_probabilities(
+            telemetry_values, 
+            additional_evidence=addtional_evidence,
+            calculate_best_evidence=False  # Skip best evidence for now
+        )
+        
         top_5_probabilities = dict(sorted(probabilities.items(), 
                                      key=lambda item: item[1], 
                                      reverse=True)[:5])
@@ -617,7 +623,7 @@ class RequestDiagnosis(APIView):
             })
         
         print("66666666666666666666666")
-        print("probabilities: ", probabilities)
+        print("Initial probabilities: ", probabilities)
         
 
 
@@ -630,13 +636,45 @@ class RequestDiagnosis(APIView):
         print("done2-----------------------------------")
 
         # Build the diagnosis report and send it to the frontend
-        diagnosis_report = {'symptoms_list': symptoms_list, 'diagnosis_list': final_report, "best_evidence": best_evidence,
-                            'hidden_components': hidden_components,
-                            'astrobee_procedure_list': astrobee_procedure_list,
-                            'current_telemetry_values': telemetry_values}
+        diagnosis_report = {
+            'symptoms_list': symptoms_list, 
+            'diagnosis_list': final_report, 
+            'best_evidence': None,  # Will be calculated separately
+            'hidden_components': hidden_components,
+            'astrobee_procedure_list': astrobee_procedure_list,
+            'current_telemetry_values': telemetry_values,
+            'calculating_best_evidence': True  # Flag to indicate best evidence is being calculated
+        }
 
         return Response(diagnosis_report)
 
+
+class CalculateBestEvidence(APIView):
+    def post(self, request):
+        """
+        Calculate the best evidence for a given diagnosis.
+        This is called after initial probabilities are returned to the user.
+        """
+        telemetry_values = json.loads(request.data['telemetryValues'])
+        additional_evidence = None
+        if 'additionalEvidence' in request.data:
+            additional_evidence = json.loads(request.data['additionalEvidence'])
+        
+        print("Calculating best evidence for telemetry values")
+        
+        # Now calculate with best evidence
+        probabilities, best_evidence, hidden_components = get_probabilities(
+            telemetry_values, 
+            additional_evidence=additional_evidence,
+            calculate_best_evidence=True  # Calculate best evidence this time
+        )
+        
+        response = {
+            'best_evidence': best_evidence,
+            'hidden_components': hidden_components
+        }
+        
+        return Response(response)
 
 
 class RequestPhysicsDiagnosis(APIView):

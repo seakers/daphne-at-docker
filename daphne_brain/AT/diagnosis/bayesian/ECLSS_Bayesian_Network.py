@@ -43,7 +43,7 @@ from AT.diagnosis.bayesian.add_cpds import add_cpds
 from AT.diagnosis.bayesian.user_input import query_parameters, query_additional_evidence
 from AT.diagnosis.bayesian.reduce_entropy import calculate_entropy, select_best_evidence
 
-def get_probabilities(telemetry_values, additional_evidence=None):
+def get_probabilities(telemetry_values, additional_evidence=None, calculate_best_evidence=True):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     split_probability_dict = os.path.join(current_dir, "split_probability_dict.json")
     hidden_probabilities_dict = os.path.join(current_dir, "hidden_probabilities_dict.json")
@@ -87,7 +87,8 @@ def get_probabilities(telemetry_values, additional_evidence=None):
     infer = VariableElimination(model)
     probabilities, evidence = query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict)
 
-    if probabilities:
+    # Only calculate best evidence if requested
+    if calculate_best_evidence and probabilities:
         initial_probabilities = list(probabilities.values())
         initial_entropy = calculate_entropy(initial_probabilities)
         print(f'Initial entropy: {initial_entropy}')
@@ -95,7 +96,6 @@ def get_probabilities(telemetry_values, additional_evidence=None):
       
         best_evidence = select_best_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
     else:
-        print('No evidence entered. Exiting script.')
         best_evidence = None
     
     hidden_components = load_hidden_components()

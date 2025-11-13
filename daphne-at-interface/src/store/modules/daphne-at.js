@@ -702,7 +702,7 @@ const actions = {
         let response = await fetchPost('/api/at/requestDiagnosis', reqData);
         if (response.ok) {
             let diagnosis_report = await response.json();
-            console.log("new diagnosis_report from backend", diagnosis_report)
+            console.log("Initial diagnosis_report from backend", diagnosis_report)
             diagnosis_report.additional_evidence = null
             commit('mutateDiagnosisReport', diagnosis_report);
             const now = new Date();
@@ -716,6 +716,30 @@ const actions = {
                 hour12: true    // Use 12-hour format with AM/PM
             });
             commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
+
+            // If best evidence is being calculated, fetch it asynchronously
+            if (diagnosis_report.calculating_best_evidence) {
+                console.log("Fetching best evidence in background...");
+                
+                // Make second request for best evidence
+                let evidenceReqData = new FormData();
+                evidenceReqData.append('telemetryValues', JSON.stringify(diagnosis_report.current_telemetry_values));
+                
+                let evidenceResponse = await fetchPost('/api/at/calculateBestEvidence', evidenceReqData);
+                if (evidenceResponse.ok) {
+                    let evidenceData = await evidenceResponse.json();
+                    console.log("Best evidence calculated:", evidenceData.best_evidence);
+                    
+                    // Update diagnosis report with best evidence
+                    diagnosis_report.best_evidence = evidenceData.best_evidence;
+                    diagnosis_report.hidden_components = evidenceData.hidden_components;
+                    diagnosis_report.calculating_best_evidence = false;
+                    
+                    commit('mutateDiagnosisReport', diagnosis_report);
+                } else {
+                    console.log('Error calculating best evidence');
+                }
+            }
         } else {
             console.log('Error requesting a diagnosis report.')
             return [];

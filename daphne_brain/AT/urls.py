@@ -17,6 +17,7 @@ urlpatterns = [
     path('get_available_procedures', views.GetAvailableProcedures.as_view(), name='get_available_procedures'),
      #-------------------------------------------------------------------------
     path('requestDiagnosis', views.RequestDiagnosis.as_view(), name='RequestDiagnosis'),
+    path('calculateBestEvidence', views.CalculateBestEvidence.as_view(), name='CalculateBestEvidence'),
     path('requestKGDiagnosis', views.RequestKGDiagnosis.as_view(), name='RequestKGDiagnosis'),
     path('requestPhysicsDiagnosis', views.RequestPhysicsDiagnosis.as_view(), name='RequestPhysicsDiagnosis'),
      path('update_diagnosis_with_evidence', views.UpdateDiagnosisWithEvidence.as_view(), name='update_diagnosis_with_evidence'),
