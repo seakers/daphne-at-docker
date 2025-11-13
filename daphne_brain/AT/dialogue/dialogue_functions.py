@@ -308,8 +308,8 @@ def run_physics_diagnosis(time_duration_seconds):
         # Default target sensor
         target_telemetry_sensor = 'ppCO2 (L1)'
         
-        # Default sampling rate (1 second)
-        sampling_rate_seconds = 1
+        # Default sampling rate (10 second)
+        sampling_rate_seconds = 10
         
         print(f"🔬 Physics Diagnosis: Starting diagnosis with duration={time_duration_seconds}s")
         

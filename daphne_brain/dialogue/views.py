@@ -914,7 +914,7 @@ class Command(APIView):
                     extract_response = client.chat.completions.create(
                         model="gpt-4o",
                         messages=[
-                            {"role": "system", "content": "Extract the target anomaly name and duration (in seconds) from the user's query about running physics diagnosis. Return in format: 'anomaly_name|duration'. If no anomaly specified, use 'CDRA Failure'. If no duration specified, use '120000'. Examples: 'CDRA Failure|30000', 'Main Cabin Fan Failure|120000'"},
+                            {"role": "system", "content": "Extract the target anomaly name and duration (in seconds) from the user's query about running physics diagnosis. Return in format: 'anomaly_name|duration'. If no anomaly specified, use 'CDRA Failure'. If no duration specified, use '108000'. Examples: 'CDRA Failure|30000', 'Main Cabin Fan Failure|108000'"},
                             {"role": "user", "content": enhanced_query}
                         ],
                         temperature=0,
@@ -929,14 +929,14 @@ class Command(APIView):
                         try:
                             duration = int(duration_str.strip())
                         except:
-                            duration = 120000  # Default
+                            duration = 108000  # Default: 30 hours in seconds
                     else:
                         target_anomaly = extraction.strip() if extraction.strip() else 'CDRA Failure'
-                        duration = 120000  # Default
+                        duration = 108000  # Default: 30 hours in seconds
                     
                     # Ensure positive duration
                     if duration <= 0:
-                        duration = 120000
+                        duration = 108000  # Default: 30 hours in seconds
                     
                     print(f"Running physics diagnosis: anomaly={target_anomaly}, duration={duration}s")
                     
@@ -953,7 +953,7 @@ class Command(APIView):
                         'symptomsList': json.dumps([]),  # Empty symptoms list
                         'target_anomaly': target_anomaly,
                         'sim_duration_seconds': duration,
-                        'sampling_rate_seconds': 1  # Default sampling rate
+                        'sampling_rate_seconds': 10  # Default sampling rate
                     }
                     
                     # Call RequestPhysicsDiagnosis directly
@@ -967,10 +967,9 @@ class Command(APIView):
                         self.session_state['physics_diagnosis_report'] = diagnosis_report
                         
                         # Format response message
-                        response_text = f"✅ Physics Diagnosis Completed!\n\n"
+                        response_text = f"Physics Diagnosis Completed!\n\n"
                         response_text += f"Target Anomaly: {target_anomaly}\n"
-                        response_text += f"Simulation Duration: {duration} seconds\n\n"
-                        response_text += "The detailed results are now available in the Anomaly Diagnosis window."
+                        response_text += f"Simulation Duration: {duration} seconds"
                         
                         # diagnosis_report already contains 'physics_diagnosis_data', so just pass it as is
                         response = {
