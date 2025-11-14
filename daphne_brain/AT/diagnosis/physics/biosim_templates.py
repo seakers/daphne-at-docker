@@ -19,7 +19,8 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 	</Globals>
 	<SimBioModules>
 		<environment>
-			<SimEnvironment moduleName="IHab" initialVolume="22900" />
+			<SimEnvironment moduleName="IHab" initialVolume="22900"> 
+			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900" />
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="IHab"
@@ -333,7 +334,13 @@ MALFUNCTION_TEMPLATES = {
         'component': 'Dehumidifier',
         'malfunction_xml': '<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
         'affected_systems': ['Dehumidifier']
-    }
+    },
+    "Sim Environment": {
+		'description': 'Sim Environment system malfunction',
+		'component': 'SimEnvironment',
+		'malfunction_xml': '<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="10"/>',
+		'affected_systems': ['SimEnvironment']
+	},
 }
 
 # Default malfunction template for unknown anomalies

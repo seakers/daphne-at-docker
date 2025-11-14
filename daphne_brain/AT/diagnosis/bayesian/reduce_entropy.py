@@ -101,7 +101,7 @@ def calculate_entropy(probabilities):
 
     return entropy_distribution
 
-def select_best_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, current_evidence, initial_entropy, probabilities, top_n_anomalies=5):
+def select_best_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, current_evidence, initial_entropy, probabilities, top_n_anomalies=10):
     # Initialize variables for the reduction in entropy and additional evidence being iterated through
     best_entropy_reduction = float('-inf')
     best_evidence = None

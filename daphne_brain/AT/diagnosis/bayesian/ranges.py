@@ -224,16 +224,16 @@ measurement_ranges = {
         'Exceeds_LowerWarningLimit': (None, 2, False, True)
     },
     "ppCO2_IHab (IHab)": {
-        'Exceeds_UpperWarningLimit': (6, None, True, False),
-        'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
-        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
+        'Exceeds_UpperWarningLimit': (2.62, None, True, False),
+        'Exceeds_UpperCautionLimit': (1.87, 2.62, True, False),
+        'Nominal': (-1, 1.87, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
     "ppCO2_HALO (HALO)": {
-        'Exceeds_UpperWarningLimit': (6, None, True, False),
-        'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
-        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
+        'Exceeds_UpperWarningLimit': (2.62, None, True, False),
+        'Exceeds_UpperCautionLimit': (1.87, 2.62, True, False),
+        'Nominal': (-1, 1.87, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
@@ -251,14 +251,14 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (0.01, 0.02, False, True),
         'Exceeds_LowerWarningLimit': (None, 0.01, False, True)
     },
-    "ppN2 (IHab)": {
+    "ppN2_IHab (IHab)": {
         'Exceeds_UpperWarningLimit': (600, None, True, False),
         'Exceeds_UpperCautionLimit': (591, 600, True, False),
         'Nominal': (480, 591, False, False), # Nominal: 581.75 mmHg
         'Exceeds_LowerCautionLimit': (220.1, 480, False, True),
         'Exceeds_LowerWarningLimit': (None, 220.1, False, True)
     },
-    "ppN2 (HALO)": {
+    "ppN2_HALO (HALO)": {
         'Exceeds_UpperWarningLimit': (600, None, True, False),
         'Exceeds_UpperCautionLimit': (591, 600, True, False),
         'Nominal': (480, 591, False, False), # Nominal: 581.84 mmHg

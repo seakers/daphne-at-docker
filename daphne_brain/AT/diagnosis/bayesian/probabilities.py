@@ -3672,9 +3672,9 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppH2 (HALO)"]
         },
     },
-    "ppN2 (IHab)": {
+    "ppN2_IHab (IHab)": {
         # Temporal probabilities
-        "ppN2 (IHab) (t-1)": {
+        "ppN2_IHab (IHab) (t-1)": {
             'probabilities': {
                 'Exceeds_UpperWarningLimit': {
                     'Exceeds_UpperWarningLimit': 0.87,
@@ -3712,7 +3712,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.87
                 },
             },
-            'value_ranges': measurement_ranges["ppN2 (IHab)"]
+            'value_ranges': measurement_ranges["ppN2_IHab (IHab)"]
         },
         # Anomaly probabilities
         "Loss of Pressure (IHab)": {
@@ -3732,7 +3732,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppN2 (IHab)"]
+            'value_ranges': measurement_ranges["ppN2_IHab (IHab)"]
         },
         "N2 Tank Burst (IHab)": {
             'probabilities': {
@@ -3751,12 +3751,12 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppN2 (IHab)"]
+            'value_ranges': measurement_ranges["ppN2_IHab (IHab)"]
         },
     },
-    "ppN2 (HALO)": {
+    "ppN2_HALO (HALO)": {
         # Spatial probabilities
-        "ppN2 (IHab)": {
+        "ppN2_IHab (IHab)": {
             'probabilities': {
                 'Exceeds_UpperWarningLimit': {
                     'Exceeds_UpperWarningLimit': 0.85,
@@ -3794,10 +3794,10 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.85
                 },
             },
-            'value_ranges': measurement_ranges["ppN2 (HALO)"]
+            'value_ranges': measurement_ranges["ppN2_HALO (HALO)"]
         },
         # Temporal probabilities
-        "ppN2 (HALO) (t-1)": {
+        "ppN2_HALO (HALO) (t-1)": {
             'probabilities': {
                 'Exceeds_UpperWarningLimit': {
                     'Exceeds_UpperWarningLimit': 0.86,
@@ -3835,7 +3835,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.86
                 },
             },
-            'value_ranges': measurement_ranges["ppN2 (HALO)"]
+            'value_ranges': measurement_ranges["ppN2_HALO (HALO)"]
         },
         # Anomaly probabilities
         "Loss of Pressure (HALO)": {
@@ -3855,7 +3855,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppN2 (HALO)"]
+            'value_ranges': measurement_ranges["ppN2_HALO (HALO)"]
         },
         "N2 Tank Burst (HALO)": {
             'probabilities': {
@@ -3874,7 +3874,7 @@ probability_dict = {
                     'Exceeds_LowerWarningLimit': 0.0001
                 },
             },
-            'value_ranges': measurement_ranges["ppN2 (HALO)"]
+            'value_ranges': measurement_ranges["ppN2_HALO (HALO)"]
         },
     },
     "ppO2_IHab (IHab)": {
@@ -4315,25 +4315,25 @@ probability_dict = {
             'value_ranges': measurement_ranges["Pressure (IHab)"]
         },
         # Anomaly probabilities
-        "Loss of Pressure (IHab)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.81,
-                    'Exceeds_LowerWarningLimit': 0.17
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Pressure (IHab)"]
-        },
+        # "Loss of Pressure (IHab)": {
+        #     'probabilities': {
+        #         True: { # probabilities when the anomaly is present
+        #             'Exceeds_UpperWarningLimit': 0.00001,
+        #             'Exceeds_UpperCautionLimit': 0.0001,
+        #             'Nominal': 0.01989,
+        #             'Exceeds_LowerCautionLimit': 0.81,
+        #             'Exceeds_LowerWarningLimit': 0.17
+        #         },
+        #         False: { # probabilities when the anomaly is absent
+        #             'Exceeds_UpperWarningLimit': 0.0001,
+        #             'Exceeds_UpperCautionLimit': 0.001,
+        #             'Nominal': 0.9978,
+        #             'Exceeds_LowerCautionLimit': 0.001,
+        #             'Exceeds_LowerWarningLimit': 0.0001
+        #         },
+        #     },
+        #     'value_ranges': measurement_ranges["Pressure (IHab)"]
+        # },
         "N2 Tank Burst (IHab)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -4438,25 +4438,25 @@ probability_dict = {
             'value_ranges': measurement_ranges["Pressure (HALO)"]
         },
         # Anomaly probabilities
-        "Loss of Pressure (HALO)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.81,
-                    'Exceeds_LowerWarningLimit': 0.17
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Pressure (HALO)"]
-        },
+        # "Loss of Pressure (HALO)": {
+        #     'probabilities': {
+        #         True: { # probabilities when the anomaly is present
+        #             'Exceeds_UpperWarningLimit': 0.00001,
+        #             'Exceeds_UpperCautionLimit': 0.0001,
+        #             'Nominal': 0.01989,
+        #             'Exceeds_LowerCautionLimit': 0.81,
+        #             'Exceeds_LowerWarningLimit': 0.17
+        #         },
+        #         False: { # probabilities when the anomaly is absent
+        #             'Exceeds_UpperWarningLimit': 0.0001,
+        #             'Exceeds_UpperCautionLimit': 0.001,
+        #             'Nominal': 0.9978,
+        #             'Exceeds_LowerCautionLimit': 0.001,
+        #             'Exceeds_LowerWarningLimit': 0.0001
+        #         },
+        #     },
+        #     'value_ranges': measurement_ranges["Pressure (HALO)"]
+        # },
         "N2 Tank Burst (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
