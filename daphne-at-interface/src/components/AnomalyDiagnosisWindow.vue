@@ -2922,11 +2922,20 @@ export default {
         }
 
         const allProcedures = responseData.procedures;
+
+        let anomaly_names = []
+        if (anomalyName.includes('+')) {
+          anomaly_names = anomalyName.split(' + ').map(name => name.trim());
+        } else {
+          anomaly_names.push(anomalyName);
+        }
         
         // Filter procedures by anomaly name (case-insensitive search in title)
         const filteredProcedures = allProcedures.filter(procedure => 
-          procedure.title.toLowerCase().includes(anomalyName.toLowerCase()) ||
-          procedure.filename.toLowerCase().includes(anomalyName.toLowerCase())
+          anomaly_names.some(name => 
+            procedure.title.toLowerCase().includes(name.toLowerCase()) ||
+            procedure.filename.toLowerCase().includes(name.toLowerCase())
+          )
         );
 
         if (filteredProcedures.length === 0) {
@@ -2954,14 +2963,14 @@ export default {
             }
           });
         } else if (filteredProcedures.length === 1) {
-          // Only one procedure found, ask for confirmation
+          // Only one procedure found, ask for confirmation with option to view all
           const procedure = filteredProcedures[0];
           this.$store.commit('addDialoguePiece', {
             "voice_message": `I found one procedure for ${anomalyName}: "${procedure.title}". Would you like me to start this procedure?`,
             "visual_message_type": ["text"],
             "visual_message": [`I found one procedure for ${anomalyName}: <br>${procedure.title}.<br><br>Would you like me to start this procedure?`],
             "writer": "daphne",
-            "options": ["Yes", "No"],
+            "options": ["Yes", "No", "Show All Procedures"],
             "optionsCallbackEvent": "confirmSingleProcedure"
           });
 
@@ -2969,6 +2978,8 @@ export default {
           this.$root.$once('confirmSingleProcedure', (response) => {
             if (response === "Yes") {
               this.startSelectedProcedure(procedure.staticProcedureID, procedure.title);
+            } else if (response === "Show All Procedures") {
+              this.showProcedureSelection(allProcedures, anomalyName, true); // true indicates showing all procedures
             } else {
               this.$store.commit('addDialoguePiece', {
                 "voice_message": "Alright, procedure not started.",
@@ -2979,8 +2990,8 @@ export default {
             }
           });
         } else {
-          // Multiple procedures found, let user choose
-          this.showProcedureSelection(filteredProcedures, anomalyName, false); // false indicates showing filtered procedures
+          // Multiple procedures found, let user choose with option to view all
+          this.showProcedureSelection(filteredProcedures, anomalyName, false, allProcedures); // Pass allProcedures as 4th param
         }
 
       } catch (error) {
@@ -2994,7 +3005,7 @@ export default {
       }
     },
 
-    showProcedureSelection(procedures, anomalyName, showingAllProcedures = false) {
+    showProcedureSelection(procedures, anomalyName, showingAllProcedures = false, allProcedures = null) {
       // Create procedure list for display
       const procedureList = procedures.map((proc, index) => 
         // `${index + 1}. ${proc.title} (${proc.number}) - ${proc.revision}`
@@ -3005,6 +3016,11 @@ export default {
       const procedureOptions = procedures.map((proc, index) => 
         `${index + 1}. ${proc.title}`
       );
+
+      // Add "Show All Procedures" button if we're showing filtered procedures and have all procedures available
+      if (!showingAllProcedures && allProcedures && allProcedures.length > procedures.length) {
+        procedureOptions.push("Show All Procedures");
+      }
 
       // Create different messages based on whether we're showing all procedures or filtered ones
       const voiceMessage = showingAllProcedures 
@@ -3026,6 +3042,12 @@ export default {
 
       // Set up listener for procedure selection
       this.$root.$once('selectProcedureFromList', (selectedOption) => {
+        // Check if user wants to see all procedures
+        if (selectedOption === "Show All Procedures") {
+          this.showProcedureSelection(allProcedures, anomalyName, true);
+          return;
+        }
+
         // Extract the index from the selected option
         const selectedIndex = parseInt(selectedOption.split('.')[0]) - 1;
         const selectedProcedure = procedures[selectedIndex];
