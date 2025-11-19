@@ -348,6 +348,15 @@ export default {
           }
         }
       }
+      
+      // Check if the last message has procedures_data and trigger the procedure list display
+      if (val.length > 0) {
+        let lastMessage = val[val.length - 1];
+        if (lastMessage['writer'] === "daphne" && lastMessage.procedures_data) {
+          console.log("📋 Emitting showProcedureListFromChat event");
+          this.$root.$emit('showProcedureListFromChat', lastMessage);
+        }
+      }
     },
     isLoading: function (val, oldVal) {
       if (val === true) {

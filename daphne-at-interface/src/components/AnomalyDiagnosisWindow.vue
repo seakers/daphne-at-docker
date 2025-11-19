@@ -2486,6 +2486,30 @@ export default {
       });
     },
 
+    handleShowProcedureListFromChat(eventData) {
+      // Get the last message which contains the procedures data
+      const dialogueHistory = this.$store.state.daphne.dialogueHistory;
+      const lastMessage = dialogueHistory[dialogueHistory.length - 1]; // Current message should have procedures data
+      
+      console.log("Showing PRIDE procedures from chat - last message", lastMessage);
+      console.log("Procedures data", lastMessage.procedures_data);
+      
+      if (!lastMessage || !lastMessage.procedures_data) {
+        console.error("No procedures data found in the last message");
+        return;
+      }
+      
+      const procedures = lastMessage.procedures_data;
+      const filterApplied = lastMessage.filter_applied;
+      
+      // Call the existing showProcedureSelection method with the procedures
+      this.showProcedureSelection(
+        procedures, 
+        filterApplied ? `filtered by '${filterApplied}'` : "all PRIDE procedures",
+        !filterApplied  // true if showing all, false if filtered
+      );
+    },
+
     async submitAdditionalEvidence() {
       try {
         this.isLoading = true;
@@ -3223,6 +3247,7 @@ export default {
     });
     this.$root.$on('addHypotheticalDiagnosis', this.handleAddHypotheticalDiagnosis);
     this.$root.$on('addBayesianDiagnosis', this.handleAddBayesianDiagnosis);
+    this.$root.$on('showProcedureListFromChat', this.handleShowProcedureListFromChat);
     
     // Add event listener for physics diagnosis completion from chatbot
     window.addEventListener('physicsDiagnosisCompleted', this.handlePhysicsDiagnosisFromChatbot);
@@ -3248,6 +3273,7 @@ export default {
   }
   this.$root.$off('addHypotheticalDiagnosis', this.handleAddHypotheticalDiagnosis);
   this.$root.$off('addBayesianDiagnosis', this.handleAddBayesianDiagnosis);
+  this.$root.$off('showProcedureListFromChat', this.handleShowProcedureListFromChat);
   this.$root.$off('damageAssessmentResponse', this.handleDamageAssessmentResponse);
 
   if (this.$refs.tabsContainer) {

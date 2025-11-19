@@ -1046,21 +1046,14 @@ class Command(APIView):
                         procedures_to_show = pride_procedures
                         filter_msg = ""
                     
-                    # Format procedures for display
-                    if isinstance(procedures_to_show, list):
-                        if len(procedures_to_show) > 20:
-                            procedures_text = "\n".join([str(proc) for proc in procedures_to_show[:20]])
-                            procedures_text += f"\n\n... and {len(procedures_to_show) - 20} more procedures"
-                        else:
-                            procedures_text = "\n".join([str(proc) for proc in procedures_to_show])
-                    else:
-                        procedures_text = str(procedures_to_show)
-                    
+                    # Return response with procedures data that frontend can display with buttons
                     response = {
-                        "voice_message": f"Here are the PRIDE procedures{filter_msg}.",
-                        "visual_message_type": ["text"],
-                        "visual_message": [f"PRIDE Procedures{filter_msg}:\n\n{procedures_text}"],
-                        "writer": "daphne"
+                        "voice_message": f"Here are {len(procedures_to_show)} PRIDE procedures{filter_msg}. Please select which one you'd like to start:",
+                        "visual_message_type": ["procedure_list"],
+                        "visual_message": [f"Here are {len(procedures_to_show)} PRIDE procedures{filter_msg}. Please select which one you'd like to start:"],
+                        "writer": "daphne",
+                        "procedures_data": procedures_to_show,  # Include structured procedures data
+                        "filter_applied": filter_keyword if filter_keyword != 'none' else None
                     }
                     
                     self.session_state['user_input'].append(enhanced_query)
