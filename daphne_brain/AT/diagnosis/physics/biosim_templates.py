@@ -10,6 +10,7 @@ import itertools
 
 # Base BioSim configuration template
 BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="../../style/table.xsl"?>
 <biosim xmlns="http://www.traclabs.com/biosim"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
@@ -28,6 +29,22 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 				<dirtyWaterProducer desiredFlowRates="10000"
 					outputs="Dirty_Water_Store" maxFlowRates="10000" />
 			</Dehumidifier>
+			<Fan moduleName="IHab_to_HALO_Fan">
+				<airConsumer inputs="IHab"
+					desiredFlowRates="40" maxFlowRates="40" />
+				<powerConsumer inputs="General_Power_Store"
+					desiredFlowRates="9000" maxFlowRates="9000" ></powerConsumer>
+				<airProducer desiredFlowRates="40"
+					outputs="HALO" maxFlowRates="40" ></airProducer>
+			</Fan>
+			<Fan moduleName="HALO_to_IHab_Fan">
+				<airConsumer inputs="HALO"
+					desiredFlowRates="40" maxFlowRates="40" />
+				<powerConsumer inputs="General_Power_Store" desiredFlowRates="50"
+					maxFlowRates="50"></powerConsumer>
+				<airProducer desiredFlowRates="40"
+					outputs="IHab" maxFlowRates="40" ></airProducer>
+			</Fan>
 		</environment>
 		<air>
 			<NitrogenStore capacity="10000"
@@ -63,12 +80,28 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 		</air>
 		<framework>
 			<Injector moduleName="Oxygen_Injector_IHab">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.195"
-					maxFlowRates="0.195" >
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.0"
+					maxFlowRates="0.0" >
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.195"
-					outputs="IHab" maxFlowRates="0.195" >
+				<O2Producer desiredFlowRates="0.0"
+					outputs="IHab" maxFlowRates="0.0" >
 				</O2Producer>
+			</Injector>
+			<Injector moduleName="Oxygen_Injector_HALO">
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.0"
+					maxFlowRates="0.0" >
+				</O2Consumer>
+				<O2Producer desiredFlowRates="0.0"
+					outputs="HALO" maxFlowRates="0.0" >
+				</O2Producer>
+			</Injector>
+			<Injector moduleName="Nitrogen_Injector_HALO">
+				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0"
+					maxFlowRates="0.0" >
+				</nitrogenConsumer>
+				<nitrogenProducer desiredFlowRates="0.0"
+					outputs="HALO" maxFlowRates="0.0" >
+				</nitrogenProducer>
 			</Injector>
 		</framework>
 		<water>
@@ -138,14 +171,20 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 					weight="55">
 					<schedule>
 						<activity intensity="2" name="ruminating"
-							length="24" />
+							length="12" />
+						<activity intensity="0" name="sleep" length="8" />
+						<activity intensity="5" name="excercise"
+							length="2" />
 					</schedule>
 				</crewPerson>
 				<crewPerson age="35" name="Tim O'Connor" sex="MALE"
 					weight="72">
 					<schedule>
 						<activity intensity="2" name="ruminating"
-							length="24" />
+							length="12" />
+						<activity intensity="0" name="sleep" length="8" />
+						<activity intensity="5" name="excercise"
+							length="2" />
 					</schedule>
 				</crewPerson>
 			</CrewGroup>
@@ -155,8 +194,8 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 		<environment>
 			<GasPressureSensor input="IHab" moduleName="ppCO2_IHab" gasType="CO2">
 				<alarms>
-					<warning_high min="0.5999507" max="0.799934"/>
-					<critical_high min="0.799934" max="100"/>
+					<warning_high min="0.15" max="0.25"/>
+					<critical_high min="0.25" max="100"/>
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</GasPressureSensor>
@@ -173,7 +212,7 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 				<alarms>
 					<critical_low min="0" max="0.40"/>
 					<warning_low min="0.40" max="0.50"/>
-					<warning_high min="0.61" max="0.70"/>
+					<warning_high min="0.51" max="0.70"/>
 					<critical_high min="0.70" max="1.00"/>
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
@@ -189,8 +228,8 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 			</TotalPressureSensor>
 			<GasPressureSensor input="HALO" moduleName="ppCO2_HALO" gasType="CO2">
 				<alarms>
-					<warning_high min="0.5999507" max="0.799934"/>
-					<critical_high min="0.799934" max="100"/>
+					<warning_high min="0.15" max="0.25"/>
+					<critical_high min="0.25" max="100"/>
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</GasPressureSensor>
@@ -207,7 +246,7 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 				<alarms>
 					<critical_low min="0" max="0.40"/>
 					<warning_low min="0.40" max="0.50"/>
-					<warning_high min="0.61" max="0.70"/>
+					<warning_high min="0.51" max="0.70"/>
 					<critical_high min="0.70" max="1.00"/>
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
