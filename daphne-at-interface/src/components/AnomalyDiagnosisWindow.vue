@@ -66,8 +66,17 @@
 
         <!-- ################### KG Diagnosis report hypothesis list ########################-->
       <div class="is-content">
+        <!-- Loading spinner at the top -->
+        <div v-if="isLoading" style="text-align: center; padding: 20px;">
+          <img src="assets/img/loader.svg"
+               style="display: block; margin: auto;"
+               height="40" width="40"
+               alt="Loading spinner">
+          <p style="color: #0AFEFF; margin-top: 10px;">Processing diagnosis...</p>
+        </div>
+        
         <!-- Simple, independent tab UI -->
-        <div class="tabs-container" style="margin-bottom: 20px;">
+        <div v-if="!isLoading" class="tabs-container" style="margin-bottom: 20px;">
           <div class="tabs is-boxed tab-wrapper">
             <ul class="draggable-tabs">
               <li v-for="(tab, index) in simpleTabs"
@@ -81,16 +90,11 @@
             </ul>
           </div>
         </div>
-        <div v-if="simpleTabs[activeSimpleTab]">
+        <div v-if="simpleTabs[activeSimpleTab] && !isLoading">
           <!-- KG Diagnosis Results -->
           <div v-if="simpleTabs[activeSimpleTab].type === 'kg'" class="kg-diagnosis-report">
             <div v-if="!simpleTabs[activeSimpleTab].diagnosisData || simpleTabs[activeSimpleTab].diagnosisData.length === 0">
-              <img v-if="isLoading"
-                   src="assets/img/loader.svg"
-                   style="display: block; margin: auto;"
-                   height="40" width="40"
-                   alt="Loading spinner">
-              <p v-else>No KG diagnosis reports requested.</p>
+              <p>No KG diagnosis reports requested.</p>
             </div>
             <div v-else>
               <div class="column" style="margin: 0px; padding: 0px">
@@ -213,12 +217,7 @@
           <!-- Bayesian Diagnosis Results -->
           <div v-else-if="simpleTabs[activeSimpleTab].type === 'bayesian'" class="bayesian-diagnosis-report">
             <div v-if="!simpleTabs[activeSimpleTab].diagnosisData || simpleTabs[activeSimpleTab].diagnosisData.length === 0">
-              <img v-if="isLoading"
-                   src="assets/img/loader.svg"
-                   style="display: block; margin: auto;"
-                   height="40" width="40"
-                   alt="Loading spinner">
-              <p v-else>No Bayesian diagnosis reports requested.</p>
+              <p>No Bayesian diagnosis reports requested.</p>
             </div>
             <div v-else>
               <!-- Most probable anomaly highlighting -->
@@ -392,15 +391,10 @@
           Add Simple Tab
         </button>
 
-        <!-- Show loading or no reports message only when no tabs are active -->
-        <div v-if="simpleTabs.length === 0">
+        <!-- Show no reports message only when no tabs are active and not loading -->
+        <div v-if="simpleTabs.length === 0 && !isLoading">
           <div v-if="diagnosisReport.length === 0">
-            <img v-if="isLoading"
-                 src="assets/img/loader.svg"
-                 style="display: block; margin: auto;"
-                 height="40" width="40"
-                 alt="Loading spinner">
-            <p v-else>No diagnosis reports requested.</p>
+            <p>No diagnosis reports requested.</p>
           </div>
         </div>
 
@@ -671,17 +665,11 @@
       </div>
 
       <!-- ################### KG Diagnosis report hypothesis comparison table ########################-->
-
-      <div class="horizontal-divider" style="margin-top: 10px; margin-bottom: 10px"></div>
     
-      <div class="is-content">
+      <div class="is-content" v-if="false">
+        <!-- This section is now deprecated - explanations are shown in tabs -->
         <div v-if="diagnosisReport.length === 0 || this.explaining === false">
-          <img v-if="isLoading"
-               src="assets/img/loader.svg"
-               style="display: block; margin: auto;"
-               height="40" width="40"
-               alt="Loading spinner">
-          <p v-else>No explanations requested.</p>
+          <p>No explanations requested.</p>
         </div>
         <div v-else id='explanations' style="display: block">
           <div class="is-mini-title" style="margin-bottom:5px; font-size: 22px">
