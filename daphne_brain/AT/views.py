@@ -683,8 +683,14 @@ class RequestPhysicsDiagnosis(APIView):
         symptoms_list = json.loads(request.data['symptomsList'])
         
         # Retrieve target anomaly if provided (from Bayesian diagnosis)
-        # target_anomaly = request.data.get('target_anomaly', None)
-        target_anomaly = 'CDRA Failure'
+        target_anomaly = request.data.get('target_anomaly', None)
+        print("Received target anomaly:", target_anomaly)
+        if target_anomaly:
+            target_anomaly = re.sub(r'\s*\(.*?\)\s*', '', target_anomaly).strip()
+            print("Cleaned target anomaly:", target_anomaly)
+        
+        
+        # target_anomaly = 'CDRA Failure'
         # if target_anomaly == 'No Anomalies Present':
         #     target_anomaly = 'CDRA Failure'
         #     print("No target anomaly provided, defaulting to 'CDRA Failure'")

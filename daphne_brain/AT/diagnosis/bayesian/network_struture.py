@@ -195,22 +195,22 @@ network = [
     ("Fuel Cell Failure", "[HIDDEN] Fuel Cell Failure Component"),
 
     # Loss of Pressure (IHab)
-    ("Loss of Pressure (IHab)", "high ppN2_IHab (IHab)"), ("Loss of Pressure (IHab)", "high ppN2_IHab (IHab) (t-1)"), 
+    # ("Loss of Pressure (IHab)", "high ppCO2_IHab (IHab)"), ("Loss of Pressure (IHab)", "high ppCO2_IHab (IHab) (t-1)"), 
     ("Loss of Pressure (IHab)", "high ppO2_IHab (IHab)"), ("Loss of Pressure (IHab)", "high ppO2_IHab (IHab) (t-1)"), 
     # ("Loss of Pressure (IHab)", "high Pressure (IHab)"), ("Loss of Pressure (IHab)", "high Pressure (IHab) (t-1)"), 
     ("Loss of Pressure (IHab)", "high Total_Cabin_Pressure_IHab (IHab)"), ("Loss of Pressure (IHab)", "high Total_Cabin_Pressure_IHab (IHab) (t-1)"),
-    ("Loss of Pressure (IHab)", "low ppN2_IHab (IHab)"), ("Loss of Pressure (IHab)", "low ppN2_IHab (IHab) (t-1)"),
+    # ("Loss of Pressure (IHab)", "low ppCO2_IHab (IHab)"), ("Loss of Pressure (IHab)", "low ppCO2_IHab (IHab) (t-1)"),
     ("Loss of Pressure (IHab)", "low ppO2_IHab (IHab)"), ("Loss of Pressure (IHab)", "low ppO2_IHab (IHab) (t-1)"),
     # ("Loss of Pressure (IHab)", "low Pressure (IHab)"), ("Loss of Pressure (IHab)", "low Pressure (IHab) (t-1)"), 
     ("Loss of Pressure (IHab)", "low Total_Cabin_Pressure_IHab (IHab)"), ("Loss of Pressure (IHab)", "low Total_Cabin_Pressure_IHab (IHab) (t-1)"),
     ("Loss of Pressure (IHab)", "[HIDDEN] Loss of Pressure Component"),
 
     # Loss of Pressure (HALO)
-    ("Loss of Pressure (HALO)", "high ppN2_HALO (HALO)"), ("Loss of Pressure (HALO)", "high ppN2_HALO (HALO) (t-1)"),
+    # ("Loss of Pressure (HALO)", "high ppCO2_HALO (HALO)"), ("Loss of Pressure (HALO)", "high ppCO2_HALO (HALO) (t-1)"),
     ("Loss of Pressure (HALO)", "high ppO2_HALO (HALO)"), ("Loss of Pressure (HALO)", "high ppO2_HALO (HALO) (t-1)"),
     # ("Loss of Pressure (HALO)", "high Pressure (HALO)"), ("Loss of Pressure (HALO)", "high Pressure (HALO) (t-1)"),
     ("Loss of Pressure (HALO)", "high Total_Cabin_Pressure_HALO (HALO)"), ("Loss of Pressure (HALO)", "high Total_Cabin_Pressure_HALO (HALO) (t-1)"),
-    ("Loss of Pressure (HALO)", "low ppN2_HALO (HALO)"), ("Loss of Pressure (HALO)", "low ppN2_HALO (HALO) (t-1)"),
+    # ("Loss of Pressure (HALO)", "low ppCO2_HALO (HALO)"), ("Loss of Pressure (HALO)", "low ppCO2_HALO (HALO) (t-1)"),
     ("Loss of Pressure (HALO)", "low ppO2_HALO (HALO)"), ("Loss of Pressure (HALO)", "low ppO2_HALO (HALO) (t-1)"),
     # ("Loss of Pressure (HALO)", "low Pressure (HALO)"), ("Loss of Pressure (HALO)", "low Pressure (HALO) (t-1)"),
     ("Loss of Pressure (HALO)", "low Total_Cabin_Pressure_HALO (HALO)"), ("Loss of Pressure (HALO)", "low Total_Cabin_Pressure_HALO (HALO) (t-1)"),

@@ -3286,6 +3286,25 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
         },
+        # "Loss of Pressure (IHab)": {
+        #     'probabilities': {
+        #         True: { # probabilities when the anomaly is present
+        #             'Exceeds_UpperWarningLimit': 0.00001,
+        #             'Exceeds_UpperCautionLimit': 0.0001,
+        #             'Nominal': 0.01989,
+        #             'Exceeds_LowerCautionLimit': 0.78,
+        #             'Exceeds_LowerWarningLimit': 0.20
+        #         },
+        #         False: { # probabilities when the anomaly is absent
+        #             'Exceeds_UpperWarningLimit': 0.0001,
+        #             'Exceeds_UpperCautionLimit': 0.001,
+        #             'Nominal': 0.9978,
+        #             'Exceeds_LowerCautionLimit': 0.001,
+        #             'Exceeds_LowerWarningLimit': 0.0001
+        #         },
+        #     },
+        #     'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
+        # },
         "Excess CO2 in Cabin (IHab)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -3466,6 +3485,25 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
         },
+        # "Loss of Pressure (HALO)": {
+        #     'probabilities': {
+        #         True: { # probabilities when the anomaly is present
+        #             'Exceeds_UpperWarningLimit': 0.00001,
+        #             'Exceeds_UpperCautionLimit': 0.0001,
+        #             'Nominal': 0.01989,
+        #             'Exceeds_LowerCautionLimit': 0.78,
+        #             'Exceeds_LowerWarningLimit': 0.20
+        #         },
+        #         False: { # probabilities when the anomaly is absent
+        #             'Exceeds_UpperWarningLimit': 0.0001,
+        #             'Exceeds_UpperCautionLimit': 0.001,
+        #             'Nominal': 0.9978,
+        #             'Exceeds_LowerCautionLimit': 0.001,
+        #             'Exceeds_LowerWarningLimit': 0.0001
+        #         },
+        #     },
+        #     'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
+        # },
         "Excess CO2 in Cabin (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -3715,25 +3753,25 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppN2_IHab (IHab)"]
         },
         # Anomaly probabilities
-        "Loss of Pressure (IHab)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.78,
-                    'Exceeds_LowerWarningLimit': 0.20
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["ppN2_IHab (IHab)"]
-        },
+        # "Loss of Pressure (IHab)": {
+        #     'probabilities': {
+        #         True: { # probabilities when the anomaly is present
+        #             'Exceeds_UpperWarningLimit': 0.00001,
+        #             'Exceeds_UpperCautionLimit': 0.0001,
+        #             'Nominal': 0.01989,
+        #             'Exceeds_LowerCautionLimit': 0.78,
+        #             'Exceeds_LowerWarningLimit': 0.20
+        #         },
+        #         False: { # probabilities when the anomaly is absent
+        #             'Exceeds_UpperWarningLimit': 0.0001,
+        #             'Exceeds_UpperCautionLimit': 0.001,
+        #             'Nominal': 0.9978,
+        #             'Exceeds_LowerCautionLimit': 0.001,
+        #             'Exceeds_LowerWarningLimit': 0.0001
+        #         },
+        #     },
+        #     'value_ranges': measurement_ranges["ppN2_IHab (IHab)"]
+        # },
         "N2 Tank Burst (IHab)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -3838,25 +3876,25 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppN2_HALO (HALO)"]
         },
         # Anomaly probabilities
-        "Loss of Pressure (HALO)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.78,
-                    'Exceeds_LowerWarningLimit': 0.20
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["ppN2_HALO (HALO)"]
-        },
+        # "Loss of Pressure (HALO)": {
+        #     'probabilities': {
+        #         True: { # probabilities when the anomaly is present
+        #             'Exceeds_UpperWarningLimit': 0.00001,
+        #             'Exceeds_UpperCautionLimit': 0.0001,
+        #             'Nominal': 0.01989,
+        #             'Exceeds_LowerCautionLimit': 0.78,
+        #             'Exceeds_LowerWarningLimit': 0.20
+        #         },
+        #         False: { # probabilities when the anomaly is absent
+        #             'Exceeds_UpperWarningLimit': 0.0001,
+        #             'Exceeds_UpperCautionLimit': 0.001,
+        #             'Nominal': 0.9978,
+        #             'Exceeds_LowerCautionLimit': 0.001,
+        #             'Exceeds_LowerWarningLimit': 0.0001
+        #         },
+        #     },
+        #     'value_ranges': measurement_ranges["ppN2_HALO (HALO)"]
+        # },
         "N2 Tank Burst (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present

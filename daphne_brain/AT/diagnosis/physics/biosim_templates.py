@@ -194,8 +194,8 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 		<environment>
 			<GasPressureSensor input="IHab" moduleName="ppCO2_IHab" gasType="CO2">
 				<alarms>
-					<warning_high min="0.15" max="0.25"/>
-					<critical_high min="0.25" max="100"/>
+					<warning_high min="0.25" max="0.35"/>
+					<critical_high min="0.35" max="100"/>
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</GasPressureSensor>
@@ -212,7 +212,7 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 				<alarms>
 					<critical_low min="0" max="0.40"/>
 					<warning_low min="0.40" max="0.50"/>
-					<warning_high min="0.51" max="0.70"/>
+					<warning_high min="0.61" max="0.70"/>
 					<critical_high min="0.70" max="1.00"/>
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
@@ -228,8 +228,8 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 			</TotalPressureSensor>
 			<GasPressureSensor input="HALO" moduleName="ppCO2_HALO" gasType="CO2">
 				<alarms>
-					<warning_high min="0.15" max="0.25"/>
-					<critical_high min="0.25" max="100"/>
+					<warning_high min="0.25" max="0.35"/>
+					<critical_high min="0.35" max="100"/>
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</GasPressureSensor>
@@ -246,7 +246,7 @@ BASE_BIOSIM_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 				<alarms>
 					<critical_low min="0" max="0.40"/>
 					<warning_low min="0.40" max="0.50"/>
-					<warning_high min="0.51" max="0.70"/>
+					<warning_high min="0.61" max="0.70"/>
 					<critical_high min="0.70" max="1.00"/>
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
