@@ -290,11 +290,11 @@
             <!-- Title Section -->
             <div class="physics-title-section">
               <div>
-                <span style="color:#0AFEFF;">Most Probable Anomaly:</span>
+                <span style="color:#0AFEFF;">Most Likely Component:</span>
                 <span style="font-weight:bold; color:white; margin-left:10px;">{{ simpleTabs[activeSimpleTab].physicsDiagnosisData ? simpleTabs[activeSimpleTab].physicsDiagnosisData.mostProbableAnomaly : 'N/A' }}</span>
               </div>
               <div style="margin-left:auto; color:#0AFEFF;">
-                Probability: <span style="font-weight:bold; color:white;">{{ simpleTabs[activeSimpleTab].bayesianProbability || (simpleTabs[activeSimpleTab].physicsDiagnosisData ? simpleTabs[activeSimpleTab].physicsDiagnosisData.probability : 'N/A') }}</span>
+                Similarity Score: <span style="font-weight:bold; color:white;">{{ formatSimilarityScore(simpleTabs[activeSimpleTab].physicsDiagnosisData ? simpleTabs[activeSimpleTab].physicsDiagnosisData.probability : null) }}</span>
               </div>
             </div>
             <!-- Content Section -->
@@ -1042,6 +1042,25 @@ export default {
   },
 
   methods: {
+
+    formatSimilarityScore(scoreStr) {
+      if (!scoreStr || scoreStr === 'N/A') {
+        return 'N/A';
+      }
+      
+      // Remove % sign if present and convert to number
+      const score = parseFloat(scoreStr.toString().replace('%', ''));
+      
+      if (isNaN(score)) {
+        return 'N/A';
+      }
+      
+      // If it's already in decimal form (< 1), use it directly
+      // Otherwise convert from percentage to decimal
+      const decimalScore = score > 1 ? score / 100 : score;
+      
+      return `${decimalScore.toFixed(3)}/1.0`;
+    },
 
     getEvidenceLabel(diagnosisData) {
       // For debugging
