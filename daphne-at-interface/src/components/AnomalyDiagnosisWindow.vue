@@ -328,9 +328,9 @@
                       <td>{{ anomaly.name }}</td>
                       <td>{{ anomaly.similarity || anomaly.probability || anomaly.score || 'N/A' }}</td>
                       <td style="text-align:center; font-size: 12px;">
-                        <span v-if="anomaly.faultInjectionTime !== undefined || anomaly.fault_injection_time !== undefined" 
-                              :title="`Fault injected at data point ${anomaly.faultInjectionTime || anomaly.fault_injection_time} (${anomaly.faultInjectionTimeSeconds || anomaly.fault_injection_time_seconds}s)`">
-                          {{ formatFaultInjectionTime(anomaly.faultInjectionTime || anomaly.fault_injection_time, anomaly.faultInjectionTimeSeconds || anomaly.fault_injection_time_seconds) }}
+                        <span v-if="anomaly.fault_injection_time_absolute" 
+                              :title="`Fault injected at ${anomaly.fault_injection_time_absolute} (data point ${anomaly.faultInjectionTime || anomaly.fault_injection_time})`">
+                          {{ anomaly.fault_injection_time_absolute }}
                         </span>
                         <span v-else style="color: #666;">N/A</span>
                       </td>
@@ -858,13 +858,14 @@ export default {
 
       const plotData = [];
 
-      // Convert timestamps to relative time gaps
-      const relativeTimeLabels = this.convertToRelativeTime(this.telemetryGraphData.timeLabels);
+      // Use absolute simulation time labels directly from backend (T+DD:HH:MM format)
+      const timeLabels = this.telemetryGraphData.timeLabels || [];
+      console.log("🔍 Using absolute simulation time labels:", timeLabels);
 
       // Add actual telemetry data
       if (this.telemetryGraphData.actual && this.telemetryGraphData.actual.length > 0) {
         plotData.push({
-          x: relativeTimeLabels || Array.from({length: this.telemetryGraphData.actual.length}, (_, i) => `-${i+1}:00`),
+          x: timeLabels.length > 0 ? timeLabels : Array.from({length: this.telemetryGraphData.actual.length}, (_, i) => `T+00:00:${i.toString().padStart(2, '0')}`),
           y: this.telemetryGraphData.actual,
           type: 'scatter',
           mode: 'lines+markers',
@@ -873,7 +874,7 @@ export default {
           marker: { size: 6, color: '#0AFEFF' },
           hovertemplate: '<b>%{fullData.name}</b><br>' +
                         'Value: %{y:.2f} mmHg<br>' +
-                        'Time Gap: %{x}<br>' +
+                        'Sim Time: %{x}<br>' +
                         '<extra></extra>'
         });
       }
@@ -888,6 +889,11 @@ export default {
               const faultInjectionTime = anomalyData.faultInjectionTime || 0;
               const totalLength = this.telemetryGraphData.actual.length;
               
+              // Get the absolute simulation time for the fault injection
+              const faultTimeLabel = timeLabels.length > 0 && faultInjectionTime < timeLabels.length 
+                ? timeLabels[faultInjectionTime] 
+                : `T+00:00:${faultInjectionTime.toString().padStart(2, '0')}`;
+              
               // Create x-axis labels that account for fault injection time
               const xLabels = [];
               const yValues = [];
@@ -895,17 +901,17 @@ export default {
               for (let i = 0; i < totalLength; i++) {
                 if (i < faultInjectionTime) {
                   // Before fault injection: transparent data (no visible points)
-                  xLabels.push(relativeTimeLabels ? relativeTimeLabels[i] : `-${totalLength - i}:00`);
+                  xLabels.push(timeLabels.length > 0 ? timeLabels[i] : `T+00:00:${i.toString().padStart(2, '0')}`);
                   yValues.push(null); // null values won't be plotted
                 } else {
                   // After fault injection: actual simulation data
                   const simIndex = i - faultInjectionTime;
                   if (simIndex < anomalyData.data.length) {
-                    xLabels.push(relativeTimeLabels ? relativeTimeLabels[i] : `-${totalLength - i}:00`);
+                    xLabels.push(timeLabels.length > 0 ? timeLabels[i] : `T+00:00:${i.toString().padStart(2, '0')}`);
                     yValues.push(anomalyData.data[simIndex]);
                   } else {
                     // Beyond simulation data
-                    xLabels.push(relativeTimeLabels ? relativeTimeLabels[i] : `-${totalLength - i}:00`);
+                    xLabels.push(timeLabels.length > 0 ? timeLabels[i] : `T+00:00:${i.toString().padStart(2, '0')}`);
                     yValues.push(null);
                   }
                 }
@@ -916,25 +922,23 @@ export default {
                 y: yValues,
                 type: 'scatter',
                 mode: 'lines+markers',
-                name: `${anomalyName} (Fault at T+${faultInjectionTime})`,
+                name: `${anomalyName} (Fault at ${faultTimeLabel})`,
                 line: { 
                   width: 3,
-                  // Make line transparent before fault injection
-                  color: yValues.map((y, i) => i < faultInjectionTime ? 'rgba(0,0,0,0)' : anomalyData.color)
+                  color: anomalyData.color  // Use solid color for line
                 },
                 marker: { 
                   size: 6, 
-                  color: yValues.map((y, i) => i < faultInjectionTime ? 'rgba(0,0,0,0)' : anomalyData.color)
+                  color: anomalyData.color  // Use solid color for markers
                 },
                 hovertemplate: '<b>%{fullData.name}</b><br>' +
                               'Value: %{y:.2f} mmHg<br>' +
-                              'Time Gap: %{x}<br>' +
+                              'Sim Time: %{x}<br>' +
                               '<extra></extra>'
               });
               
               // Add a vertical line to mark fault injection point
-              if (faultInjectionTime > 0) {
-                const faultTimeLabel = relativeTimeLabels ? relativeTimeLabels[faultInjectionTime] : `-${totalLength - faultInjectionTime}:00`;
+              if (faultInjectionTime > 0 && faultInjectionTime < totalLength) {
                 plotData.push({
                   x: [faultTimeLabel, faultTimeLabel],
                   y: [0, 8], // Full y-axis range
@@ -960,12 +964,13 @@ export default {
 
     // Vue Plotly layout for physics diagnosis graph
     physicsPlotLayout() {
-      // Generate better-spaced X-axis ticks
-      const xAxisTicks = this.generateBetterXAxisTicks();
+      // Get diagnosis run time from telemetry graph data
+      const diagnosisRunTime = this.telemetryGraphData.diagnosis_run_time || '';
+      const titleSuffix = diagnosisRunTime ? ` (Diagnosis Run: ${diagnosisRunTime})` : '';
       
       return {
         title: {
-          text: 'Telemetry Trend Comparison (with Fault Injection Times)',
+          text: `Telemetry Trend Comparison (with Fault Injection Times)${titleSuffix}`,
           font: { color: '#0AFEFF', size: 16 },
           x: 0.5
         },
@@ -973,17 +978,16 @@ export default {
         paper_bgcolor: '#001e1e',
         font: { color: '#ccc' },
         xaxis: {
-          title: 'Time Gap (min:sec)',
+          title: 'Absolute Simulation Time (T+DD:HH:MM)',
           gridcolor: '#333',
           zerolinecolor: '#666',
           showline: true,
           linecolor: '#666',
           tickangle: -45,
           tickfont: { size: 10 },
-          // Improve X-axis readability by controlling tick spacing
-          tickmode: 'array',
-          tickvals: xAxisTicks.tickvals,
-          ticktext: xAxisTicks.ticktext
+          // Let plotly automatically determine tick spacing for absolute time
+          tickmode: 'auto',
+          nticks: 10
         },
         yaxis: {
           title: 'Pressure (mmHg)',
@@ -996,7 +1000,7 @@ export default {
           dtick: 2,
           tickfont: { size: 10 }
         },
-        margin: { l: 60, r: 150, t: 60, b: 80 }, // Increased right margin for better graph spacing
+        margin: { l: 60, r: 150, t: 80, b: 80 }, // Increased top margin for longer title
         showlegend: true,
         legend: {
           x: 1.08, // Moved further to the right (was 1.02)
@@ -1928,7 +1932,8 @@ export default {
               score: anomaly.score,
               isHighlighted: anomaly.is_highlighted,
               faultInjectionTime: anomaly.fault_injection_time,
-              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds
+              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds,
+              fault_injection_time_absolute: anomaly.fault_injection_time_absolute
             }))
           };
           this.$store.commit('mutatePhysicsDiagnosisData', physicsDiagnosisData);
@@ -1937,6 +1942,8 @@ export default {
           const telemetryGraphData = {
             actual: diagnosisReport.physics_diagnosis_data.actual_telemetry,
             simulated: {},
+            diagnosis_run_time: diagnosisReport.physics_diagnosis_data.diagnosis_run_time,
+            t_zero: diagnosisReport.physics_diagnosis_data.t_zero,
             timeLabels: diagnosisReport.physics_diagnosis_data.time_labels,
             telemetry_metadata: diagnosisReport.physics_diagnosis_data.telemetry_metadata || {
               unit: '',
@@ -1952,7 +1959,8 @@ export default {
               color: this.getAnomalyColor(index),
               score: parseFloat(anomaly.score),
               faultInjectionTime: anomaly.fault_injection_time,
-              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds
+              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds,
+              fault_injection_time_absolute: anomaly.fault_injection_time_absolute
             };
           });
           this.$store.commit('mutateTelemetryGraphData', telemetryGraphData);
@@ -3260,7 +3268,8 @@ export default {
               score: anomaly.score,
               isHighlighted: anomaly.is_highlighted,
               faultInjectionTime: anomaly.fault_injection_time,
-              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds
+              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds,
+              fault_injection_time_absolute: anomaly.fault_injection_time_absolute
             }))
           };
           this.$store.commit('mutatePhysicsDiagnosisData', physicsDiagnosisData);
@@ -3270,6 +3279,8 @@ export default {
             actual: diagnosisReport.physics_diagnosis_data.actual_telemetry,
             simulated: {},
             timeLabels: diagnosisReport.physics_diagnosis_data.time_labels,
+            diagnosis_run_time: diagnosisReport.physics_diagnosis_data.diagnosis_run_time,
+            t_zero: diagnosisReport.physics_diagnosis_data.t_zero,
             telemetry_metadata: diagnosisReport.physics_diagnosis_data.telemetry_metadata || {
               unit: '',
               sensor_info: {},
@@ -3284,7 +3295,8 @@ export default {
               color: this.getAnomalyColor(index),
               score: parseFloat(anomaly.score),
               faultInjectionTime: anomaly.fault_injection_time,
-              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds
+              faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds,
+              fault_injection_time_absolute: anomaly.fault_injection_time_absolute
             };
           });
           this.$store.commit('mutateTelemetryGraphData', telemetryGraphData);
@@ -3574,16 +3586,16 @@ export default {
       }
 
       const annotations = [];
-      const relativeTimeLabels = this.convertToRelativeTime(this.telemetryGraphData.timeLabels);
-      const totalLength = this.telemetryGraphData.actual.length;
+      const timeLabels = this.telemetryGraphData.timeLabels || [];
 
       Object.entries(this.telemetryGraphData.simulated)
         .filter(([name]) => this.selectedPhysicsAnomalies.indexOf(name) !== -1)
         .forEach(([anomalyName, anomalyData]) => {
-          if (anomalyData.faultInjectionTime > 0) {
-            const faultTimeLabel = relativeTimeLabels ? 
-              relativeTimeLabels[anomalyData.faultInjectionTime] : 
-              `-${totalLength - anomalyData.faultInjectionTime}:00`;
+          if (anomalyData.faultInjectionTime !== undefined && anomalyData.faultInjectionTime >= 0) {
+            // Get the absolute simulation time for this fault injection
+            const faultTimeLabel = timeLabels.length > 0 && anomalyData.faultInjectionTime < timeLabels.length
+              ? timeLabels[anomalyData.faultInjectionTime]
+              : `T+00:00:${anomalyData.faultInjectionTime.toString().padStart(2, '0')}`;
             
             annotations.push({
               x: faultTimeLabel,

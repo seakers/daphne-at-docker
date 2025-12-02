@@ -40,6 +40,12 @@ class TelemetryStorageService:
         # Add timestamp to metadata
         metadata['stored_at'] = timezone.now().isoformat()
         
+        # Set T+0 if this is first BioSim telemetry
+        if source == 'BioSim':
+            from AT.diagnosis.physics.simulation_time_service import SimulationTimeService
+            if not SimulationTimeService.get_t_zero():
+                SimulationTimeService.set_t_zero(timezone.now())
+        
         # Create and save the telemetry history record
         telemetry_record = TelemetryHistory.objects.create(
             telemetry_data=telemetry_data,

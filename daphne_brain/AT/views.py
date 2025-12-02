@@ -1023,3 +1023,39 @@ class GetAvailableProcedures(APIView):
                 "message": f"Unexpected error: {str(e)}"
             }, status=500)
 
+
+class GetSimulationTime(APIView):
+    """
+    Get the current absolute simulation time (T+DD:HH:MM).
+    
+    Returns:
+        - simulation_time: Current absolute simulation time in T+DD:HH:MM format
+        - t_zero: The T+0 reference timestamp (when first BioSim telemetry was received)
+        - is_running: Boolean indicating if simulation is running (T+0 has been set)
+    """
+    def get(self, request, format=None):
+        from AT.diagnosis.physics.simulation_time_service import SimulationTimeService
+        from django.utils import timezone
+        
+        try:
+            # Get current simulation time
+            simulation_time = SimulationTimeService.get_absolute_simulation_time(timezone.now())
+            t_zero = SimulationTimeService.get_t_zero()
+            is_running = SimulationTimeService.is_simulation_running()
+            
+            return Response({
+                "simulation_time": simulation_time,
+                "t_zero": t_zero.isoformat() if t_zero else None,
+                "is_running": is_running,
+                "status": "success"
+            })
+            
+        except Exception as e:
+            print(f"Error getting simulation time: {e}")
+            return Response({
+                "error": "Failed to get simulation time",
+                "message": str(e),
+                "status": "error"
+            }, status=500)
+
+

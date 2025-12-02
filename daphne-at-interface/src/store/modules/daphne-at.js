@@ -52,6 +52,12 @@ const state = {
     lastUpdatedProceduresTimestamp: '',
     lastUpdatedProceduresInfoTimestamp: '',
     lastUpdatedDiagnosisTimestamp: '',
+    
+    // Simulation time related variables
+    simulationTime: 'T+00:00:00', // Current absolute simulation time (T+DD:HH:MM)
+    tZero: null, // T+0 reference timestamp
+    isSimulationRunning: false, // Whether simulation is running
+    
     // Anomaly treatment related variables
     selectedAnomaliesList: [], // A list of the anomalies selected by the user to be displayed. RELEVANT FOR THE CONTEXT.
     selectedAnomaliesInfo: {}, // A dictionary with all the information of each of the selected anomalies.
@@ -99,6 +105,9 @@ const getters = {
     getTelemetryGraphData(state) { return state.telemetryGraphData },
     getPhysicsSimDurationSeconds(state) { return state.physicsSimDurationSeconds },
     getPhysicsSamplingRateSeconds(state) { return state.physicsSamplingRateSeconds },
+    getSimulationTime(state) { return state.simulationTime },
+    getTZero(state) { return state.tZero },
+    getIsSimulationRunning(state) { return state.isSimulationRunning },
 };
 
 const actions = {
@@ -892,6 +901,27 @@ const actions = {
             let audio = new Audio(endAnomalySound);
             await audio.play();
         }
+    },
+    async updateSimulationTime({ commit }) {
+        try {
+            const response = await fetch('/api/at/get_simulation_time', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                commit('mutateSimulationTime', data.simulation_time);
+                commit('mutateTZero', data.t_zero);
+                commit('mutateIsSimulationRunning', data.is_running);
+            } else {
+                console.error('Failed to fetch simulation time:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error fetching simulation time:', error);
+        }
     }
 };
 
@@ -937,6 +967,9 @@ const mutations = {
     mutateTelemetryGraphData(state, newVal) { state.telemetryGraphData = newVal },
     mutatePhysicsSimDurationSeconds(state, newVal) { state.physicsSimDurationSeconds = newVal },
     mutatePhysicsSamplingRateSeconds(state, newVal) { state.physicsSamplingRateSeconds = newVal },
+    mutateSimulationTime(state, newVal) { state.simulationTime = newVal },
+    mutateTZero(state, newVal) { state.tZero = newVal },
+    mutateIsSimulationRunning(state, newVal) { state.isSimulationRunning = newVal },
 };
 
 export default {

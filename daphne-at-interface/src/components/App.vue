@@ -5,6 +5,7 @@
       <div v-else style="margin-left: 1em; float: left; z-index: 1; width: 40%"><p>Welcome, guest</p></div>
       <div style="width: 25%; float: right">
         <p style="float: left">{{ timestamp }}</p>
+        <p v-if="isSimulationRunning" style="float: left; margin-left: 1em; color: #0AFEFF; font-weight: bold">{{ simulationTime }}</p>
         <a id="tutorial" style="font-weight:bold; float: left; margin-left: 1em; margin-right: 1em; line-height: inherit"
            v-on:click.prevent="showTutorial">Tutorial</a>
         <div style="float: right">
@@ -144,7 +145,9 @@ export default {
     ...mapGetters({
       telemetryIsOngoing: 'getTelemetryIsOngoing',
       heraUser: 'getHeraUser',
-      symptomsList: 'getSymptomsList'
+      symptomsList: 'getSymptomsList',
+      simulationTime: 'getSimulationTime',
+      isSimulationRunning: 'getIsSimulationRunning',
     }),
   },
   methods: {
@@ -157,6 +160,9 @@ export default {
       const time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
       const dateTime = date +' '+ time;
       this.timestamp = dateTime;
+      
+      // Update simulation time
+      this.$store.dispatch('updateSimulationTime');
     },
     onCountdownEnd() {
       console.log('Countdown ended!');

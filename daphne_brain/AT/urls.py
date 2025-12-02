@@ -17,6 +17,7 @@ urlpatterns = [
     path('get_available_procedures', views.GetAvailableProcedures.as_view(), name='get_available_procedures'),
     path('get_shared_variables', views.GetSharedVariables.as_view(), name='get_shared_variables'),
     path('get_procedure_status', views.GetProcedureStatus.as_view(), name='get_procedure_status'),
+    path('get_simulation_time', views.GetSimulationTime.as_view(), name='get_simulation_time'),
      #-------------------------------------------------------------------------
     path('requestDiagnosis', views.RequestDiagnosis.as_view(), name='RequestDiagnosis'),
     path('calculateBestEvidence', views.CalculateBestEvidence.as_view(), name='CalculateBestEvidence'),

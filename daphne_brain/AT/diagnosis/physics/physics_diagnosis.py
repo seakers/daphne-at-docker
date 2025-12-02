@@ -5,7 +5,9 @@ import json
 import os
 from typing import Dict, List, Any
 from sklearn.metrics import mean_squared_error
+from django.utils import timezone
 from .telemetry_storage import telemetry_storage
+from .simulation_time_service import SimulationTimeService
 try:
     from AT.neo4j_queries import query_functions as neo4j_q
 except Exception:  # neo4j optional
@@ -181,6 +183,62 @@ def _generate_simulation_time_labels(sim_duration_seconds: int, target_points: i
     return time_labels
 
 
+def _resample_list(items: List, target_length: int) -> List:
+    """
+    Resample a list to a target length by selecting evenly-spaced elements.
+    This is used for non-numeric data like timestamps and labels.
+    
+    Args:
+        items: List to resample
+        target_length: Desired output length
+        
+    Returns:
+        Resampled list with target_length elements
+    """
+    if not items:
+        return []
+    
+    if len(items) == target_length:
+        return items
+    
+    if target_length <= 0:
+        return []
+    
+    if len(items) == 1:
+        return items * target_length
+    
+    # Select evenly-spaced indices
+    indices = [int(i * (len(items) - 1) / (target_length - 1)) for i in range(target_length)]
+    return [items[i] for i in indices]
+
+
+def _generate_absolute_simulation_time_labels(timestamps: List[str]) -> List[str]:
+    """
+    Generate absolute simulation time labels (T+DD:HH:MM) for each timestamp
+    using the SimulationTimeService.
+    
+    Args:
+        timestamps: List of ISO format timestamp strings
+        
+    Returns:
+        List of absolute simulation time labels in format T+DD:HH:MM
+    """
+    from AT.diagnosis.physics.simulation_time_service import SimulationTimeService
+    from datetime import datetime
+    
+    time_labels = []
+    for ts_str in timestamps:
+        try:
+            ts = datetime.fromisoformat(ts_str)
+            sim_time = SimulationTimeService.convert_timestamp_to_sim_time(ts)
+            time_labels.append(sim_time if sim_time else "T+00:00:00")
+        except (ValueError, TypeError) as e:
+            print(f"⚠️ Error converting timestamp {ts_str}: {e}")
+            time_labels.append("T+00:00:00")
+    
+    return time_labels
+
+
 def _resample_labels(labels: List[str], target_len: int) -> List[str]:
     if not labels or target_len <= 0:
         return []
@@ -321,16 +379,29 @@ def generate_physics_diagnosis_data(
     # Determine target points from duration and sampling rate
     target_points = max(1, int(sim_duration_seconds // max(1, int(sampling_rate_seconds))))
     
-    # Generate simulation-aware time labels that reflect the simulation timeline
-    # These labels represent simulation time progression, not real-time telemetry collection
-    time_labels = _generate_simulation_time_labels(sim_duration_seconds, target_points, simulation_speed_factor)
+    # Generate absolute simulation time labels (T+DD:HH:MM format)
+    # These represent absolute simulation time from T+0, not real-time telemetry collection
+    # Note: time_labels will be resampled along with the actual telemetry
+    original_time_labels = _generate_absolute_simulation_time_labels(timestamps)
+    
+    # Get the current absolute simulation time when diagnosis is run
+    diagnosis_run_time = SimulationTimeService.get_absolute_simulation_time(timezone.now())
+    t_zero = SimulationTimeService.get_t_zero()
     
     # Resample actual series to target_points
     effective_len = target_points
     print(f"[PHYS_DIAG] Sampling plan: duration={sim_duration_seconds}s, sample_every={sampling_rate_seconds}s -> target_points={target_points}")
     print(f"[PHYS_DIAG] Simulation speed factor: {simulation_speed_factor}x")
-    print(f"[PHYS_DIAG] Time labels represent simulation time (not real-time telemetry collection)")
+    print(f"[PHYS_DIAG] Time labels represent absolute simulation time (T+DD:HH:MM)")
+    print(f"[PHYS_DIAG] Diagnosis run time: {diagnosis_run_time}")
+    print(f"[PHYS_DIAG] T+0 reference: {t_zero}")
+    
+    # Resample numeric telemetry data using interpolation
     actual_telemetry = resample_series(actual_telemetry, target_points)
+    # Resample timestamps and time_labels using evenly-spaced selection (no interpolation for strings)
+    timestamps = _resample_list(timestamps, target_points)
+    time_labels = _resample_list(original_time_labels, target_points)
+    
     print(f"[PHYS_DIAG] Time labels: {time_labels}")
     print(f"[PHYS_DIAG] Time labels length: {len(time_labels)}")
     print(f"[PHYS_DIAG] First label: {time_labels[0]} (simulation start)")
@@ -497,6 +568,16 @@ def generate_physics_diagnosis_data(
         print(f"[PHYS_DIAG] best_shift: {best_shift}")
         print(f"[PHYS_DIAG] fault_injection_time: {best_shift}")
         print(f"[PHYS_DIAG] fault_injection_time_seconds: {best_shift * sampling_rate_seconds}")
+        
+        # Get absolute simulation time for fault injection from the resampled time_labels
+        if best_shift < len(time_labels):
+            fault_injection_time_absolute = time_labels[best_shift]
+        else:
+            # Fallback if index is out of range
+            fault_injection_time_absolute = "Unknown"
+            print(f"[PHYS_DIAG] WARNING: best_shift {best_shift} >= time_labels length {len(time_labels)}")
+        
+        print(f"[PHYS_DIAG] fault_injection_time_absolute: {fault_injection_time_absolute}")
         print(f"[PHYS_DIAG] ==========================================")
         
         comp_list.append({
@@ -508,9 +589,10 @@ def generate_physics_diagnosis_data(
             'best_mse': f"{best_mse:.4f}",  # Store the best MSE for debugging/analysis
             'fault_injection_time': best_shift,  # Time point when fault was injected (in data points)
             'fault_injection_time_seconds': best_shift * sampling_rate_seconds,  # Time in seconds
+            'fault_injection_time_absolute': fault_injection_time_absolute,  # Absolute simulation time (T+DD:HH:MM)
         })
         print(f"[PHYS_DIAG] === Completed anomaly {i+1}: '{name}' ===")
-        print(f"[PHYS_DIAG] Added to comp_list: fault_injection_time={best_shift}, fault_injection_time_seconds={best_shift * sampling_rate_seconds}")
+        print(f"[PHYS_DIAG] Added to comp_list: fault_injection_time={best_shift}, fault_injection_time_seconds={best_shift * sampling_rate_seconds}, fault_injection_time_absolute={fault_injection_time_absolute}")
         print(f"[PHYS_DIAG] ==========================================\n")
 
     # Sort by similarity descending and highlight top
@@ -530,15 +612,20 @@ def generate_physics_diagnosis_data(
             'unit': unit,
             'sensor_info': sensor_info,
             'target_sensor': target_telemetry_sensor
-        }
+        },
+        'diagnosis_run_time': diagnosis_run_time,  # When the diagnosis was run (absolute simulation time)
+        't_zero': t_zero.isoformat() if t_zero else None,  # T+0 reference timestamp
     }
     
     print(f"[PHYS_DIAG] === FINAL DATA STRUCTURE ===")
     print(f"[PHYS_DIAG] Component anomalies count: {len(comp_list)}")
+    print(f"[PHYS_DIAG] Diagnosis run time: {diagnosis_run_time}")
+    print(f"[PHYS_DIAG] T+0 reference: {t_zero}")
     for i, comp in enumerate(comp_list):
         print(f"[PHYS_DIAG] Anomaly {i+1}: '{comp['name']}'")
         print(f"[PHYS_DIAG]   - fault_injection_time: {comp.get('fault_injection_time', 'MISSING')}")
         print(f"[PHYS_DIAG]   - fault_injection_time_seconds: {comp.get('fault_injection_time_seconds', 'MISSING')}")
+        print(f"[PHYS_DIAG]   - fault_injection_time_absolute: {comp.get('fault_injection_time_absolute', 'MISSING')}")
         print(f"[PHYS_DIAG]   - best_shift: {comp.get('best_shift', 'MISSING')}")
     print(f"[PHYS_DIAG] =================================")
     
