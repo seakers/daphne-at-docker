@@ -111,10 +111,11 @@
                 this.$root.$emit('telemetryTutorialIndividual');
             },
             plotAll() {
+                // Plot all symptoms from the symptom list
                 let newSelectedVariables = [];
                 let symptomsList = this.symptomsList;
                 for (let i = 0; i < symptomsList.length; i++) {
-                    newSelectedVariables[i] = symptomsList[i]['display_name'];
+                    newSelectedVariables.push(symptomsList[i]['display_name']);
                 }    
                 this.$store.dispatch('updateSelectedVariables', newSelectedVariables);
             },
