@@ -15,6 +15,8 @@ urlpatterns = [
     path('astrobee_status', views.AstrobeeStatus.as_view(), name='astrobee_status'),
     path('start_astrobee_procedure', views.StartAstrobeeProcedure.as_view(), name='start_astrobee_procedure'),
     path('get_available_procedures', views.GetAvailableProcedures.as_view(), name='get_available_procedures'),
+    path('get_shared_variables', views.GetSharedVariables.as_view(), name='get_shared_variables'),
+    path('get_procedure_status', views.GetProcedureStatus.as_view(), name='get_procedure_status'),
      #-------------------------------------------------------------------------
     path('requestDiagnosis', views.RequestDiagnosis.as_view(), name='RequestDiagnosis'),
     path('calculateBestEvidence', views.CalculateBestEvidence.as_view(), name='CalculateBestEvidence'),

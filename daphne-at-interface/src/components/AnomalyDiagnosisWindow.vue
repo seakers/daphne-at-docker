@@ -2147,99 +2147,523 @@ export default {
       
       this.isLoading = false;
       
-      // If best evidence is being calculated, show a message and wait for it
-      if (diagnosisReport.calculating_best_evidence) {
+      // Get the most probable anomaly from the diagnosis report
+      const topAnomaly = diagnosisReport.diagnosis_list && diagnosisReport.diagnosis_list.length > 0 
+        ? diagnosisReport.diagnosis_list[0] 
+        : null;
+      
+      // Special handling for "Loss of Pressure" anomaly
+      if (topAnomaly && topAnomaly.anomaly.includes("Loss of Pressure")) {
+        // For Loss of Pressure, ask about leak detection directly
         this.$store.commit('addDialoguePiece', {
-          "voice_message": "Calculating the most informative evidence to collect...",
+          "voice_message": `${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. There is no additional sub-component to improve diagnosis confidence. Do you want me to check if there is any leak?`,
           "visual_message_type": ["text"],
-          "visual_message": ["Calculating the most informative evidence to collect..."],
-          "writer": "daphne"
+          "visual_message": [`${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. There is no additional sub-component to improve diagnosis confidence. Do you want me to check if there is any leak?`],
+          "writer": "daphne",
+          "options": ["Yes", "No"],
+          "optionsCallbackEvent": "lossOfPressureResponse"
         });
         
-        // Set up a watcher to detect when best evidence is calculated
-        const unwatch = this.$watch(
-          () => this.$store.getters.getDiagnosisReport.best_evidence,
-          (newBestEvidence) => {
-            if (newBestEvidence) {
-              this.bestEvidence = newBestEvidence;
-              this.unconfirmedSymptoms = this.$store.getters.getDiagnosisReport.hidden_components;
-              
-              // Update the diagnostic history with best evidence
-              this.diagnosticHistory[this.activeDiagnosticTab].best_evidence = newBestEvidence;
-              this.diagnosticHistory[this.activeDiagnosticTab].hidden_components = this.unconfirmedSymptoms;
-              
-              // Show best evidence message
-              this.$store.commit('addDialoguePiece', {
-                "voice_message": `I could improve my diagnosis confidence if you could assess the condition of ${newBestEvidence}. Would you like to provide this information?`,
-                "visual_message_type": ["text"],
-                "visual_message": [`I could improve my diagnosis confidence if you could assess the condition of ${newBestEvidence}. Would you like to provide this information?`],
-                "writer": "daphne",
-                "options": ["Yes", "No"],
-                "optionsCallbackEvent": "bestEvidenceResponse"
-              });
-              
-              this.setupBestEvidenceListener();
-              
-              // Stop watching
-              unwatch();
-            }
-          }
-        );
-      } else if (this.bestEvidence) {
-        // Best evidence already available (shouldn't happen with new flow, but keeping for safety)
-        setTimeout(() => {
-          this.$store.commit('addDialoguePiece', {
-            "voice_message": `I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
-            "visual_message_type": ["text"],
-            "visual_message": [`I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
-            "writer": "daphne",
-            "options": ["Yes", "No"],
-            "optionsCallbackEvent": "bestEvidenceResponse"
-          });
-          
-          this.setupBestEvidenceListener();
-        }, 1000);
-      } else {
-        // No best evidence needed
+        // Set up listener for loss of pressure response
+        this.setupLossOfPressureListener(topAnomaly);
+      } 
+      // For other anomalies with significant probability, suggest physics-based analysis
+      else if (topAnomaly && topAnomaly.probability > 0.4 && topAnomaly.anomaly !== "No Anomalies Present") {
+        // Set up listener for physics analysis response and get unique event name
+        const uniqueEventName = this.setupPhysicsAnalysisListener(topAnomaly);
+        
         this.$store.commit('addDialoguePiece', {
-          "voice_message": `No additional evidence can improve my diagnostic confidence. Please proceed with the anomaly resolution.`,
+          "voice_message": `${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. Do you want to run physics-based analysis to determine which subcomponent is likely to have failed?`,
           "visual_message_type": ["text"],
-          "visual_message": [`No additional evidence can improve my diagnostic confidence. Please proceed with the anomaly resolution.`],
+          "visual_message": [`${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. Do you want to run physics-based analysis to determine which subcomponent is likely to have failed?`],
+          "writer": "daphne",
+          "options": ["Yes", "No"],
+          "optionsCallbackEvent": uniqueEventName
+        });
+      } else {
+        // No significant anomaly detected or "No Anomalies Present"
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `The diagnosis is complete. No significant anomaly requiring further analysis was detected.`,
+          "visual_message_type": ["text"],
+          "visual_message": [`The diagnosis is complete. No significant anomaly requiring further analysis was detected.`],
           "writer": "daphne",
         });
-      }
-
-      // Display Astrobee procedures in chat after diagnosis
-      console.log("diagnosos report",diagnosisReport, diagnosisReport.astrobee_procedure_list);
-      if (diagnosisReport && diagnosisReport.astrobee_procedure_list && diagnosisReport.astrobee_procedure_list.length > 0) {
-        console.log("Adding procedure message to dialogue", diagnosisReport.astrobee_procedure_list);
-        const procedureList = diagnosisReport.astrobee_procedure_list.map(proc => 
-          `<li>${proc.title}</li>`
-        ).join('');
-        const procedureMessage = {
-          "voice_message": "I found the following Astrobee procedures that might be helpful for the diagnosed anomalies. Would you like me to start any of these procedures?",
-          "visual_message_type": ["text"],
-          "visual_message": [
-            `I found the following Astrobee procedures that might be helpful for the diagnosed anomalies. Would you like me to start any of these procedures?
-            <ul>
-              ${procedureList}
-            </ul>`
-          ],
-          "writer": "daphne"
-        };
-        console.log("Adding procedure message to dialogue: ", procedureMessage);
-        this.$store.commit('addDialoguePiece', procedureMessage);
-        console.log("diagnosis report", diagnosisReport);
-        console.log("diagnosis anomaly report", diagnosisReport['diagnosis_list'], diagnosisReport['diagnosis_list'][0]);
-        
-        // Set flag to display yes/no buttons for procedure selection
-        console.log("Setting anomalous procedures detected flag to true");
-        this.$store.commit('setAnomalousProceduresDetected', true);
       }
     },
 
     showSymptomSelectionDialog() {
       this.showSymptomDialog = true;
+    },
+
+    setupBestEvidenceListener() {
+      // Add event listener for options response
+      if (!this.bestEvidenceListener) {
+        this.$root.$on('bestEvidenceResponse', this.handleBestEvidenceResponse);
+        this.bestEvidenceListener = true;
+      }
+    },
+
+    setupPhysicsAnalysisListener(topAnomaly) {
+      // Create a unique event name for this specific diagnosis to prevent multiple listeners from firing
+      const uniqueEventName = `physicsAnalysisResponse_${Date.now()}_${Math.random()}`;
+      
+      // Set up listener for physics analysis response
+      this.$root.$once(uniqueEventName, async (response) => {
+        if (response === 'Yes') {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "Running physics-based analysis...",
+            "visual_message_type": ["text"],
+            "visual_message": ["Running physics-based analysis..."],
+            "writer": "daphne"
+          });
+
+          // Run physics diagnosis using the existing function
+          // Note: runPhysicsDiagnosisForAnomaly now handles the robot inspection prompt
+          try {
+            await this.runPhysicsDiagnosisForAnomaly(topAnomaly.anomaly, topAnomaly.probability);
+          } catch (error) {
+            console.error("Error running physics diagnosis:", error);
+            this.$store.commit('addDialoguePiece', {
+              "voice_message": "I encountered an error while running the physics-based analysis.",
+              "visual_message_type": ["text"],
+              "visual_message": ["I encountered an error while running the physics-based analysis."],
+              "writer": "daphne"
+            });
+          }
+        } else {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "Understood. Let me know if you need anything else.",
+            "visual_message_type": ["text"],
+            "visual_message": ["Understood. Let me know if you need anything else."],
+            "writer": "daphne"
+          });
+        }
+      });
+      
+      // Return the unique event name so the dialog can use it
+      return uniqueEventName;
+    },
+
+    setupRobotInspectionListener(component) {
+      // Set up listener for robot inspection response
+      this.$root.$once('robotInspectionResponse', async (response) => {
+        if (response === 'Yes') {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "Searching for inspection procedures...",
+            "visual_message_type": ["text"],
+            "visual_message": ["Searching for inspection procedures..."],
+            "writer": "daphne"
+          });
+
+          try {
+            // Get all available procedures from PRIDE
+            const proceduresResponse = await fetchGet('/api/at/get_available_procedures');
+            
+            if (proceduresResponse.ok) {
+              const data = await proceduresResponse.json();
+              const allProcedures = data.procedures || [];
+              console.log(`Total available procedures: ${allProcedures}`);
+              
+              // Split component name by '+' to handle multiple components
+              const componentNames = component.anomaly.split('+').map(name => name.trim());
+              console.log(`Searching for inspection procedures for components: ${componentNames.join(', ')}`);
+              
+              // Find inspection procedures for each component
+              const allInspectionProcedures = [];
+              
+              for (const componentName of componentNames) {
+                const componentNameLower = componentName.toLowerCase();
+                const matchingProcedures = allProcedures.filter(proc => {
+                  const titleLower = proc.title.toLowerCase();
+                  console.log(`Checking procedure title: ${proc.title}`);
+                  return titleLower.includes('inspection') && 
+                         (titleLower.includes(componentNameLower) || 
+                          titleLower.includes(componentNameLower.replace(' ', '')));
+                });
+                
+                if (matchingProcedures.length > 0) {
+                  allInspectionProcedures.push(...matchingProcedures);
+                }
+              }
+              
+              // Remove duplicates based on staticProcedureID
+              const uniqueProcedures = Array.from(
+                new Map(allInspectionProcedures.map(proc => [proc.staticProcedureID, proc])).values()
+              );
+
+              if (uniqueProcedures.length === 1) {
+                // Only one procedure found - start it automatically
+                const procedure = uniqueProcedures[0];
+                
+                this.$store.commit('addDialoguePiece', {
+                  "voice_message": `I found the inspection procedure: ${procedure.title}. Starting it now...`,
+                  "visual_message_type": ["text"],
+                  "visual_message": [`I found the inspection procedure: ${procedure.title}. Starting it now...`],
+                  "writer": "daphne"
+                });
+
+                // Start the procedure
+                let reqData = new FormData();
+                reqData.append('procedureID', procedure.staticProcedureID);
+                const startResponse = await fetchPost('/api/at/start_astrobee_procedure', reqData);
+                
+                if (startResponse.ok) {
+                  const startData = await startResponse.json();
+                  console.log("Procedure start response data:", startData);
+                  const runtimeID = startData.procedure_runtime_id; // Get the runtime ID from the response
+                  
+                  this.$store.commit('addDialoguePiece', {
+                    "voice_message": `Procedure started successfully. I'll monitor its progress and check the results when it's complete.`,
+                    "visual_message_type": ["text"],
+                    "visual_message": [`Procedure started successfully. I'll monitor its progress and check the results when it's complete.`],
+                    "writer": "daphne"
+                  });
+
+                  // Start polling for procedure completion and shared variables with runtimeID
+                  this.monitorProcedureCompletion(component, runtimeID);
+                } else {
+                  this.$store.commit('addDialoguePiece', {
+                    "voice_message": "I encountered an error while starting the procedure.",
+                    "visual_message_type": ["text"],
+                    "visual_message": ["I encountered an error while starting the procedure."],
+                    "writer": "daphne"
+                  });
+                }
+              } else if (uniqueProcedures.length > 1) {
+                // Multiple procedures found - let user select which one(s) to run
+                const procedureList = uniqueProcedures.map(proc => proc.title).join(', ');
+                
+                this.$store.commit('addDialoguePiece', {
+                  "voice_message": `I found ${uniqueProcedures.length} inspection procedures: ${procedureList}. Please select which procedure(s) you'd like to run.`,
+                  "visual_message_type": ["text"],
+                  "visual_message": [`I found ${uniqueProcedures.length} inspection procedures for the identified components. Please select which procedure(s) you'd like to run.`],
+                  "writer": "daphne"
+                });
+                
+                // Show procedure selection dialog (you may need to implement this)
+                // For now, just show the procedures in chat
+                this.showProcedureSelection(uniqueProcedures, component);
+              } else {
+                // No procedures found
+                this.$store.commit('addDialoguePiece', {
+                  "voice_message": `No inspection procedure found for ${component.anomaly}.`,
+                  "visual_message_type": ["text"],
+                  "visual_message": [`No inspection procedure found for ${component.anomaly}.`],
+                  "writer": "daphne"
+                });
+              }
+            }
+          } catch (error) {
+            console.error("Error finding/starting inspection procedure:", error);
+            this.$store.commit('addDialoguePiece', {
+              "voice_message": "I encountered an error while searching for inspection procedures.",
+              "visual_message_type": ["text"],
+              "visual_message": ["I encountered an error while searching for inspection procedures."],
+              "writer": "daphne"
+            });
+          }
+        } else {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "Understood. Let me know if you need anything else.",
+            "visual_message_type": ["text"],
+            "visual_message": ["Understood. Let me know if you need anything else."],
+            "writer": "daphne"
+          });
+        }
+      });
+    },
+
+    setupLossOfPressureListener(topAnomaly) {
+      // Set up listener for loss of pressure leak check response
+      this.$root.$once('lossOfPressureResponse', async (response) => {
+        if (response === 'Yes') {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "Starting the Pressure Leak External Inspection procedure...",
+            "visual_message_type": ["text"],
+            "visual_message": ["Starting the Pressure Leak External Inspection procedure..."],
+            "writer": "daphne"
+          });
+
+          try {
+            // Get all available procedures from PRIDE
+            const proceduresResponse = await fetchGet('/api/at/get_available_procedures');
+            
+            if (proceduresResponse.ok) {
+              const data = await proceduresResponse.json();
+              const allProcedures = data.procedures || [];
+              
+              // Find the Pressure Leak External Inspection procedure (02.102)
+              const leakProcedure = allProcedures.find(proc => 
+                proc.title.includes('Pressure Leak External Inspection') || 
+                proc.title.includes('02.102')
+              );
+
+              if (leakProcedure) {
+                // Start the procedure
+                let reqData = new FormData();
+                reqData.append('procedureID', leakProcedure.staticProcedureID);
+                const startResponse = await fetchPost('/api/at/start_astrobee_procedure', reqData);
+                
+                if (startResponse.ok) {
+                  const startData = await startResponse.json();
+                  const runtimeID = startData.procedure_runtime_id; // Get the runtime ID from the response
+                  
+                  this.$store.commit('addDialoguePiece', {
+                    "voice_message": "Pressure leak inspection procedure started. I'll check the results when it's complete.",
+                    "visual_message_type": ["text"],
+                    "visual_message": ["Pressure leak inspection procedure started. I'll check the results when it's complete."],
+                    "writer": "daphne"
+                  });
+
+                  // Start polling for procedure completion and leak detection with runtimeID
+                  this.monitorLeakDetection(runtimeID);
+                }
+              } else {
+                this.$store.commit('addDialoguePiece', {
+                  "voice_message": "Could not find the Pressure Leak External Inspection procedure.",
+                  "visual_message_type": ["text"],
+                  "visual_message": ["Could not find the Pressure Leak External Inspection procedure."],
+                  "writer": "daphne"
+                });
+              }
+            }
+          } catch (error) {
+            console.error("Error starting leak detection procedure:", error);
+            this.$store.commit('addDialoguePiece', {
+              "voice_message": "I encountered an error while starting the leak detection procedure.",
+              "visual_message_type": ["text"],
+              "visual_message": ["I encountered an error while starting the leak detection procedure."],
+              "writer": "daphne"
+            });
+          }
+        } else {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "Understood. Let me know if you need anything else.",
+            "visual_message_type": ["text"],
+            "visual_message": ["Understood. Let me know if you need anything else."],
+            "writer": "daphne"
+          });
+        }
+      });
+    },
+
+    async monitorProcedureCompletion(component, runtimeID, completionCallback = null) {
+      // Poll for procedure status first, then check shared variables only when complete
+      const pollInterval = setInterval(async () => {
+        try {
+          // Check if procedure is still running
+          const reqData = new FormData();
+          reqData.append('runtimeID', runtimeID);
+          
+          const statusResponse = await fetchPost('/api/at/get_procedure_status', reqData);
+          
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            console.log(`Procedure status for ${runtimeID}:`, statusData.procedureStatus);
+            
+            // Only check shared variables when procedure is finished
+            if (statusData.procedureStatus === 'finish') {
+              clearInterval(pollInterval);
+              
+              console.log("Procedure completed, checking shared variables...");
+              
+              // If a custom completion callback is provided, use it
+              if (completionCallback) {
+                await completionCallback();
+                return;
+              }
+              
+              // Default behavior: check shared variables for filter status
+              const response = await fetchPost('/api/at/get_shared_variables');
+          
+              if (response.ok) {
+                const data = await response.json();
+                const sharedVariables = data.shared_variables || [];
+                console.log("Shared variables fetched for procedure monitoring:", sharedVariables);
+                
+                // Look for filterisBad variable
+                const filterVariable = sharedVariables.find(v => v.label === 'filterisBad');
+                
+                if (filterVariable) {
+                  const filterIsBad = filterVariable.raw === 'true' || filterVariable.raw === true;
+                  
+                  if (filterIsBad) {
+                    this.$store.commit('addDialoguePiece', {
+                      "voice_message": `The inspection procedure detected that the filter is bad. Do you want to start the procedure for replacing the filter?`,
+                      "visual_message_type": ["text"],
+                      "visual_message": [`The inspection procedure detected that the filter is bad. Do you want to start the procedure for replacing the filter?`],
+                      "writer": "daphne",
+                      "options": ["Yes", "No"],
+                      "optionsCallbackEvent": "filterReplacementResponse"
+                    });
+
+                    this.setupFilterReplacementListener();
+                  } else {
+                    this.$store.commit('addDialoguePiece', {
+                      "voice_message": `The inspection procedure completed. The filter appears to be in good condition. Please wait a few minutes and I'll run the Bayesian diagnosis again to see if the anomaly has disappeared.`,
+                      "visual_message_type": ["text"],
+                      "visual_message": [`The inspection procedure completed. The filter appears to be in good condition. Please wait a few minutes and I'll run the Bayesian diagnosis again to see if the anomaly has disappeared.`],
+                      "writer": "daphne"
+                    });
+                  }
+                } else {
+                  console.warn("filterisBad variable not found in shared variables");
+                  this.$store.commit('addDialoguePiece', {
+                    "voice_message": "The inspection procedure completed, but I couldn't retrieve the filter status.",
+                    "visual_message_type": ["text"],
+                    "visual_message": ["The inspection procedure completed, but I couldn't retrieve the filter status."],
+                    "writer": "daphne"
+                  });
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error monitoring procedure:", error);
+        }
+      }, 5000); // Poll every 5 seconds
+      
+      // Stop polling after 10 minutes to prevent infinite loops
+      setTimeout(() => clearInterval(pollInterval), 600000);
+    },
+
+    async monitorLeakDetection(runtimeID) {
+      // Poll for procedure status first, then check shared variables only when complete
+      const pollInterval = setInterval(async () => {
+        try {
+          // Check if procedure is still running
+          const reqData = new FormData();
+          reqData.append('runtimeID', runtimeID);
+          
+          const statusResponse = await fetchPost('/api/at/get_procedure_status', reqData);
+          
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            console.log(`Leak detection procedure status for ${runtimeID}:`, statusData.procedureStatus);
+            
+            // Only check shared variables when procedure is finished
+            if (statusData.procedureStatus === 'finish') {
+              clearInterval(pollInterval);
+              
+              console.log("Leak detection procedure completed, checking shared variables...");
+              
+              // Now check shared variables
+              const response = await fetchPost('/api/at/get_shared_variables');
+          
+              if (response.ok) {
+                const data = await response.json();
+                const sharedVariables = data.shared_variables || [];
+                
+                // Look for leakDetected variable
+                const leakVariable = sharedVariables.find(v => v.label === 'leakDetected');
+                
+                if (leakVariable) {
+                  const leakDetected = leakVariable.raw === 'true' || leakVariable.raw === true;
+                  
+                  if (leakDetected) {
+                    this.$store.commit('addDialoguePiece', {
+                      "voice_message": `A leak has been detected. Do you want to start the procedure for stopping the leak?`,
+                      "visual_message_type": ["text"],
+                      "visual_message": [`A leak has been detected. Do you want to start the procedure for stopping the leak?`],
+                      "writer": "daphne",
+                      "options": ["Yes", "No"],
+                      "optionsCallbackEvent": "leakRepairResponse"
+                    });
+
+                    this.setupLeakRepairListener();
+                  } else {
+                    this.$store.commit('addDialoguePiece', {
+                      "voice_message": "The leak inspection procedure completed. No leak was detected.",
+                      "visual_message_type": ["text"],
+                      "visual_message": ["The leak inspection procedure completed. No leak was detected."],
+                      "writer": "daphne"
+                    });
+                  }
+                } else {
+                  console.warn("leakDetected variable not found in shared variables");
+                  this.$store.commit('addDialoguePiece', {
+                    "voice_message": "The leak inspection procedure completed, but I couldn't retrieve the leak detection status.",
+                    "visual_message_type": ["text"],
+                    "visual_message": ["The leak inspection procedure completed, but I couldn't retrieve the leak detection status."],
+                    "writer": "daphne"
+                  });
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error monitoring leak detection procedure:", error);
+        }
+      }, 5000); // Poll every 5 seconds
+      
+      // Stop polling after 10 minutes
+      setTimeout(() => clearInterval(pollInterval), 600000);
+    },
+
+    setupFilterReplacementListener() {
+      this.$root.$once('filterReplacementResponse', async (response) => {
+        if (response === 'Yes') {
+          // Find and start the filter replacement procedure
+          try {
+            const proceduresResponse = await fetchGet('/api/at/get_available_procedures');
+            
+            if (proceduresResponse.ok) {
+              const data = await proceduresResponse.json();
+              const allProcedures = data.procedures || [];
+              
+              const replacementProcedure = allProcedures.find(proc => 
+                proc.title.includes('Filter Swapout') || proc.title.includes('03.101')
+              );
+
+              if (replacementProcedure) {
+                let reqData = new FormData();
+                reqData.append('procedureID', replacementProcedure.staticProcedureID);
+                const startResponse = await fetchPost('/api/at/start_astrobee_procedure', reqData);
+                
+                if (startResponse.ok) {
+                  const startData = await startResponse.json();
+                  const runtimeID = startData.runtimeID; // Get the runtime ID from the response
+                  
+                  this.$store.commit('addDialoguePiece', {
+                    "voice_message": "Filter replacement procedure started. I'll monitor its progress and notify you when it's complete.",
+                    "visual_message_type": ["text"],
+                    "visual_message": ["Filter replacement procedure started. I'll monitor its progress and notify you when it's complete."],
+                    "writer": "daphne"
+                  });
+                  
+                  // Reuse monitorProcedureCompletion with a custom callback for filter replacement
+                  this.monitorProcedureCompletion(null, runtimeID, async () => {
+                    this.$store.commit('addDialoguePiece', {
+                      "voice_message": "Filter replacement procedure has been completed successfully.",
+                      "visual_message_type": ["text"],
+                      "visual_message": ["Filter replacement procedure has been completed successfully."],
+                      "writer": "daphne"
+                    });
+                  });
+                }
+              }
+            }
+          } catch (error) {
+            console.error("Error starting filter replacement:", error);
+          }
+        }
+      });
+    },
+
+    setupLeakRepairListener() {
+      this.$root.$once('leakRepairResponse', async (response) => {
+        if (response === 'Yes') {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": "Starting the leak repair procedure...",
+            "visual_message_type": ["text"],
+            "visual_message": ["Starting the leak repair procedure..."],
+            "writer": "daphne"
+          });
+          
+          // Here you would find and start the leak repair/EVA procedure
+          // This is a placeholder as the exact procedure name wasn't specified
+        }
+      });
     },
 
     setupBestEvidenceListener() {
@@ -2889,6 +3313,26 @@ export default {
           //   "writer": "daphne"
           // });
           
+          // Ask user if they want to run robot inspection for the most likely component
+          if (physicsDiagnosisData.componentAnomalies && physicsDiagnosisData.componentAnomalies.length > 0) {
+            const mostLikelyComponent = physicsDiagnosisData.componentAnomalies[0];
+            
+            this.$store.commit('addDialoguePiece', {
+              "voice_message": `Physics-based analysis complete. The most likely failed subcomponent is ${mostLikelyComponent.name}. Do you want to command the robot to check ${mostLikelyComponent.name} condition?`,
+              "visual_message_type": ["text"],
+              "visual_message": [`Physics-based analysis complete. The most likely failed subcomponent is ${mostLikelyComponent.name} with ${(mostLikelyComponent.score * 100).toFixed(1)}% score. Do you want to command the robot to check ${mostLikelyComponent.name} condition?`],
+              "writer": "daphne",
+              "options": ["Yes", "No"],
+              "optionsCallbackEvent": "robotInspectionResponse"
+            });
+
+            // Set up listener for robot inspection response
+            this.setupRobotInspectionListener({
+              anomaly: mostLikelyComponent.name,
+              probability: mostLikelyComponent.score
+            });
+          }
+          
         } else {
           throw new Error("No physics diagnosis data received from backend");
         }
@@ -3271,6 +3715,14 @@ export default {
   if (this.bestEvidenceListener) {
     this.$root.$off('bestEvidenceResponse', this.handleBestEvidenceResponse);
   }
+  
+  // Clean up new event listeners
+  this.$root.$off('physicsAnalysisResponse');
+  this.$root.$off('robotInspectionResponse');
+  this.$root.$off('lossOfPressureResponse');
+  this.$root.$off('filterReplacementResponse');
+  this.$root.$off('leakRepairResponse');
+  
   this.$root.$off('addHypotheticalDiagnosis', this.handleAddHypotheticalDiagnosis);
   this.$root.$off('addBayesianDiagnosis', this.handleAddBayesianDiagnosis);
   this.$root.$off('showProcedureListFromChat', this.handleShowProcedureListFromChat);

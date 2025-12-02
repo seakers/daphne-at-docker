@@ -889,6 +889,99 @@ class CompleteTutorial(APIView):
         return Response()
 
 
+class GetSharedVariables(APIView):
+    def post(self, request, format=None):
+        """
+        Get all shared variables from Pride API
+        """
+        global global_procedure_runtime_ID
+        
+        try:
+            url = f"https://10.5.0.3:8000/api/sharedVariables"
+            print("Fetching shared variables from Pride API:", url)
+            
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
+            }
+            
+            response = requests.request("GET", url, headers=headers, verify=False)
+            
+            if response.status_code == 200:
+                shared_variables = response.json()
+                print(f"Successfully fetched {(shared_variables)} shared variables from Pride")
+                return Response({
+                    "shared_variables": shared_variables,
+                    "status": "success"
+                })
+            else:
+                return Response({
+                    "error": "Failed to fetch shared variables",
+                    "message": f"Failed to fetch shared variables from Pride. Status: {response.status_code}"
+                }, status=response.status_code)
+                
+        except requests.exceptions.RequestException as e:
+            return Response({
+                "error": "Network error",
+                "message": f"Network error when fetching shared variables: {str(e)}"
+            }, status=500)
+        except Exception as e:
+            return Response({
+                "error": "Server error",
+                "message": f"Unexpected error: {str(e)}"
+            }, status=500)
+
+
+class GetProcedureStatus(APIView):
+    def post(self, request, format=None):
+        """
+        Get the status of a running procedure from Pride API
+        """
+        try:
+            runtime_id = request.data.get('runtimeID')
+            
+            if not runtime_id:
+                return Response({
+                    "error": "Missing runtimeID",
+                    "message": "runtimeID is required"
+                }, status=400)
+            
+            url = f"https://10.5.0.3:8000/api/procedures/{runtime_id}/procedureStatus"
+            print(f"Checking procedure status from Pride API: {url}")
+            
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
+            }
+            
+            response = requests.request("GET", url, headers=headers, verify=False)
+            
+            if response.status_code == 200:
+                status_data = response.json()
+                print(f"Procedure {runtime_id} status: {status_data.get('procedureStatus')}")
+                return Response({
+                    "runtimeID": status_data.get('runtimeID'),
+                    "procedureStatus": status_data.get('procedureStatus'),
+                    "status": "success"
+                })
+            else:
+                return Response({
+                    "error": "Failed to fetch procedure status",
+                    "message": f"Failed to fetch procedure status from Pride. Status: {response.status_code}"
+                }, status=response.status_code)
+                
+        except requests.exceptions.RequestException as e:
+            return Response({
+                "error": "Network error",
+                "message": f"Network error when fetching procedure status: {str(e)}"
+            }, status=500)
+        except Exception as e:
+            return Response({
+                "error": "Server error",
+                "message": f"Unexpected error: {str(e)}"
+            }, status=500)
+
+
 class GetAvailableProcedures(APIView):
     def get(self, request, format=None):
         """

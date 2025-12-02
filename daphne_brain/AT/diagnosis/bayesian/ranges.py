@@ -153,15 +153,15 @@ measurement_ranges = {
     },
     "Humidity_IHab (IHab)": {
         'Exceeds_UpperWarningLimit': (70, None, True, False),
-        'Exceeds_UpperCautionLimit': (51, 70, True, False),
-        'Nominal': (50, 51, False, False), # Nominal: 52.01% (IHab = HALO)
+        'Exceeds_UpperCautionLimit': (55, 70, True, False),
+        'Nominal': (50, 55, False, False), # Nominal: 52.01% (IHab = HALO)
         'Exceeds_LowerCautionLimit': (40, 50, False, True),
         'Exceeds_LowerWarningLimit': (None, 40, False, True)
     },
     "Humidity_HALO (HALO)": {
         'Exceeds_UpperWarningLimit': (70, None, True, False),
-        'Exceeds_UpperCautionLimit': (51, 70, True, False),
-        'Nominal': (50, 51, False, False), # Nominal: 52.01% (IHab = HALO)
+        'Exceeds_UpperCautionLimit': (55, 70, True, False),
+        'Nominal': (50, 55, False, False), # Nominal: 52.01% (IHab = HALO)
         'Exceeds_LowerCautionLimit': (40, 50, False, True),
         'Exceeds_LowerWarningLimit': (None, 40, False, True)
     },
@@ -237,6 +237,20 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (0, 0.2, False, True),
         'Exceeds_LowerWarningLimit': (None, 0, False, True)
     },
+    # "ppCO2_IHab (IHab)": {
+    #     'Exceeds_UpperWarningLimit': (3.1, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (3.0, 3.1, True, False),
+    #     'Nominal': (0.2, 3.0, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
+    #     'Exceeds_LowerCautionLimit': (0, 0.2, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 0, False, True)
+    # },
+    # "ppCO2_HALO (HALO)": {
+    #     'Exceeds_UpperWarningLimit': (3.1, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (3.0, 3.1, True, False),
+    #     'Nominal': (0.2, 3.0, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
+    #     'Exceeds_LowerCautionLimit': (0, 0.2, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 0, False, True)
+    # },
     "ppH2 (IHab)": {
         'Exceeds_UpperWarningLimit': (0.1, None, True, False),
         'Exceeds_UpperCautionLimit': (0.07, 0.1, True, False),
