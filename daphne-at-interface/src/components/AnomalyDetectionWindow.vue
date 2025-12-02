@@ -276,6 +276,12 @@ export default {
       this.$store.commit('mutateLastUpdatedSymptomsTimestamp', formattedDate);
     },
     selectall() {
+      // First, clear all existing selections
+      this.$store.commit('mutateSelectedLeftSymptomsList', []);
+      this.$store.commit('mutateSelectedRightSymptomsList', []);
+      this.$store.commit('mutateSelectedSymptomsList', []);
+      
+      // Now select all current symptoms
       let symptomsList = this.symptomsList;
       let leftSymptoms = [];
       let rightSymptoms = [];
