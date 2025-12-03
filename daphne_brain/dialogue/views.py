@@ -910,11 +910,26 @@ class Command(APIView):
             ##################################################################################################################
             elif classify_answer == 'physics diagnosis query':
                 try:
+                    # Get current simulation time from BioSim telemetry as default duration
+                    default_duration = 108000  # Fallback: 30 hours in seconds
+                    try:
+                        from AT.diagnosis.physics.telemetry_storage import TelemetryHistory
+                        recent_telemetry = TelemetryHistory.objects.filter(source='BioSim').order_by('-timestamp').first()
+                        
+                        if recent_telemetry and recent_telemetry.metadata and recent_telemetry.metadata.get('elapsed_seconds') is not None:
+                            # Use current simulation time as default
+                            default_duration = int(recent_telemetry.metadata.get('elapsed_seconds'))
+                            print(f"🕐 Using current simulation time as default duration: {default_duration}s")
+                        else:
+                            print(f"⚠️ No BioSim telemetry available, using fallback duration: {default_duration}s")
+                    except Exception as e:
+                        print(f"⚠️ Error getting current simulation time, using fallback: {e}")
+                    
                     # Extract target anomaly and duration from the query using GPT
                     extract_response = client.chat.completions.create(
                         model="gpt-4o",
                         messages=[
-                            {"role": "system", "content": "Extract the target anomaly name and duration (in seconds) from the user's query about running physics diagnosis. Return in format: 'anomaly_name|duration'. If no anomaly specified, use 'CDRA Failure'. If no duration specified, use '108000'. Examples: 'CDRA Failure|30000', 'Main Cabin Fan Failure|108000'"},
+                            {"role": "system", "content": f"Extract the target anomaly name and duration (in seconds) from the user's query about running physics diagnosis. Return in format: 'anomaly_name|duration'. If no anomaly specified, use 'CDRA Failure'. If no duration specified, use 'default'. Examples: 'CDRA Failure|30000', 'Main Cabin Fan Failure|default'"},
                             {"role": "user", "content": enhanced_query}
                         ],
                         temperature=0,
@@ -926,17 +941,22 @@ class Command(APIView):
                     if '|' in extraction:
                         target_anomaly, duration_str = extraction.split('|')
                         target_anomaly = target_anomaly.strip()
-                        try:
-                            duration = int(duration_str.strip())
-                        except:
-                            duration = 108000  # Default: 30 hours in seconds
+                        duration_str = duration_str.strip()
+                        
+                        if duration_str.lower() == 'default':
+                            duration = default_duration
+                        else:
+                            try:
+                                duration = int(duration_str)
+                            except:
+                                duration = default_duration
                     else:
                         target_anomaly = extraction.strip() if extraction.strip() else 'CDRA Failure'
-                        duration = 108000  # Default: 30 hours in seconds
+                        duration = default_duration
                     
                     # Ensure positive duration
                     if duration <= 0:
-                        duration = 108000  # Default: 30 hours in seconds
+                        duration = default_duration
                     
                     print(f"Running physics diagnosis: anomaly={target_anomaly}, duration={duration}s")
                     

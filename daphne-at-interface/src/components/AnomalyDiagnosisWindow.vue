@@ -2337,6 +2337,9 @@ export default {
     },
 
     setupRobotInspectionListener(component) {
+      // Extract bayesianAnomaly if provided in component object
+      const bayesianAnomaly = component.bayesianAnomaly;
+      
       // Set up listener for robot inspection response
       this.$root.$once('robotInspectionResponse', async (response) => {
         if (response === 'Yes') {
@@ -2412,7 +2415,7 @@ export default {
                   });
 
                   // Start polling for procedure completion and shared variables with runtimeID
-                  this.monitorProcedureCompletion(component, runtimeID);
+                  this.monitorProcedureCompletion(component, runtimeID, null, bayesianAnomaly);
                 } else {
                   this.$store.commit('addDialoguePiece', {
                     "voice_message": "I encountered an error while starting the procedure.",
@@ -2539,8 +2542,57 @@ export default {
       });
     },
 
-    async monitorProcedureCompletion(component, runtimeID, completionCallback = null) {
-      // Poll for procedure status first, then check shared variables only when complete
+    /**
+     * Unified procedure monitoring with Bayesian diagnosis update
+     * 
+     * This method provides a scalable framework for monitoring inspection procedures,
+     * updating Bayesian diagnosis with results, and offering follow-up actions.
+     * 
+     * USAGE EXAMPLE - Adding a new inspection type:
+     * 
+     * async monitorTemperatureSensorCheck(runtimeID) {
+     *   await this.monitorInspectionProcedure({
+     *     runtimeID,
+     *     sharedVariableName: 'sensorIsFaulty',
+     *     bayesianAnomaly: 'Temperature Control Failure',
+     *     tabLabel: 'Sensor Check',
+     *     messages: {
+     *       positiveVoice: `The sensor check detected a faulty sensor. I've updated the Bayesian diagnosis. Do you want to replace the sensor?`,
+     *       negativeVoice: `The sensor check completed. The sensor is functioning normally.`,
+     *       notFound: `The sensor check completed, but I couldn't retrieve the sensor status.`
+     *     },
+     *     followUp: {
+     *       eventName: 'sensorReplacementResponse',
+     *       setupListener: () => this.setupSensorReplacementListener()
+     *     }
+     *   });
+     * }
+     * 
+     * @param {Object} config - Configuration object for the procedure
+     * @param {string} config.runtimeID - The runtime ID of the procedure
+     * @param {string} config.sharedVariableName - Name of the shared variable to check (e.g., 'filterisBad', 'leakDetected')
+     * @param {string} config.bayesianAnomaly - Bayesian anomaly name for evidence key (e.g., 'CDRA Failure', 'Loss of Pressure')
+     * @param {string} config.tabLabel - Label for the diagnosis tab (e.g., 'Inspection', 'Leak Check')
+     * @param {Object} config.messages - Messages to display based on detection result
+     * @param {string} config.messages.positiveVoice - Message when issue is detected
+     * @param {string} config.messages.negativeVoice - Message when no issue is detected
+     * @param {string} config.messages.notFound - Message when variable is not found
+     * @param {Object} config.followUp - Optional follow-up configuration
+     * @param {string} config.followUp.eventName - Event name for follow-up response
+     * @param {Function} config.followUp.setupListener - Function to set up follow-up listener
+     * @param {Function} config.completionCallback - Optional custom completion callback
+     */
+    async monitorInspectionProcedure(config) {
+      const {
+        runtimeID,
+        sharedVariableName,
+        bayesianAnomaly,
+        tabLabel,
+        messages,
+        followUp,
+        completionCallback
+      } = config;
+
       const pollInterval = setInterval(async () => {
         try {
           // Check if procedure is still running
@@ -2553,57 +2605,97 @@ export default {
             const statusData = await statusResponse.json();
             console.log(`Procedure status for ${runtimeID}:`, statusData.procedureStatus);
             
-            // Only check shared variables when procedure is finished
+            // Only process when procedure is finished
             if (statusData.procedureStatus === 'finish') {
               clearInterval(pollInterval);
+              console.log(`${tabLabel} procedure completed, checking shared variables...`);
               
-              console.log("Procedure completed, checking shared variables...");
-              
-              // If a custom completion callback is provided, use it
+              // If custom callback is provided, use it instead of default behavior
               if (completionCallback) {
                 await completionCallback();
                 return;
               }
               
-              // Default behavior: check shared variables for filter status
+              // Default behavior: check shared variables and update Bayesian diagnosis
               const response = await fetchPost('/api/at/get_shared_variables');
           
               if (response.ok) {
                 const data = await response.json();
                 const sharedVariables = data.shared_variables || [];
-                console.log("Shared variables fetched for procedure monitoring:", sharedVariables);
                 
-                // Look for filterisBad variable
-                const filterVariable = sharedVariables.find(v => v.label === 'filterisBad');
+                // Look for the specified shared variable
+                const variable = sharedVariables.find(v => v.label === sharedVariableName);
                 
-                if (filterVariable) {
-                  const filterIsBad = filterVariable.raw === 'true' || filterVariable.raw === true;
+                if (variable) {
+                  const issueDetected = variable.raw === 'true' || variable.raw === true;
                   
-                  if (filterIsBad) {
-                    this.$store.commit('addDialoguePiece', {
-                      "voice_message": `The inspection procedure detected that the filter is bad. Do you want to start the procedure for replacing the filter?`,
-                      "visual_message_type": ["text"],
-                      "visual_message": [`The inspection procedure detected that the filter is bad. Do you want to start the procedure for replacing the filter?`],
-                      "writer": "daphne",
+                  // Remove component suffix like "(IHab)" or "(HALO)" from bayesian anomaly name
+                  const cleanedBayesianAnomaly = bayesianAnomaly.replace(/\s*\([^)]+\)\s*$/, '').trim();
+                  
+                  // Prepare hidden evidence key for Bayesian update
+                  const hiddenEvidenceKey = `[HIDDEN] ${cleanedBayesianAnomaly} Component`;
+                  
+                  // Build additional evidence (4-5 for issue detected, 1-2 for no issue)
+                  const additionalEvidence = {
+                    [hiddenEvidenceKey]: issueDetected 
+                      ? (Math.random() < 0.5 ? 4 : 5)
+                      : (Math.random() < 0.5 ? 1 : 2)
+                  };
+                  
+                  // Update Bayesian diagnosis with evidence
+                  console.log(`Updating Bayesian diagnosis with ${tabLabel} evidence:`, additionalEvidence);
+                  await this.$store.dispatch('requestDiagnosisWithEvidence', {
+                    symptoms: this.lastSelectedSymptomsList,
+                    additional_evidence: additionalEvidence
+                  });
+                  
+                  // Get updated diagnosis report and add to tabs
+                  const diagnosisReport = this.$store.getters.getDiagnosisReport;
+                  this.unconfirmedSymptoms = diagnosisReport.hidden_components;
+                  this.bestEvidence = diagnosisReport.best_evidence;
+                  this.currentTelemetryValues = diagnosisReport.current_telemetry_values;
+                  this.activeDiagnosticTab = this.diagnosticHistory.length;
+                  this.diagnosticHistory.push(JSON.parse(JSON.stringify(diagnosisReport)));
+                  
+                  // Add a simple tab with updated Bayesian diagnosis content
+                  const evidenceText = Object.keys(additionalEvidence).length > 0 
+                    ? `Additional Evidence: ${Object.entries(additionalEvidence).map(([key, value]) => `${key}: ${this.formatEvidenceValue(value)}`).join(', ')}`
+                    : '';
+                  
+                  this.simpleTabs.push({
+                    label: `Bayesian Diagnosis (${tabLabel})`,
+                    type: "bayesian",
+                    content: `Updated Bayesian diagnosis after ${tabLabel.toLowerCase()}. ${evidenceText}`,
+                    diagnosisData: diagnosisReport,
+                    checked: [],
+                    allSelected: false,
+                    additionalEvidence: JSON.parse(JSON.stringify(additionalEvidence))
+                  });
+                  this.activeSimpleTab = this.simpleTabs.length - 1;
+                  
+                  // Display appropriate message based on detection result
+                  const message = issueDetected ? messages.positiveVoice : messages.negativeVoice;
+                  this.$store.commit('addDialoguePiece', {
+                    "voice_message": message,
+                    "visual_message_type": ["text"],
+                    "visual_message": [message],
+                    "writer": "daphne",
+                    ...(issueDetected && followUp ? {
                       "options": ["Yes", "No"],
-                      "optionsCallbackEvent": "filterReplacementResponse"
-                    });
+                      "optionsCallbackEvent": followUp.eventName
+                    } : {})
+                  });
 
-                    this.setupFilterReplacementListener();
-                  } else {
-                    this.$store.commit('addDialoguePiece', {
-                      "voice_message": `The inspection procedure completed. The filter appears to be in good condition. Please wait a few minutes and I'll run the Bayesian diagnosis again to see if the anomaly has disappeared.`,
-                      "visual_message_type": ["text"],
-                      "visual_message": [`The inspection procedure completed. The filter appears to be in good condition. Please wait a few minutes and I'll run the Bayesian diagnosis again to see if the anomaly has disappeared.`],
-                      "writer": "daphne"
-                    });
+                  // Set up follow-up listener if issue detected and follow-up is configured
+                  if (issueDetected && followUp && followUp.setupListener) {
+                    followUp.setupListener();
                   }
                 } else {
-                  console.warn("filterisBad variable not found in shared variables");
+                  console.warn(`${sharedVariableName} variable not found in shared variables`);
                   this.$store.commit('addDialoguePiece', {
-                    "voice_message": "The inspection procedure completed, but I couldn't retrieve the filter status.",
+                    "voice_message": messages.notFound,
                     "visual_message_type": ["text"],
-                    "visual_message": ["The inspection procedure completed, but I couldn't retrieve the filter status."],
+                    "visual_message": [messages.notFound],
                     "writer": "daphne"
                   });
                 }
@@ -2611,7 +2703,7 @@ export default {
             }
           }
         } catch (error) {
-          console.error("Error monitoring procedure:", error);
+          console.error(`Error monitoring ${tabLabel} procedure:`, error);
         }
       }, 5000); // Poll every 5 seconds
       
@@ -2619,77 +2711,50 @@ export default {
       setTimeout(() => clearInterval(pollInterval), 600000);
     },
 
-    async monitorLeakDetection(runtimeID) {
-      // Poll for procedure status first, then check shared variables only when complete
-      const pollInterval = setInterval(async () => {
-        try {
-          // Check if procedure is still running
-          const reqData = new FormData();
-          reqData.append('runtimeID', runtimeID);
-          
-          const statusResponse = await fetchPost('/api/at/get_procedure_status', reqData);
-          
-          if (statusResponse.ok) {
-            const statusData = await statusResponse.json();
-            console.log(`Leak detection procedure status for ${runtimeID}:`, statusData.procedureStatus);
-            
-            // Only check shared variables when procedure is finished
-            if (statusData.procedureStatus === 'finish') {
-              clearInterval(pollInterval);
-              
-              console.log("Leak detection procedure completed, checking shared variables...");
-              
-              // Now check shared variables
-              const response = await fetchPost('/api/at/get_shared_variables');
-          
-              if (response.ok) {
-                const data = await response.json();
-                const sharedVariables = data.shared_variables || [];
-                
-                // Look for leakDetected variable
-                const leakVariable = sharedVariables.find(v => v.label === 'leakDetected');
-                
-                if (leakVariable) {
-                  const leakDetected = leakVariable.raw === 'true' || leakVariable.raw === true;
-                  
-                  if (leakDetected) {
-                    this.$store.commit('addDialoguePiece', {
-                      "voice_message": `A leak has been detected. Do you want to start the procedure for stopping the leak?`,
-                      "visual_message_type": ["text"],
-                      "visual_message": [`A leak has been detected. Do you want to start the procedure for stopping the leak?`],
-                      "writer": "daphne",
-                      "options": ["Yes", "No"],
-                      "optionsCallbackEvent": "leakRepairResponse"
-                    });
-
-                    this.setupLeakRepairListener();
-                  } else {
-                    this.$store.commit('addDialoguePiece', {
-                      "voice_message": "The leak inspection procedure completed. No leak was detected.",
-                      "visual_message_type": ["text"],
-                      "visual_message": ["The leak inspection procedure completed. No leak was detected."],
-                      "writer": "daphne"
-                    });
-                  }
-                } else {
-                  console.warn("leakDetected variable not found in shared variables");
-                  this.$store.commit('addDialoguePiece', {
-                    "voice_message": "The leak inspection procedure completed, but I couldn't retrieve the leak detection status.",
-                    "visual_message_type": ["text"],
-                    "visual_message": ["The leak inspection procedure completed, but I couldn't retrieve the leak detection status."],
-                    "writer": "daphne"
-                  });
-                }
-              }
-            }
-          }
-        } catch (error) {
-          console.error("Error monitoring leak detection procedure:", error);
-        }
-      }, 5000); // Poll every 5 seconds
+    // Legacy wrapper methods for backward compatibility
+    async monitorProcedureCompletion(component, runtimeID, completionCallback = null, bayesianAnomaly = null) {
+      // Extract anomaly name from component or use provided bayesianAnomaly
+      let anomalyName = bayesianAnomaly || '';
       
-      // Stop polling after 10 minutes
-      setTimeout(() => clearInterval(pollInterval), 600000);
+      // Handle multi-component anomalies
+      if (anomalyName.includes('+')) {
+        anomalyName = anomalyName.split('+')[0].trim();
+      }
+
+      await this.monitorInspectionProcedure({
+        runtimeID,
+        sharedVariableName: 'filterisBad',
+        bayesianAnomaly: anomalyName,
+        tabLabel: 'Inspection',
+        messages: {
+          positiveVoice: `The inspection procedure detected that the filter is bad. I've updated the Bayesian diagnosis with this information. Do you want to start the procedure for replacing the filter?`,
+          negativeVoice: `The inspection procedure completed. The filter appears to be in good condition. I've updated the Bayesian diagnosis with this information.`,
+          notFound: `The inspection procedure completed, but I couldn't retrieve the filter status.`
+        },
+        followUp: {
+          eventName: 'filterReplacementResponse',
+          setupListener: () => this.setupFilterReplacementListener()
+        },
+        completionCallback
+      });
+    },
+
+    async monitorLeakDetection(runtimeID) {
+      await this.monitorInspectionProcedure({
+        runtimeID,
+        sharedVariableName: 'leakDetected',
+        bayesianAnomaly: 'Loss of Pressure',
+        tabLabel: 'Leak Check',
+        messages: {
+          positiveVoice: `A leak has been detected. I've updated the Bayesian diagnosis with this information. Do you want to start the procedure for stopping the leak?`,
+          negativeVoice: `The leak inspection procedure completed. No leak was detected. I've updated the Bayesian diagnosis with this information.`,
+          notFound: `The leak inspection procedure completed, but I couldn't retrieve the leak detection status.`
+        },
+        followUp: {
+          eventName: 'leakRepairResponse',
+          setupListener: () => this.setupLeakRepairListener()
+        }
+      });
     },
 
     setupFilterReplacementListener() {
@@ -2714,7 +2779,7 @@ export default {
                 
                 if (startResponse.ok) {
                   const startData = await startResponse.json();
-                  const runtimeID = startData.runtimeID; // Get the runtime ID from the response
+                  const runtimeID = startData.procedure_runtime_id; // Get the runtime ID from the response
                   
                   this.$store.commit('addDialoguePiece', {
                     "voice_message": "Filter replacement procedure started. I'll monitor its progress and notify you when it's complete.",
@@ -3427,7 +3492,8 @@ export default {
             // Set up listener for robot inspection response
             this.setupRobotInspectionListener({
               anomaly: mostLikelyComponent.name,
-              probability: mostLikelyComponent.score
+              probability: mostLikelyComponent.score,
+              bayesianAnomaly: anomalyName  // Pass Bayesian anomaly name for evidence formatting
             });
           }
           
