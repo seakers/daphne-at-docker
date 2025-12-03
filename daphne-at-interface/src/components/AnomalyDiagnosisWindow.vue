@@ -329,7 +329,9 @@
                   <tbody>
                     <tr v-for="anomaly in (simpleTabs[activeSimpleTab].physicsDiagnosisData ? simpleTabs[activeSimpleTab].physicsDiagnosisData.componentAnomalies : [])" 
                         :key="anomaly.name"
-                        :style="(anomaly.isHighlighted || anomaly.is_highlighted) ? 'background:#c0392b; color:white; font-weight:bold;' : ''">
+                        :style="(anomaly.isHighlighted || anomaly.is_highlighted) ? 'background:#c0392b; color:white; font-weight:bold;' : ''"
+                        @mouseenter="hoveredPhysicsAnomaly = anomaly.name"
+                        @mouseleave="hoveredPhysicsAnomaly = null">
                       <td class="checkbox-cell">
                         <label class="checkbox-full">
                           <input type="checkbox"
@@ -370,7 +372,7 @@
               </div>
               <!-- Right: System Configuration Image -->
               <div class="physics-image-section">
-                <img src="assets/img/CDRA.png" alt="System Configuration" style="max-width:100%; border-radius:6px;"/>
+                <img :src="physicsComponentImage" alt="System Configuration" style="max-width:100%; border-radius:6px;"/>
               </div>
             </div>
             
@@ -790,7 +792,16 @@ import VuePlotly from '@statnett/vue-plotly';
 
 
 let loaderImage = require('../images/loader.svg');
-let CDRAImage = require('../images/CDRA.png');
+
+// Dynamically require all PNG images from the images directory
+const imageContext = require.context('../images/physics_components/', false, /\.png$/);
+const componentImages = {};
+
+// Build a map of image names to their required paths
+imageContext.keys().forEach(key => {
+  const imageName = key.replace('./', '').replace('.png', '');
+  componentImages[imageName] = imageContext(key);
+});
 
 export default {
   name: "AnomalyDiagnosisWindow",
@@ -842,6 +853,7 @@ export default {
       durationValue: 30, // The numeric value for duration
       durationUnit: 'hours', // The unit: 'seconds', 'minutes', or 'hours'
       useManualDuration: false, // Default to automatic duration based on simulation time
+      hoveredPhysicsAnomaly: null, // Track which anomaly row is being hovered
 
     }
   },
@@ -1109,6 +1121,82 @@ export default {
         annotations: this.getFaultInjectionAnnotations()
       };
     },
+    
+    // Computed property to determine which physics image to display
+    physicsComponentImage() {
+      // Get the most probable anomaly from the active tab
+      const activeTab = this.simpleTabs[this.activeSimpleTab];
+      if (!activeTab || !activeTab.physicsDiagnosisData) {
+        return null; // Default fallback
+      }
+      
+      // Use hovered anomaly if available, otherwise use the first (most probable) anomaly
+      const componentAnomalies = activeTab.physicsDiagnosisData.componentAnomalies || [];
+      let anomalyToDisplay;
+      
+      if (this.hoveredPhysicsAnomaly) {
+        // Use the hovered anomaly
+        anomalyToDisplay = this.hoveredPhysicsAnomaly;
+      } else if (componentAnomalies.length > 0) {
+        // Default to first anomaly in the list
+        anomalyToDisplay = componentAnomalies[0].name;
+      } else {
+        // No anomalies available
+        return null;
+      }
+      
+      // Extract component names from the anomaly name
+      // Examples: "VCCR Failure" -> ["VCCR"], "VCCR + Dehumidifier" -> ["VCCR", "Dehumidifier"]
+      const componentNames = anomalyToDisplay
+        .split('+')
+        .map(part => {
+          // Extract first word (component name) and capitalize properly
+          const words = part.trim().split(/\s+/);
+          return words[0]; // e.g., "VCCR", "Dehumidifier"
+        });
+      
+      console.log('Component names extracted:', componentNames);
+      console.log('Available images:', Object.keys(componentImages));
+      
+      // Try to find exact match for combination (e.g., "Dehumidifier_VCCR" or "VCCR_Dehumidifier")
+      if (componentNames.length > 1) {
+        // Try all permutations of component order
+        const permutations = [
+          componentNames.join('_'),           // e.g., "VCCR_Dehumidifier"
+          componentNames.reverse().join('_')  // e.g., "Dehumidifier_VCCR"
+        ];
+        
+        for (const permutation of permutations) {
+          // Case-insensitive search
+          const matchingKey = Object.keys(componentImages).find(
+            key => key.toLowerCase() === permutation.toLowerCase()
+          );
+          
+          if (matchingKey) {
+            console.log('Found combination image:', matchingKey);
+            return componentImages[matchingKey].default || null;
+          }
+        }
+      }
+      
+      // Try to find single component match (e.g., "VCCR" -> "VCCR.png")
+      if (componentNames.length === 1) {
+        const componentName = componentNames[0];
+        const matchingKey = Object.keys(componentImages).find(
+          key => key.toLowerCase() === componentName.toLowerCase()
+        );
+        
+        if (matchingKey) {
+          console.log('Found single component image:', matchingKey);
+          return componentImages[matchingKey].default || null;
+        }
+      }
+      
+      // Fallback to CDRA if no match found
+      console.log('No matching image found, using CDRA fallback');
+      return null;
+    },
+    
     checkAll: {
       get: function () {
         return this.diagnosisReport['diagnosis_list'] ? this.checked.length === this.diagnosisReport['diagnosis_list'].length : false;
@@ -4354,8 +4442,14 @@ export default {
   color: #0AFEFF;
 }
 
-.physics-table tr:not(:first-child):hover {
-  background: #003f3f;
+.physics-table tbody tr {
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.physics-table tbody tr:hover {
+  background: #003f3f !important;
+  box-shadow: 0 0 8px rgba(10, 254, 255, 0.3);
 }
 
 .physics-image-section {
@@ -4364,6 +4458,10 @@ export default {
   align-items: center;
   justify-content: center;
   min-width: 220px;
+}
+
+.physics-image-section img {
+  transition: opacity 0.3s ease;
 }
 
 .checkbox-cell {
