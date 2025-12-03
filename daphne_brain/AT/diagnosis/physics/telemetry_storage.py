@@ -20,7 +20,8 @@ class TelemetryStorageService:
         self.session_id = session_id or str(uuid.uuid4())
     
     def store_telemetry(self, telemetry_data: Dict[str, Any], source: str = 'Hera', 
-                       user_information=None, metadata: Dict[str, Any] = None) -> TelemetryHistory:
+                       user_information=None, metadata: Dict[str, Any] = None,
+                       tick_number: Optional[int] = None) -> TelemetryHistory:
         """
         Store telemetry data in the database
         
@@ -29,6 +30,7 @@ class TelemetryStorageService:
             source: Source of the telemetry data (default: 'Hera')
             user_information: Optional user information object
             metadata: Optional metadata dictionary
+            tick_number: Optional tick number from BioSim (each tick = 0.1 hour)
             
         Returns:
             TelemetryHistory object that was created
@@ -44,7 +46,10 @@ class TelemetryStorageService:
         if source == 'BioSim':
             from AT.diagnosis.physics.simulation_time_service import SimulationTimeService
             if not SimulationTimeService.get_t_zero():
-                SimulationTimeService.set_t_zero(timezone.now())
+                # Set T+0 to current server time
+                t_zero_time = timezone.now()
+                SimulationTimeService.set_t_zero(t_zero_time)
+                print(f"🕐 T+0 SET at server time: {t_zero_time.isoformat()}")
         
         # Create and save the telemetry history record
         telemetry_record = TelemetryHistory.objects.create(

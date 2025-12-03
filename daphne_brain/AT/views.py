@@ -487,14 +487,27 @@ class HeraFeed(APIView):
                         co2_sensors = [k for k in telemetry_dict.keys() if 'CO2' in k or 'co2' in k]
                         # print(f"🔍 HeraFeed: Available CO2-related sensors: {co2_sensors}")
                     
+                    # Extract tick number from BioSim data
+                    # Each tick = 0.1 hour = 360 seconds
+                    tick_number = parsed_sensor_data.get('tickNumber', None)
+                    current_time_seconds = None
+                    
+                    if tick_number is not None:
+                        # Calculate elapsed time: tickNumber * 0.1 hours * 3600 seconds/hour
+                        current_time_seconds = tick_number * 0.1 * 3600  # Convert to seconds
+                        print(f"🔍 HeraFeed BioSim data - tickNumber: {tick_number}, elapsed seconds: {current_time_seconds}")
+                    
                     # Store telemetry data with appropriate source and format
                     telemetry_record = telemetry_storage.store_telemetry(
                         telemetry_data=telemetry_dict,
                         source=data_source,
+                        tick_number=tick_number,  # Pass tick number for T+0 initialization
                         metadata={
                             'api_endpoint': 'HeraFeed',
                             'parameter_format': 'biosim' if use_biosim_format else 'hera',
-                            'original_data': {'Parameters': parameters_list}  # Store original data for sensor info
+                            'original_data': {'Parameters': parameters_list},  # Store original data for sensor info
+                            'tick_number': tick_number,  # Store tick number
+                            'elapsed_seconds': current_time_seconds  # Store calculated elapsed time
                         }
                     )
                     # print(f"💾 HeraFeed: Successfully stored telemetry record ID: {telemetry_record.id}")
@@ -1035,13 +1048,40 @@ class GetSimulationTime(APIView):
     """
     def get(self, request, format=None):
         from AT.diagnosis.physics.simulation_time_service import SimulationTimeService
+        from AT.models import TelemetryHistory
         from django.utils import timezone
+        from datetime import timedelta
         
         try:
-            # Get current simulation time
-            simulation_time = SimulationTimeService.get_absolute_simulation_time(timezone.now())
             t_zero = SimulationTimeService.get_t_zero()
             is_running = SimulationTimeService.is_simulation_running()
+            
+            # Get the most recent BioSim telemetry to extract current elapsed time
+            recent_telemetry = TelemetryHistory.objects.filter(source='BioSim').order_by('-timestamp').first()
+            
+            print(f"🔍 GetSimulationTime: recent_telemetry found: {recent_telemetry is not None}")
+            if recent_telemetry:
+                print(f"🔍 GetSimulationTime: metadata: {recent_telemetry.metadata}")
+            
+            if recent_telemetry and recent_telemetry.metadata and recent_telemetry.metadata.get('elapsed_seconds') is not None:
+                # Use BioSim's elapsed time from tick count
+                elapsed_seconds = recent_telemetry.metadata.get('elapsed_seconds')
+                tick_number = recent_telemetry.metadata.get('tick_number', 'unknown')
+                
+                # Convert elapsed seconds directly to T+DD:HH:MM format
+                # No speed factor needed - tick count already represents simulation time
+                sim_elapsed_seconds = int(elapsed_seconds)
+                
+                days = sim_elapsed_seconds // 86400
+                hours = (sim_elapsed_seconds % 86400) // 3600
+                minutes = (sim_elapsed_seconds % 3600) // 60
+                
+                simulation_time = f"T+{days:02d}:{hours:02d}:{minutes:02d}"
+                print(f"🕐 GetSimulationTime: tick={tick_number}, elapsed={elapsed_seconds}s -> {simulation_time}")
+            else:
+                # Fallback to server time if no BioSim data available
+                simulation_time = SimulationTimeService.get_absolute_simulation_time(timezone.now())
+                print(f"⚠️ GetSimulationTime: No BioSim elapsed_seconds, using server time -> {simulation_time}")
             
             return Response({
                 "simulation_time": simulation_time,
@@ -1052,6 +1092,8 @@ class GetSimulationTime(APIView):
             
         except Exception as e:
             print(f"Error getting simulation time: {e}")
+            import traceback
+            traceback.print_exc()
             return Response({
                 "error": "Failed to get simulation time",
                 "message": str(e),

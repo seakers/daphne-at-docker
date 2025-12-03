@@ -218,7 +218,7 @@ def _generate_absolute_simulation_time_labels(timestamps: List[str]) -> List[str
     using the SimulationTimeService.
     
     Args:
-        timestamps: List of ISO format timestamp strings
+        timestamps: List of timestamp strings (either ISO format or already T+DD:HH:MM format)
         
     Returns:
         List of absolute simulation time labels in format T+DD:HH:MM
@@ -229,9 +229,14 @@ def _generate_absolute_simulation_time_labels(timestamps: List[str]) -> List[str
     time_labels = []
     for ts_str in timestamps:
         try:
-            ts = datetime.fromisoformat(ts_str)
-            sim_time = SimulationTimeService.convert_timestamp_to_sim_time(ts)
-            time_labels.append(sim_time if sim_time else "T+00:00:00")
+            # Check if already in T+DD:HH:MM format (from BioSim)
+            if ts_str.startswith('T+') or ts_str.startswith('T-'):
+                time_labels.append(ts_str)
+            else:
+                # Convert ISO timestamp to simulation time (for Hera data)
+                ts = datetime.fromisoformat(ts_str)
+                sim_time = SimulationTimeService.convert_timestamp_to_sim_time(ts)
+                time_labels.append(sim_time if sim_time else "T+00:00:00")
         except (ValueError, TypeError) as e:
             print(f"⚠️ Error converting timestamp {ts_str}: {e}")
             time_labels.append("T+00:00:00")
@@ -385,7 +390,23 @@ def generate_physics_diagnosis_data(
     original_time_labels = _generate_absolute_simulation_time_labels(timestamps)
     
     # Get the current absolute simulation time when diagnosis is run
-    diagnosis_run_time = SimulationTimeService.get_absolute_simulation_time(timezone.now())
+    # For BioSim, use the most recent tick-based elapsed time
+    from AT.models import TelemetryHistory
+    recent_telemetry = TelemetryHistory.objects.filter(source='BioSim').order_by('-timestamp').first()
+    
+    if recent_telemetry and recent_telemetry.metadata and recent_telemetry.metadata.get('elapsed_seconds') is not None:
+        # Use BioSim's tick-based elapsed time
+        elapsed_seconds = int(recent_telemetry.metadata.get('elapsed_seconds'))
+        days = elapsed_seconds // 86400
+        hours = (elapsed_seconds % 86400) // 3600
+        minutes = (elapsed_seconds % 3600) // 60
+        diagnosis_run_time = f"T+{days:02d}:{hours:02d}:{minutes:02d}"
+        print(f"[PHYS_DIAG] Using BioSim tick-based time for diagnosis run time")
+    else:
+        # Fallback to server time with speed factor (for non-BioSim sources)
+        diagnosis_run_time = SimulationTimeService.get_absolute_simulation_time(timezone.now())
+        print(f"[PHYS_DIAG] Using server time with speed factor for diagnosis run time")
+    
     t_zero = SimulationTimeService.get_t_zero()
     
     # Resample actual series to target_points
@@ -804,7 +825,19 @@ def get_actual_telemetry_from_storage(target_sensor: str, sim_duration_seconds: 
                                     break
                         
                         if found_sensor:
-                            timestamps.append(record['timestamp'])
+                            # For BioSim, use elapsed_seconds from metadata to generate simulation time timestamps
+                            # For Hera, use database timestamp with speed factor conversion
+                            if data_source == 'BioSim' and 'metadata' in record and 'elapsed_seconds' in record['metadata']:
+                                elapsed_seconds = record['metadata']['elapsed_seconds']
+                                # Convert elapsed seconds to T+DD:HH:MM format
+                                days = int(elapsed_seconds) // 86400
+                                hours = (int(elapsed_seconds) % 86400) // 3600
+                                minutes = (int(elapsed_seconds) % 3600) // 60
+                                sim_time_label = f"T+{days:02d}:{hours:02d}:{minutes:02d}"
+                                timestamps.append(sim_time_label)
+                            else:
+                                # Fallback to database timestamp for Hera or if no metadata
+                                timestamps.append(record['timestamp'])
                             # If we haven't found unit/info yet, look for it in the original Parameters list
                             if unit is None and 'metadata' in record and 'original_data' in record['metadata'] and 'Parameters' in record['metadata']['original_data']:
                                 print(f"🔍 Physics Diagnosis: Looking for sensor info in original data")
