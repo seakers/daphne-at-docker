@@ -41,22 +41,36 @@
             </div>
             <!-- Physics Simulation Duration Input -->
             <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
-              <label style="color: #0AFEFF; font-size: 12px; white-space: nowrap;">Sim Duration:</label>
+              <label style="color: #0AFEFF; font-size: 12px; white-space: nowrap;">
+                <input 
+                  type="checkbox" 
+                  v-model="useManualDuration"
+                  style="margin-right: 5px; vertical-align: middle;"
+                >
+                Manual Duration:
+              </label>
               <input 
                 type="number" 
                 v-model="durationValue" 
+                :disabled="!useManualDuration"
                 min="1" 
                 max="10000"
                 style="width: 80px; padding: 4px 8px; background: #002E2E; border: 1px solid #0AFEFF; color: #0AFEFF; border-radius: 4px; font-size: 12px;"
+                :style="{ opacity: useManualDuration ? 1 : 0.5 }"
               >
               <select 
                 v-model="durationUnit" 
+                :disabled="!useManualDuration"
                 @change="updatePhysicsSimDuration"
-                style="padding: 4px 8px; background: #002E2E; border: 1px solid #0AFEFF; color: #0AFEFF; border-radius: 4px; font-size: 12px; min-width: 75px;">
+                style="padding: 4px 8px; background: #002E2E; border: 1px solid #0AFEFF; color: #0AFEFF; border-radius: 4px; font-size: 12px; min-width: 75px;"
+                :style="{ opacity: useManualDuration ? 1 : 0.5 }">
                 <option value="seconds">sec</option>
                 <option value="minutes">min</option>
                 <option value="hours">hrs</option>
               </select>
+              <span v-if="!useManualDuration" style="color: #0AFEFF; font-size: 12px; margin-left: 5px;">
+                (Auto: {{ autoSimDurationDisplay }})
+              </span>
             </div>
           </div>
         </div>
@@ -827,6 +841,7 @@ export default {
       localPhysicsSimDuration: 3000, // Local copy of physics simulation duration (in seconds)
       durationValue: 30, // The numeric value for duration
       durationUnit: 'hours', // The unit: 'seconds', 'minutes', or 'hours'
+      useManualDuration: false, // Default to automatic duration based on simulation time
 
     }
   },
@@ -844,7 +859,72 @@ export default {
       physicsDiagnosisData: 'getPhysicsDiagnosisData',
       telemetryGraphData: 'getTelemetryGraphData',
       physicsSimDurationSeconds: 'getPhysicsSimDurationSeconds',
+      simulationTime: 'getSimulationTime',
     }),
+
+    // Parse simulation time (T+DD:HH:MM or T-DD:HH:MM) and convert to seconds
+    autoSimDurationSeconds() {
+      const simTime = this.simulationTime;
+      if (!simTime || typeof simTime !== 'string') {
+        return 3600; // Default to 1 hour if no simulation time available
+      }
+
+      // Parse T+DD:HH:MM or T-DD:HH:MM format
+      const match = simTime.match(/^T([+-])(\d{2}):(\d{2}):(\d{2})$/);
+      if (!match) {
+        return 3600; // Default if format doesn't match
+      }
+
+      const [, sign, days, hours, minutes] = match;
+      const totalSeconds = (parseInt(days) * 86400) + (parseInt(hours) * 3600) + (parseInt(minutes) * 60);
+      
+      // If simulation is before T+0, use default
+      if (sign === '-') {
+        return 3600;
+      }
+
+      return totalSeconds;
+    },
+
+    // Display auto duration in a human-readable format
+    autoSimDurationDisplay() {
+      const seconds = this.autoSimDurationSeconds;
+      const days = Math.floor(seconds / 86400);
+      const hours = Math.floor((seconds % 86400) / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+
+      const parts = [];
+      if (days > 0) parts.push(`${days}d`);
+      if (hours > 0) parts.push(`${hours}h`);
+      if (minutes > 0) parts.push(`${minutes}m`);
+
+      return parts.length > 0 ? parts.join(' ') : '0m';
+    },
+
+    // Actual duration to use for physics diagnosis
+    effectiveSimDurationSeconds() {
+      if (this.useManualDuration) {
+        // Use manual input
+        let durationInSeconds;
+        switch (this.durationUnit) {
+          case 'seconds':
+            durationInSeconds = this.durationValue;
+            break;
+          case 'minutes':
+            durationInSeconds = this.durationValue * 60;
+            break;
+          case 'hours':
+            durationInSeconds = this.durationValue * 3600;
+            break;
+          default:
+            durationInSeconds = this.durationValue;
+        }
+        return durationInSeconds;
+      } else {
+        // Use automatic duration based on simulation time
+        return this.autoSimDurationSeconds;
+      }
+    },
 
     // Vue Plotly data for physics diagnosis graph
     physicsPlotData() {
@@ -1487,27 +1567,10 @@ export default {
     },
 
     updatePhysicsSimDuration() {
-      // Convert the duration value to seconds based on the selected unit
-      let durationInSeconds;
+      // Use the effective duration (either manual or automatic)
+      this.localPhysicsSimDuration = this.effectiveSimDurationSeconds;
       
-      switch (this.durationUnit) {
-        case 'seconds':
-          durationInSeconds = this.durationValue;
-          break;
-        case 'minutes':
-          durationInSeconds = this.durationValue * 60;
-          break;
-        case 'hours':
-          durationInSeconds = this.durationValue * 3600;
-          break;
-        default:
-          durationInSeconds = this.durationValue; // fallback to seconds
-      }
-      
-      // Update the local physics simulation duration
-      this.localPhysicsSimDuration = durationInSeconds;
-      
-      console.log(`Physics simulation duration updated: ${this.durationValue} ${this.durationUnit} = ${durationInSeconds} seconds`);
+      console.log(`Physics simulation duration updated: ${this.effectiveSimDurationSeconds} seconds (manual mode: ${this.useManualDuration})`);
     },
     
     setupUserResponseListener() {
@@ -1928,8 +1991,10 @@ export default {
       this.physicsDiagnosisError = null; // Clear any previous errors
 
       try {
-        // Update store with local value before making the request
-        this.$store.commit('mutatePhysicsSimDurationSeconds', this.localPhysicsSimDuration);
+        // Update store with effective duration (either manual or auto based on simulation time)
+        const durationToUse = this.effectiveSimDurationSeconds;
+        console.log(`🔍 Using simulation duration: ${durationToUse} seconds (manual mode: ${this.useManualDuration})`);
+        this.$store.commit('mutatePhysicsSimDurationSeconds', durationToUse);
         
         // Request physics diagnosis from backend
         await this.$store.dispatch('requestPhysicsDiagnosis', this.selectedSymptomsList);
@@ -3265,8 +3330,10 @@ export default {
         //   "writer": "daphne"
         // });
         
-        // Update store with local physics simulation duration
-        this.$store.commit('mutatePhysicsSimDurationSeconds', this.localPhysicsSimDuration);
+        // Update store with effective duration (either manual or auto based on simulation time)
+        const durationToUse = this.effectiveSimDurationSeconds;
+        console.log(`🔍 Using simulation duration for anomaly analysis: ${durationToUse} seconds (manual mode: ${this.useManualDuration})`);
+        this.$store.commit('mutatePhysicsSimDurationSeconds', durationToUse);
         
         // Request physics diagnosis from backend with specific anomaly
         await this.$store.dispatch('requestPhysicsDiagnosis', {
@@ -3786,6 +3853,18 @@ export default {
     // Watch for changes in duration value and update physics sim duration
     durationValue() {
       this.updatePhysicsSimDuration();
+    },
+
+    // Watch for changes in checkbox state to update duration
+    useManualDuration() {
+      this.updatePhysicsSimDuration();
+    },
+
+    // Watch for changes in simulation time to update auto duration (when in automatic mode)
+    simulationTime() {
+      if (!this.useManualDuration) {
+        this.updatePhysicsSimDuration();
+      }
     },
 
   }

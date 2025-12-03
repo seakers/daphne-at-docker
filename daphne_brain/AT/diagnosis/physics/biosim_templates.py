@@ -300,14 +300,14 @@ MALFUNCTION_TEMPLATES = {
     "VCCR": {
         'description': 'VCCR system malfunction',
         'component': 'VCCR',
-        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="0"/>',
         'affected_systems': ['VCCR'],
         'default_intensity': 'MEDIUM_MALF'
     },
     "Dehumidifier": {
         'description': 'Dehumidifier system malfunction',
         'component': 'Dehumidifier',
-        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="10"/>',
+        'malfunction_xml': '<malfunction intensity="{intensity}" length="PERMANENT_MALF" occursAtTick="0"/>',
         'affected_systems': ['Dehumidifier'],
         'default_intensity': 'SEVERE_MALF'
     },
