@@ -2795,10 +2795,88 @@ export default {
                   // Reuse monitorProcedureCompletion with a custom callback for filter replacement
                   this.monitorProcedureCompletion(null, runtimeID, async () => {
                     this.$store.commit('addDialoguePiece', {
-                      "voice_message": "Filter replacement procedure has been completed successfully.",
+                      "voice_message": "Filter replacement procedure has been completed successfully. Would you like to run Bayesian diagnosis to check if the anomaly was resolved?",
                       "visual_message_type": ["text"],
-                      "visual_message": ["Filter replacement procedure has been completed successfully."],
-                      "writer": "daphne"
+                      "visual_message": ["Filter replacement procedure has been completed successfully. Would you like to run Bayesian diagnosis to check if the anomaly was resolved?"],
+                      "writer": "daphne",
+                      "options": ["Yes", "No"],
+                      "optionsCallbackEvent": "postReplacementDiagnosisResponse"
+                    });
+                    
+                    // Set up listener for post-replacement diagnosis response
+                    this.$root.$once('postReplacementDiagnosisResponse', async (diagnosisResponse) => {
+                      if (diagnosisResponse === 'Yes') {
+                        this.$store.commit('addDialoguePiece', {
+                          "voice_message": "Running Bayesian diagnosis to verify the repair...",
+                          "visual_message_type": ["text"],
+                          "visual_message": ["Running Bayesian diagnosis to verify the repair..."],
+                          "writer": "daphne"
+                        });
+                        
+                        try {
+                          // Run Bayesian diagnosis with current symptoms
+                          this.isLoading = true;
+                          await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
+                          
+                          const diagnosisReport = this.$store.getters.getDiagnosisReport;
+                          
+                          // Add to diagnostic history
+                          this.diagnosticHistory.push(diagnosisReport);
+                          
+                          // Add a simple tab with the post-replacement diagnosis
+                          this.simpleTabs.push({
+                            label: "Post-Replacement Diagnosis",
+                            type: "bayesian",
+                            content: "Bayesian diagnosis after filter replacement.",
+                            diagnosisData: diagnosisReport,
+                            checked: [],
+                            allSelected: false
+                          });
+                          
+                          // Switch to the new tab
+                          this.activeDiagnosticTab = this.diagnosticHistory.length - 1;
+                          this.activeSimpleTab = this.simpleTabs.length - 1;
+                          
+                          this.isLoading = false;
+                          
+                          // Provide feedback on the diagnosis results
+                          const topAnomaly = diagnosisReport.diagnosis_list && diagnosisReport.diagnosis_list.length > 0 
+                            ? diagnosisReport.diagnosis_list[0] 
+                            : null;
+                          
+                          if (topAnomaly && topAnomaly.anomaly === "No Anomalies Present") {
+                            this.$store.commit('addDialoguePiece', {
+                              "voice_message": "The diagnosis shows no anomalies present. The filter replacement appears to have resolved the issue.",
+                              "visual_message_type": ["text"],
+                              "visual_message": ["The diagnosis shows no anomalies present. The filter replacement appears to have resolved the issue."],
+                              "writer": "daphne"
+                            });
+                          } else if (topAnomaly) {
+                            this.$store.commit('addDialoguePiece', {
+                              "voice_message": `The diagnosis is complete. ${topAnomaly.anomaly} is now the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. You can review the results in the new diagnosis tab.`,
+                              "visual_message_type": ["text"],
+                              "visual_message": [`The diagnosis is complete. ${topAnomaly.anomaly} is now the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. You can review the results in the new diagnosis tab.`],
+                              "writer": "daphne"
+                            });
+                          }
+                        } catch (error) {
+                          console.error("Error running post-replacement diagnosis:", error);
+                          this.isLoading = false;
+                          this.$store.commit('addDialoguePiece', {
+                            "voice_message": "I encountered an error running the diagnosis. Please try again.",
+                            "visual_message_type": ["text"],
+                            "visual_message": ["I encountered an error running the diagnosis. Please try again."],
+                            "writer": "daphne"
+                          });
+                        }
+                      } else {
+                        this.$store.commit('addDialoguePiece', {
+                          "voice_message": "Understood. Let me know if you need anything else.",
+                          "visual_message_type": ["text"],
+                          "visual_message": ["Understood. Let me know if you need anything else."],
+                          "writer": "daphne"
+                        });
+                      }
                     });
                   });
                 }
