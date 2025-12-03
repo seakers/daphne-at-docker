@@ -1097,11 +1097,16 @@ def generate_anomaly_telemetry(anomaly_name: str, score: float, target_sensor: s
         # )
         
         # STEP 2: Replace with unit-aware sensor data extraction (commented out for now)
+        # Determine target unit based on sensor type
+        # Total Cabin Pressure uses PSI (industry standard for cabin pressure)
+        # Partial pressures (CO2, O2, etc.) use mmHg
+        target_unit = 'psi' if 'Total_Cabin_Pressure' in target_sensor else 'mmHg'
+        
         sensor_data_result = biosim_client.get_sensor_data_with_units(
             sim_id=sim_id,
             sensor_name=target_sensor,
             duration_seconds=duration_seconds,
-            target_unit='mmHg'  # Convert to mmHg for consistency with CDRA simulation
+            target_unit=target_unit
         )
         
         if sensor_data_result:
@@ -1242,12 +1247,16 @@ def generate_multi_anomaly_telemetry(anomaly_names: List[str], intensities: List
         if not simulation_completed:
             print(f"[MULTI_ANOMALY] ⚠️ Multi-anomaly simulation did not complete within timeout")
         
-        # Get sensor data
+        # Get sensor data with conditional unit selection
+        # Total Cabin Pressure uses PSI (industry standard for cabin pressure)
+        # Partial pressures (CO2, O2, etc.) use mmHg
+        target_unit = 'psi' if 'Total_Cabin_Pressure' in target_sensor else 'mmHg'
+        
         sensor_data_result = biosim_client.get_sensor_data_with_units(
             sim_id=sim_id,
             sensor_name=target_sensor,
             duration_seconds=duration_seconds,
-            target_unit='mmHg'
+            target_unit=target_unit
         )
         
         if sensor_data_result:

@@ -202,10 +202,12 @@ const actions = {
                     telemetry: anomaly.telemetry_data || anomaly.telemetry || [],
                     faultInjectionTime: anomaly.fault_injection_time,
                     faultInjectionTimeSeconds: anomaly.fault_injection_time_seconds,
+                    faultInjectionTimeAbsolute: anomaly.fault_injection_time_absolute,
                     isHighlighted: anomaly.is_highlighted,
                     // Keep snake_case versions too for template fallback
                     fault_injection_time: anomaly.fault_injection_time,
                     fault_injection_time_seconds: anomaly.fault_injection_time_seconds,
+                    fault_injection_time_absolute: anomaly.fault_injection_time_absolute,
                     is_highlighted: anomaly.is_highlighted
                 }))
             };

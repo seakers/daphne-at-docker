@@ -1048,6 +1048,12 @@ export default {
       const diagnosisRunTime = this.telemetryGraphData.diagnosis_run_time || '';
       const titleSuffix = diagnosisRunTime ? ` (Diagnosis Run: ${diagnosisRunTime})` : '';
       
+      // Get sensor name and unit from telemetry metadata
+      const telemetryMetadata = this.telemetryGraphData.telemetry_metadata || {};
+      const targetSensor = telemetryMetadata.target_sensor || 'Sensor';
+      const unit = telemetryMetadata.unit || 'units';
+      const yAxisTitle = `${targetSensor} (${unit})`;
+      
       return {
         title: {
           text: `Telemetry Trend Comparison (with Fault Injection Times)${titleSuffix}`,
@@ -1070,14 +1076,12 @@ export default {
           nticks: 10
         },
         yaxis: {
-          title: 'Pressure (mmHg)',
+          title: yAxisTitle,
           gridcolor: '#333',
           zerolinecolor: '#666',
           showline: true,
           linecolor: '#666',
-          range: [0, 8],
-          tickmode: 'linear',
-          dtick: 2,
+          autorange: true,  // Let Plotly automatically determine the range based on data
           tickfont: { size: 10 }
         },
         margin: { l: 60, r: 150, t: 80, b: 80 }, // Increased top margin for longer title
