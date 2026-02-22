@@ -54,14 +54,14 @@ network = [
     ("CDRA Failure (HALO)", "low ppO2_HALO (HALO)"), ("CDRA Failure (HALO)", "low ppO2_HALO (HALO) (t-1)"),
     ("CDRA Failure (HALO)", "[HIDDEN] CDRA Failure Component"),
 
-    # CDRA LiOH Canister Saturation (IHab)
+    # CDRA LiOH Canister Saturation (IHab) <-- for parameter learning, proposing to remove the 'LiOH CO2 Saturation parameter, as that could be the additional evidence
     ("CDRA LiOH Canister Saturation (IHab)", "high ppCO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation (IHab)", "high ppCO2_IHab (IHab) (t-1)"),
     ("CDRA LiOH Canister Saturation (IHab)", "high ppO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation (IHab)", "high ppO2_IHab (IHab) (t-1)"),
     ("CDRA LiOH Canister Saturation (IHab)", "high LiOH CO2 Saturation"), ("CDRA LiOH Canister Saturation (IHab)", "high LiOH CO2 Saturation (t-1)"),
     ("CDRA LiOH Canister Saturation (IHab)", "low ppCO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation (IHab)", "low ppCO2_IHab (IHab) (t-1)"),
     ("CDRA LiOH Canister Saturation (IHab)", "low ppO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation (IHab)", "low ppO2_IHab (IHab) (t-1)"),
     ("CDRA LiOH Canister Saturation (IHab)", "low LiOH CO2 Saturation"), ("CDRA LiOH Canister Saturation (IHab)", "low LiOH CO2 Saturation (t-1)"),
-    ("CDRA LiOH Canister Saturation (IHab)", "[HIDDEN] CDRA LiOH Canister Saturation Component"),
+    ("CDRA LiOH Canister Saturation (IHab)", "[HIDDEN] CDRA LiOH Canister Saturation Component"), # <-- propose just changing name to '[HIDDEN] LiOH CO2 Canister Saturation'
 
     # CDRA LiOH Canister Saturation (HALO)
     ("CDRA LiOH Canister Saturation (HALO)", "high ppCO2_HALO (HALO)"), ("CDRA LiOH Canister Saturation (HALO)", "high ppCO2_HALO (HALO) (t-1)"),
