@@ -833,6 +833,8 @@ export default {
       yesNoQuestionListener: null,
       unconfirmedSymptoms: [],
       bestEvidence: null,
+  bestEvidenceWatcher: null,
+  bestEvidencePrompted: false,
       currentTelemetryValues: {},
       diagnosticHistory: [],
       activeDiagnosticTab: 0,
@@ -2305,6 +2307,8 @@ export default {
       this.isLoading = true;
       this.explaining = false;
       this.checked = [];
+      
+      // Request diagnosis - this will return immediately with initial diagnosis
       await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
 
       const diagnosisReport = this.$store.getters.getDiagnosisReport;
@@ -2318,7 +2322,7 @@ export default {
       this.diagnosticHistory.push(diagnosisReport);
       console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
       
-      // Add a simple tab with Bayesian diagnosis content
+      // Add a simple tab with Bayesian diagnosis content 
       this.simpleTabs.push({
         label: "Bayesian Diagnosis",
         type: "bayesian",
@@ -2329,7 +2333,16 @@ export default {
       });
       this.activeSimpleTab = this.simpleTabs.length - 1;
       
+      // Stop loading - show the table immediately
       this.isLoading = false;
+  this.bestEvidencePrompted = false;
+      
+      // Set up monitoring for best evidence if it's being calculated
+      if (diagnosisReport.calculating_best_evidence) {
+        this.monitorBestEvidence();
+      } else {
+        this.promptBestEvidenceIfReady();
+      }
       
       // Get the most probable anomaly from the diagnosis report
       const topAnomaly = diagnosisReport.diagnosis_list && diagnosisReport.diagnosis_list.length > 0 
@@ -2373,6 +2386,98 @@ export default {
           "writer": "daphne",
         });
       }
+    },
+
+    monitorBestEvidence() {
+
+      if (!this.bestEvidencePrompted) {
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": "I’m calculating the best evidence in the background and will update you when it’s ready.",
+          "visual_message_type": ["text"],
+          "visual_message": ["I’m calculating the best evidence in the background and will update you when it’s ready."],
+          "writer": "daphne"
+        });
+      }
+      
+      // Watch for changes to diagnosis report to update UI when best evidence arrives
+      if (this.bestEvidenceWatcher) {
+        this.bestEvidenceWatcher();
+        this.bestEvidenceWatcher = null;
+      }
+
+      const unwatch = this.$store.watch(
+        (state) => state.daphneat.diagnosisReport,
+        (newDiagnosisReport, oldDiagnosisReport) => {
+          // Only process if we have valid data
+          if (!newDiagnosisReport) {
+            return; // Skip if diagnosis report is undefined/null
+          }
+          
+          // Check if best evidence just arrived (was calculating, now has best_evidence)
+          const bestEvidenceArrived = !newDiagnosisReport.calculating_best_evidence && 
+                                     newDiagnosisReport.best_evidence;
+          
+          if (bestEvidenceArrived) {
+            console.log("Best evidence arrived:", newDiagnosisReport.best_evidence);
+            console.log("Updated hidden components:", newDiagnosisReport.hidden_components);
+            
+            // Update local data
+            this.bestEvidence = newDiagnosisReport.best_evidence;
+            this.unconfirmedSymptoms = newDiagnosisReport.hidden_components || [];
+            
+            if (this.simpleTabs[this.activeSimpleTab]) {
+              this.simpleTabs[this.activeSimpleTab] = {
+                ...this.simpleTabs[this.activeSimpleTab],
+                diagnosisData: newDiagnosisReport
+              };
+            }
+            
+            // Update diagnostic history (create new object to trigger reactivity)
+            if (this.diagnosticHistory.length > 0) {
+              this.$set(this.diagnosticHistory, this.diagnosticHistory.length - 1, newDiagnosisReport);
+            }
+
+            // Show the best-evidence prompt once data is ready
+            this.promptBestEvidenceIfReady();
+            
+            // Stop watching once we have the best evidence
+            unwatch();
+            this.bestEvidenceWatcher = null;
+            
+          }
+        },
+        { deep: true }
+      );
+
+      this.bestEvidenceWatcher = unwatch;
+    },
+
+    promptBestEvidenceIfReady() {
+      if (this.bestEvidencePrompted) {
+        return;
+      }
+
+      if (this.bestEvidence) {
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
+          "visual_message_type": ["text"],
+          "visual_message": [`I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
+          "writer": "daphne",
+          "options": ["Yes", "No"],
+          "optionsCallbackEvent": "bestEvidenceResponse"
+        });
+        this.setupBestEvidenceListener();
+        this.bestEvidencePrompted = true;
+        return;
+      }
+
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": "No additional evidence can improve my diagnostic confidence. Please proceed with the anomaly resolution.",
+        "visual_message_type": ["text"],
+        "visual_message": ["No additional evidence can improve my diagnostic confidence. Please proceed with the anomaly resolution."],
+        "writer": "daphne"
+      });
+      this.bestEvidencePrompted = true;
     },
 
     showSymptomSelectionDialog() {
