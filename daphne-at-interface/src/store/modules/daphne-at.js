@@ -671,37 +671,10 @@ const actions = {
                 parsedTelemetryValuest1[i] = reversedArray[reversedArray.length - 1][1];
                 console.log("telemetry reversed dict value", reversedArray[reversedArray.length - 1][1])
             }
-            // console.log("telemetry reversed dict value", reversedValueDict)
-            // for (let j in value) {
-            //     console.log("telemetry dict value j", value[j])
-            // if (value[j] != null || value[j] != undefined) {
-            //         parsedTelemetryValues[i] = value[j];
-            //         break;
-            //     }
-            // }
-            // console.log("telemetry dict value", value)
         }
 
         console.log("parsed telemetry values", parsedTelemetryValues);
         console.log("parsed telemetry values t1", parsedTelemetryValuest1);
-
-
-        // for (let key in telemetryValues) {
-        //     const plainObj = JSON.parse(JSON.stringify(telemetryValues[key]));
-
-        //     // Find the first numeric value in the object (excluding __ob__ property)
-        //     let firstValueIndex = null;
-        //     for (let i = 0; i < Object.keys(plainObj).length; i++) {
-        //         if (!isNaN(Number(plainObj[i])) && plainObj[i] !== null && plainObj[i] !== undefined) {
-        //             firstValueIndex = i;
-        //             break;
-        //         }
-        //     }
-
-        //     // Use the found index, or undefined if none found
-        //     parsedTelemetryValues[key] = firstValueIndex !== null ? plainObj[firstValueIndex] : undefined;
-        //     console.log("telemetry value each", parsedTelemetryValues[key]);
-        // }
 
         console.log("parsedTelemetryValues", parsedTelemetryValues)
         console.log("telemetry values", telemetryValues)
@@ -731,23 +704,34 @@ const actions = {
                 console.log("Fetching best evidence in background...");
                 
                 // Make second request for best evidence
-                let evidenceReqData = new FormData();
-                evidenceReqData.append('telemetryValues', JSON.stringify(diagnosis_report.current_telemetry_values));
-                
-                let evidenceResponse = await fetchPost('/api/at/calculateBestEvidence', evidenceReqData);
-                if (evidenceResponse.ok) {
-                    let evidenceData = await evidenceResponse.json();
-                    console.log("Best evidence calculated:", evidenceData.best_evidence);
-                    
-                    // Update diagnosis report with best evidence
-                    diagnosis_report.best_evidence = evidenceData.best_evidence;
-                    diagnosis_report.hidden_components = evidenceData.hidden_components;
-                    diagnosis_report.calculating_best_evidence = false;
-                    
-                    commit('mutateDiagnosisReport', diagnosis_report);
-                } else {
-                    console.log('Error calculating best evidence');
-                }
+                (async () => {
+                    try {
+                        let evidenceReqData = new FormData();
+                        evidenceReqData.append('telemetryValues', JSON.stringify(diagnosis_report.current_telemetry_values));
+                        
+                        let evidenceResponse = await fetchPost('/api/at/calculateBestEvidence', evidenceReqData);
+                        if (evidenceResponse.ok) {
+                            let evidenceData = await evidenceResponse.json();
+                            console.log("Best evidence calculated:", evidenceData.best_evidence);
+                            
+                            // Create a NEW object with updated best evidence (don't mutate existing state)
+                            let updatedDiagnosisReport = {
+                                ...diagnosis_report,
+                                best_evidence: evidenceData.best_evidence,
+                                hidden_components: evidenceData.hidden_components,
+                                calculating_best_evidence: false
+                            };
+                            //console.log("Updating diagnosis report with best evidence:", updatedDiagnosisReport);
+                            
+                            commit('mutateDiagnosisReport', updatedDiagnosisReport);
+                            //console.log("Diagnosis report updated with best evidence.");
+                        } else {
+                            console.log('Error calculating best evidence');
+                        }
+                    } catch (error) {
+                        console.error('Error fetching best evidence:', error);
+                    }
+                })();
             }
         } else {
             console.log('Error requesting a diagnosis report.')
