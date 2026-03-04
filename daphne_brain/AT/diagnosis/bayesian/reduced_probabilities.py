@@ -1,8 +1,14 @@
 # reduced_probabilities.py
 # Author: Joshua Elston
-# Last Edited: 02/09/2026
+# Last Edited: 03/04/2026
 
 # Reduced set of parameters and probabilities for parameter learning with Biosim
+
+# UPDATES:
+# Updated on 03/03/2026 to reflect that parameters measured in IHab are related to both
+# (IHab) and (Habitat) failures, while those measured in HALO are only related to
+# (Habitat) failures. This pertains to Humidity, ppCO2, and ppO2 (not Cabin Pressure)
+# Updated on 03/04/2026 to add Unknown Anomaly probabilities for each parameter
 
 from ranges import measurement_ranges
 import json
@@ -67,6 +73,45 @@ reduced_probability_dict = {
                     'Nominal': 0.9978,
                     'Exceeds_LowerCautionLimit': 0.001,
                     'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab)"]
+        },
+        "CDRA Failure (Habitat)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.20,
+                    'Exceeds_UpperCautionLimit': 0.78,
+                    'Nominal': 0.01989,
+                    'Exceeds_LowerCautionLimit': 0.0001,
+                    'Exceeds_LowerWarningLimit': 0.00001
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["Humidity_IHab (IHab)"]
+        },
+        # Unknown Anomaly <-- equal effect in all direction
+        "Unknown Anomaly": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.20,
+                    'Exceeds_UpperCautionLimit': 0.20,
+                    'Nominal': 0.20,
+                    'Exceeds_LowerCautionLimit': 0.20,
+                    'Exceeds_LowerWarningLimit': 0.20
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0025,
+                    'Exceeds_UpperCautionLimit': 0.015,
+                    'Nominal': 0.965,
+                    'Exceeds_LowerCautionLimit': 0.015,
+                    'Exceeds_LowerWarningLimit': 0.0025
                 },
             },
             'value_ranges': measurement_ranges["Humidity_IHab (IHab)"]
@@ -156,7 +201,7 @@ reduced_probability_dict = {
             'value_ranges': measurement_ranges["Humidity_HALO (HALO)"]
         },
         # Anomaly probabilities
-        "CDRA Failure (HALO)": {
+        "CDRA Failure (Habitat)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.20,
@@ -171,6 +216,26 @@ reduced_probability_dict = {
                     'Nominal': 0.9978,
                     'Exceeds_LowerCautionLimit': 0.001,
                     'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["Humidity_HALO (HALO)"]
+        },
+        # Unknown Anomaly <-- equal effect in all direction
+        "Unknown Anomaly": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.2,
+                    'Exceeds_UpperCautionLimit': 0.2,
+                    'Nominal': 0.2,
+                    'Exceeds_LowerCautionLimit': 0.2,
+                    'Exceeds_LowerWarningLimit': 0.2
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0025,
+                    'Exceeds_UpperCautionLimit': 0.015,
+                    'Nominal': 0.965,
+                    'Exceeds_LowerCautionLimit': 0.015,
+                    'Exceeds_LowerWarningLimit': 0.0025
                 },
             },
             'value_ranges': measurement_ranges["Humidity_HALO (HALO)"]
@@ -218,8 +283,27 @@ reduced_probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
         },
-        # Anomaly probabilities <-- updated to reflect level-specific failures
+        # Anomaly probabilities
         "Biological Filter Saturation (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.18,
+                    'Exceeds_UpperCautionLimit': 0.79,
+                    'Nominal': 0.02989,
+                    'Exceeds_LowerCautionLimit': 0.0001,
+                    'Exceeds_LowerWarningLimit': 0.00001
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
+        },
+        "Biological Filter Saturation (Habitat)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.18,
@@ -257,25 +341,44 @@ reduced_probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
         },
-        # "Loss of Pressure (IHab)": {
-        #     'probabilities': {
-        #         True: { # probabilities when the anomaly is present
-        #             'Exceeds_UpperWarningLimit': 0.00001,
-        #             'Exceeds_UpperCautionLimit': 0.0001,
-        #             'Nominal': 0.01989,
-        #             'Exceeds_LowerCautionLimit': 0.78,
-        #             'Exceeds_LowerWarningLimit': 0.20
-        #         },
-        #         False: { # probabilities when the anomaly is absent
-        #             'Exceeds_UpperWarningLimit': 0.0001,
-        #             'Exceeds_UpperCautionLimit': 0.001,
-        #             'Nominal': 0.9978,
-        #             'Exceeds_LowerCautionLimit': 0.001,
-        #             'Exceeds_LowerWarningLimit': 0.0001
-        #         },
-        #     },
-        #     'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
-        # },
+        "CDRA Failure (Habitat)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.75,
+                    'Exceeds_UpperCautionLimit': 0.23,
+                    'Nominal': 0.01989,
+                    'Exceeds_LowerCautionLimit': 0.0001,
+                    'Exceeds_LowerWarningLimit': 0.00001
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
+        },
+        "Loss of Pressure (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.00001,
+                    'Exceeds_UpperCautionLimit': 0.0001,
+                    'Nominal': 0.01989,
+                    'Exceeds_LowerCautionLimit': 0.78,
+                    'Exceeds_LowerWarningLimit': 0.20
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
+        },
         "Excess CO2 in Cabin (IHab)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -291,6 +394,26 @@ reduced_probability_dict = {
                     'Nominal': 0.9978,
                     'Exceeds_LowerCautionLimit': 0.001,
                     'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
+        },
+        # Unknown Anomaly <-- equal effect in all direction
+        "Unknown Anomaly": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.2,
+                    'Exceeds_UpperCautionLimit': 0.2,
+                    'Nominal': 0.2,
+                    'Exceeds_LowerCautionLimit': 0.2,
+                    'Exceeds_LowerWarningLimit': 0.2
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0025,
+                    'Exceeds_UpperCautionLimit': 0.015,
+                    'Nominal': 0.965,
+                    'Exceeds_LowerCautionLimit': 0.015,
+                    'Exceeds_LowerWarningLimit': 0.0025
                 },
             },
             'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
@@ -379,8 +502,8 @@ reduced_probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
         },
-        # Anomaly probabilities <-- updated to reflect level-specific failures
-        "Biological Filter Saturation (HALO)": {
+        # Anomaly probabilities
+        "Biological Filter Saturation (Habitat)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.18,
@@ -399,7 +522,7 @@ reduced_probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
         },
-        "CDRA Failure (HALO)": {
+        "CDRA Failure (Habitat)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.75,
@@ -418,25 +541,25 @@ reduced_probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
         },
-        # "Loss of Pressure (HALO)": {
-        #     'probabilities': {
-        #         True: { # probabilities when the anomaly is present
-        #             'Exceeds_UpperWarningLimit': 0.00001,
-        #             'Exceeds_UpperCautionLimit': 0.0001,
-        #             'Nominal': 0.01989,
-        #             'Exceeds_LowerCautionLimit': 0.78,
-        #             'Exceeds_LowerWarningLimit': 0.20
-        #         },
-        #         False: { # probabilities when the anomaly is absent
-        #             'Exceeds_UpperWarningLimit': 0.0001,
-        #             'Exceeds_UpperCautionLimit': 0.001,
-        #             'Nominal': 0.9978,
-        #             'Exceeds_LowerCautionLimit': 0.001,
-        #             'Exceeds_LowerWarningLimit': 0.0001
-        #         },
-        #     },
-        #     'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
-        # },
+        "Loss of Pressure (HALO)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.00001,
+                    'Exceeds_UpperCautionLimit': 0.0001,
+                    'Nominal': 0.01989,
+                    'Exceeds_LowerCautionLimit': 0.78,
+                    'Exceeds_LowerWarningLimit': 0.20
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
+        },
         "Excess CO2 in Cabin (HALO)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -452,6 +575,26 @@ reduced_probability_dict = {
                     'Nominal': 0.9978,
                     'Exceeds_LowerCautionLimit': 0.001,
                     'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
+        },
+        # Unknown Anomaly <-- equal effect in all direction
+        "Unknown Anomaly": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.2,
+                    'Exceeds_UpperCautionLimit': 0.2,
+                    'Nominal': 0.2,
+                    'Exceeds_LowerCautionLimit': 0.2,
+                    'Exceeds_LowerWarningLimit': 0.2
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0025,
+                    'Exceeds_UpperCautionLimit': 0.015,
+                    'Nominal': 0.965,
+                    'Exceeds_LowerCautionLimit': 0.015,
+                    'Exceeds_LowerWarningLimit': 0.0025
                 },
             },
             'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
@@ -519,7 +662,45 @@ reduced_probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
         },
+        "Biological Filter Saturation (Habitat)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.00001,
+                    'Exceeds_UpperCautionLimit': 0.0001,
+                    'Nominal': 0.02989,
+                    'Exceeds_LowerCautionLimit': 0.81,
+                    'Exceeds_LowerWarningLimit': 0.16
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
+        },
         "CDRA Failure (IHab)": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.00001,
+                    'Exceeds_UpperCautionLimit': 0.0001,
+                    'Nominal': 0.02989,
+                    'Exceeds_LowerCautionLimit': 0.78,
+                    'Exceeds_LowerWarningLimit': 0.19
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0001,
+                    'Exceeds_UpperCautionLimit': 0.001,
+                    'Nominal': 0.9978,
+                    'Exceeds_LowerCautionLimit': 0.001,
+                    'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
+        },
+        "CDRA Failure (Habitat)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -572,6 +753,26 @@ reduced_probability_dict = {
                     'Nominal': 0.9978,
                     'Exceeds_LowerCautionLimit': 0.001,
                     'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
+        },
+        # Unknown Anomaly <-- equal effect in all direction
+        "Unknown Anomaly": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.2,
+                    'Exceeds_UpperCautionLimit': 0.2,
+                    'Nominal': 0.2,
+                    'Exceeds_LowerCautionLimit': 0.2,
+                    'Exceeds_LowerWarningLimit': 0.2
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0025,
+                    'Exceeds_UpperCautionLimit': 0.015,
+                    'Nominal': 0.965,
+                    'Exceeds_LowerCautionLimit': 0.015,
+                    'Exceeds_LowerWarningLimit': 0.0025
                 },
             },
             'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
@@ -661,7 +862,7 @@ reduced_probability_dict = {
             'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
         },
         # Anomaly probabilities <-- updated to reflect level-specific failures
-        "Biological Filter Saturation (HALO)": {
+        "Biological Filter Saturation (Habitat)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -680,7 +881,7 @@ reduced_probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
         },
-        "CDRA Failure (HALO)": {
+        "CDRA Failure (Habitat)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -733,6 +934,26 @@ reduced_probability_dict = {
                     'Nominal': 0.9978,
                     'Exceeds_LowerCautionLimit': 0.001,
                     'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
+        },
+        # Unknown Anomaly <-- equal effect in all direction
+        "Unknown Anomaly": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.2,
+                    'Exceeds_UpperCautionLimit': 0.2,
+                    'Nominal': 0.2,
+                    'Exceeds_LowerCautionLimit': 0.2,
+                    'Exceeds_LowerWarningLimit': 0.2
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0025,
+                    'Exceeds_UpperCautionLimit': 0.015,
+                    'Nominal': 0.965,
+                    'Exceeds_LowerCautionLimit': 0.015,
+                    'Exceeds_LowerWarningLimit': 0.0025
                 },
             },
             'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
@@ -796,6 +1017,26 @@ reduced_probability_dict = {
                     'Nominal': 0.9978,
                     'Exceeds_LowerCautionLimit': 0.001,
                     'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["Total_Cabin_Pressure_IHab (IHab)"]
+        },
+        # Unknown Anomaly <-- equal effect in all direction
+        "Unknown Anomaly": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.2,
+                    'Exceeds_UpperCautionLimit': 0.2,
+                    'Nominal': 0.2,
+                    'Exceeds_LowerCautionLimit': 0.2,
+                    'Exceeds_LowerWarningLimit': 0.2
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0025,
+                    'Exceeds_UpperCautionLimit': 0.015,
+                    'Nominal': 0.965,
+                    'Exceeds_LowerCautionLimit': 0.015,
+                    'Exceeds_LowerWarningLimit': 0.0025
                 },
             },
             'value_ranges': measurement_ranges["Total_Cabin_Pressure_IHab (IHab)"]
@@ -900,6 +1141,26 @@ reduced_probability_dict = {
                     'Nominal': 0.9978,
                     'Exceeds_LowerCautionLimit': 0.001,
                     'Exceeds_LowerWarningLimit': 0.0001
+                },
+            },
+            'value_ranges': measurement_ranges["Total_Cabin_Pressure_HALO (HALO)"]
+        },
+        # Unknown Anomaly <-- equal effect in all direction
+        "Unknown Anomaly": {
+            'probabilities': {
+                True: { # probabilities when the anomaly is present
+                    'Exceeds_UpperWarningLimit': 0.2,
+                    'Exceeds_UpperCautionLimit': 0.2,
+                    'Nominal': 0.2,
+                    'Exceeds_LowerCautionLimit': 0.2,
+                    'Exceeds_LowerWarningLimit': 0.2
+                },
+                False: { # probabilities when the anomaly is absent
+                    'Exceeds_UpperWarningLimit': 0.0025,
+                    'Exceeds_UpperCautionLimit': 0.015,
+                    'Nominal': 0.965,
+                    'Exceeds_LowerCautionLimit': 0.015,
+                    'Exceeds_LowerWarningLimit': 0.0025
                 },
             },
             'value_ranges': measurement_ranges["Total_Cabin_Pressure_HALO (HALO)"]

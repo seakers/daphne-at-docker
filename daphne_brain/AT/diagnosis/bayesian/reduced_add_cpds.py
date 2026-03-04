@@ -1,16 +1,19 @@
 # reduced_add_cpds.py
 # Author: Joshua Elston
-# Last Edited: 02/09/2026
+# Last Edited: 03/03/2026
 
 # Quicker to create small development copy of add_cpds for reduced network for parameter learning
 
-# from AT.diagnosis.bayesian.noisy_MAX import noisy_MAX
+# UPDATES:
+# Updated on 03/03/2026 to remove use of combined failures (defined in
+# reduced_dictionaries.py) given small size of network. Determine speed
+# of building network with this expanded approach
+
 from noisy_MAX import noisy_MAX
 from pgmpy.factors.discrete import TabularCPD
 from itertools import product
 from math import prod
-# from AT.diagnosis.bayesian.dictionaries import combined_failure_dict, subgroup_dict, nap_dict
-from reduced_dictionaries import combined_failure_dict, subgroup_dict, nap_dict
+from reduced_dictionaries import subgroup_dict, nap_dict
 import time
 import numpy as np
 
@@ -139,30 +142,6 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
             print(hidden_cpd)
         model.add_cpds(hidden_cpd)
 
-        # for anomaly, data in anomalies.items():
-        #     # Extract activation probabilities for each hidden node conditioned
-        #     # on the associated parent anomaly
-        #     c_i = data['probabilities']['true']['True']
-        #     q_i = round(1 - c_i, 3)
-
-        #     # NOTE: These can either be defined within the hidden_probabilities_dict or automatically
-        #     # for all hidden nodes as done here; this just removes the need for the 'False' subdictionary
-        #     # Defined as such to prevent deterministic behavior observed when setting the A = 0 probabilities
-        #     # to 1 and 0 for AE = 'False' or 'True', respectively (which follows the Noisy OR format)
-        #     hidden_probs = [[0.9999, q_i],
-        #                     [0.0001, c_i]]
-
-        #     # Create CPTs for each individual parent child relationship
-        #     hidden_cpd = TabularCPD(
-        #         variable = hidden_parameter,
-        #         variable_card = len(hidden_probs),
-        #         values = hidden_probs,
-        #         evidence = [anomaly],
-        #         evidence_card = [anomaly_cardinality]
-        #     )
-
-        #     model.add_cpds(hidden_cpd)
-
 # COMMENTED OUT ON 02/11/2026 TO SEE IF REDUCED NETWORK CAN BE BUILT W/O NEED FOR SUBGROUPS
     # print("Creating combined failure CPDs...")
     # # NEW CODE ON 10/31/2025
@@ -197,73 +176,73 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
     #     )
     #     model.add_cpds(cpd)
 
-    # print('Creating subgroup CPDs...')
-    # # Add CPDs for subgroups conditioned on the status of their related anomalies
-    # for subgroup, anomalies in subgroup_dict.items():
-    #     num_anomalies = len(anomalies)
+    print('Creating subgroup CPDs...')
+    # Add CPDs for subgroups conditioned on the status of their related anomalies
+    for subgroup, anomalies in subgroup_dict.items():
+        num_anomalies = len(anomalies)
 
-    #     # Create all possible True/False state combinations for the anomalies for a given subgroup
-    #     anomaly_states = list(product([False, True], repeat = num_anomalies))
+        # Create all possible True/False state combinations for the anomalies for a given subgroup
+        anomaly_states = list(product([False, True], repeat = num_anomalies))
 
-    #     # Create an empty list to store the CPT values for each combination of anomaly states
-    #     cpt_values = []
-    #     for state_combo in anomaly_states:
-    #         # If any anomaly is True, set the probability of the subgroup being True to ~1
-    #         if any(state_combo):
-    #             cpt_values.append([0.0001, 0.9999])
-    #         # If no anomalies are True, set the probability of the subgroup being False to ~1
-    #         else:
-    #             cpt_values.append([0.9999, 0.0001])
+        # Create an empty list to store the CPT values for each combination of anomaly states
+        cpt_values = []
+        for state_combo in anomaly_states:
+            # If any anomaly is True, set the probability of the subgroup being True to ~1
+            if any(state_combo):
+                cpt_values.append([0.0001, 0.9999])
+            # If no anomalies are True, set the probability of the subgroup being False to ~1
+            else:
+                cpt_values.append([0.9999, 0.0001])
 
-    #     # Reshape the CPT values to align with TabularCPD formatting
-    #     cpt_values = list(zip(*cpt_values))
+        # Reshape the CPT values to align with TabularCPD formatting
+        cpt_values = list(zip(*cpt_values))
        
-    #     # Create CPDs for each subgroup
-    #     subgroup_cpd = TabularCPD(
-    #        variable = subgroup,
-    #        variable_card = 2,
-    #        values = cpt_values,
-    #        evidence = anomalies,
-    #        evidence_card = [2] * num_anomalies
-    #    )
+        # Create CPDs for each subgroup
+        subgroup_cpd = TabularCPD(
+           variable = subgroup,
+           variable_card = 2,
+           values = cpt_values,
+           evidence = anomalies,
+           evidence_card = [2] * num_anomalies
+       )
 
-    #     model.add_cpds(subgroup_cpd)
+        model.add_cpds(subgroup_cpd)
 
-    # print('Creating NAP CPD...')
-    # # Add CPD for the No Anomalies Present node conditoned on the state of each of the subgroups
-    # for nap, subgroups in nap_dict.items():
-    #     num_groups = len(subgroups)
+    print('Creating NAP CPD...')
+    # Add CPD for the No Anomalies Present node conditoned on the state of each of the subgroups
+    for nap, subgroups in nap_dict.items():
+        num_groups = len(subgroups)
 
-    #     # Create all possible True/False combinations of the subgroup states
-    #     group_states = list(product([False, True], repeat = num_groups))
+        # Create all possible True/False combinations of the subgroup states
+        group_states = list(product([False, True], repeat = num_groups))
 
-    #     # Create an empty list to store the CPT for each combination of group states
-    #     cpt_values = []
-    #     for state_combo in group_states:
-    #         # If any of the subgroups is True, set the probability of NAP being False to ~1
-    #         if any(state_combo):
-    #             cpt_values.append([0.9999, 0.0001])
-    #         # If none of the subgroups are True, set the probability of NAP being True to ~1
-    #         else:
-    #             cpt_values.append([0.0001, 0.9999])
+        # Create an empty list to store the CPT for each combination of group states
+        cpt_values = []
+        for state_combo in group_states:
+            # If any of the subgroups is True, set the probability of NAP being False to ~1
+            if any(state_combo):
+                cpt_values.append([0.9999, 0.0001])
+            # If none of the subgroups are True, set the probability of NAP being True to ~1
+            else:
+                cpt_values.append([0.0001, 0.9999])
 
-    #     # Reshape the CPT values to align with TabularCPD formatting
-    #     cpt_values = list(zip(*cpt_values))
+        # Reshape the CPT values to align with TabularCPD formatting
+        cpt_values = list(zip(*cpt_values))
 
-    #     # Create the CPD for No Anomalies Present conditioned on the states of the subgroups
-    #     nap_cpd = TabularCPD(
-    #         variable = nap,
-    #         variable_card = 2,
-    #         values = cpt_values,
-    #         evidence = subgroups,
-    #         evidence_card = [2] * num_groups
-    #     )
+        # Create the CPD for No Anomalies Present conditioned on the states of the subgroups
+        nap_cpd = TabularCPD(
+            variable = nap,
+            variable_card = 2,
+            values = cpt_values,
+            evidence = subgroups,
+            evidence_card = [2] * num_groups
+        )
 
-    #     model.add_cpds(nap_cpd)
+        model.add_cpds(nap_cpd)
 
     # Verify expected parents
     if print_cpds:
-        testparam = 'CDRA Failure'
+        testparam = 'No Anomalies Present'
         print(f"Expected parents for {testparam}: {model.get_parents(testparam)}")
         print(model.get_cpds(testparam))
 

@@ -1,23 +1,29 @@
 # reduced_dictionaries.py
 # Author: Joshua Elston
-# Last Updated: 02/09/2026
+# Last Updated: 03/03/2026
 
 # Condensed dictionaries for relationships between:
 # - Combined failures
 # - Subgroups and related anomalies
 # - No Anomalies Present and subgroups
 
-# Called in reduced_add_cpds.py
+# Called in reduced_add_cpds.py <-- NOTE: currently NOT called, but
+# need to update if this is to be used in the future
+
+# UPDATES:
+# Updated on 03/03/2026 to experiment with defining all anomalies within 
+# subgroups to see impacts on run time
+# Updated on 03/04/2026 to add "Unknown Anomaly" as a parent of "No Anomalies Present"
 
 combined_failure_dict = {
-    "Biological Filter Saturation": [
-        "Biological Filter Saturation (IHab)",
-        "Biological Filter Saturation (HALO)"
-    ],
-    "CDRA Failure": [
-        "CDRA Failure (IHab)",
-        "CDRA Failure (HALO)"
-    ],
+    # "Biological Filter Saturation": [
+    #     "Biological Filter Saturation (IHab)",
+    #     "Biological Filter Saturation (HALO)"
+    # ],
+    # "CDRA Failure": [
+    #     "CDRA Failure (IHab)",
+    #     "CDRA Failure (HALO)"
+    # ],
     "Emergency O2 System Maintenance": [
         "Emergency O2 System Maintenance (IHab)",
         "Emergency O2 System Maintenance (HALO)"
@@ -34,14 +40,18 @@ combined_failure_dict = {
 
 subgroup_dict = {
     "Group 1": [
-        "CDRA Failure",
-        "Emergency O2 System Maintenance",
-        "Excess CO2 in Cabin",
+        "CDRA Failure (IHab)",
+        "CDRA Failure (Habitat)",
+        "Emergency O2 System Maintenance (IHab)",
+        "Emergency O2 System Maintenance (HALO)",
+        "Excess CO2 in Cabin (IHab)",
+        "Excess CO2 in Cabin (HALO)"
         ],
     #  "Group 2": [
         # ],
     "Group 3": [
-        "Biological Filter Saturation",
+        "Biological Filter Saturation (IHab)",
+        "Biological Filter Saturation (Habitat)"
         ],
 #  "Group 4": [
     # ],
@@ -50,7 +60,8 @@ subgroup_dict = {
 #  "Group 6": [
     # ],
     "Group 7": [
-        "Loss of Pressure"
+        "Loss of Pressure (IHab)",
+        "Loss of Pressure (HALO)"
     ]
 }
 
@@ -62,6 +73,7 @@ nap_dict = {
     #   "Group 4",
     #   "Group 5",
     #   "Group 6",
-        "Group 7"
+        "Group 7",
+        "Unknown Anomaly"
     ]
 }

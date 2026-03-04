@@ -1,8 +1,12 @@
 # reduced_hidden_probabilities.py
 # Author: Joshua Elston
-# Last Edited: 02/09/2026
+# Last Edited: 03/03/2026
 
 # Reduced dictionary storing the hidden parameters used for parameter learning using Biosim
+
+# UPDATES:
+# Updated on 03/03/2026 to match hidden components to (Habitat) anomalies
+# NOTE: Probabilities remained the same from (iHab) failures; may want to change in future
 
 import os, json
 
@@ -20,7 +24,7 @@ reduced_hidden_probabilities_dict = {
                 },
             },
         },
-        "Biological Filter Saturation (HALO)": {
+        "Biological Filter Saturation (Habitat)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.985,
@@ -46,7 +50,7 @@ reduced_hidden_probabilities_dict = {
                 },
             },
         },
-        "CDRA Failure (HALO)": {
+        "CDRA Failure (Habitat)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9988,
