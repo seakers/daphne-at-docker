@@ -149,17 +149,18 @@ reduced_network.extend(new_edges)
 reduced_network.sort() # sort to keep 'current' and temporal parameters together
 
 
-## NEW CODE ON 02/11/2026
-# Create new edges between all parameters and the 'Unknown Anomaly' Node
-ua_edges = []
-for _, parameters in network_dict.items():
-    for parameter in parameters:
-        if parameter.startswith("[HIDDEN]"):
-            continue
-        ua_edges.append(("Unknown Anomaly", parameter))
-# Merge edges into existing network
-reduced_network.extend(ua_edges)
-reduced_network.sort()
+# NOTE: Commented out on 03/05/2026, as Unknown Anomaly now replaces what was previously "No Anomalies Present"
+# ## NEW CODE ON 02/11/2026
+# # Create new edges between all parameters and the 'Unknown Anomaly' Node
+# ua_edges = []
+# for _, parameters in network_dict.items():
+#     for parameter in parameters:
+#         if parameter.startswith("[HIDDEN]"):
+#             continue
+#         ua_edges.append(("Unknown Anomaly", parameter))
+# # Merge edges into existing network
+# reduced_network.extend(ua_edges)
+# reduced_network.sort()
 
 # NOTE: Re-commented out to retain Groups
 # # Add nodes for subgroups related to NAP node
@@ -293,18 +294,19 @@ group_nodes = [
 for group in group_nodes:
     reduced_network.append(group)
 
-# # Add nodes for subgroups related to NAP node
-# # Flipped such that the NAP node is a child of the groups, as its state is deterministic based on the status of the subgroups
-no_anomalies_nodes = [
-    ("Group 1", "No Anomalies Present"),
-    # ("Group 2", "No Anomalies Present"),
-    ("Group 3", "No Anomalies Present"),
-    # ("Group 4", "No Anomalies Present"),
-    # ("Group 5", "No Anomalies Present"),
-    # ("Group 6", "No Anomalies Present"),
-    ("Group 7", "No Anomalies Present"),
-    ("Unknown Anomaly", "No Anomalies Present")
+# NOTE: Updated on 03/05/2026 to replace "No Anomalies Present" with "Unknown Anomaly"
+# # Add nodes for subgroups related to Unknown Anomaly node
+# # Flipped such that the Unknown Anomaly node is a child of the groups, as its state is deterministic based on the status of the subgroups
+unknown_anomaly_nodes = [
+    ("Group 1", "Unknown Anomaly"),
+    # ("Group 2", "Unknown Anomaly"),
+    ("Group 3", "Unknown Anomaly"),
+    # ("Group 4", "Unknown Anomaly"),
+    # ("Group 5", "Unknown Anomaly"),
+    # ("Group 6", "Unknown Anomaly"),
+    ("Group 7", "Unknown Anomaly")
+    # ("Unknown Anomaly", "Unknown Anomaly")
 ]
 
-for nap in no_anomalies_nodes:
-    reduced_network.append(nap)
+for ua in unknown_anomaly_nodes:
+    reduced_network.append(ua)

@@ -1,6 +1,6 @@
 # reduced_add_cpds.py
 # Author: Joshua Elston
-# Last Edited: 03/03/2026
+# Last Edited: 03/06/2026
 
 # Quicker to create small development copy of add_cpds for reduced network for parameter learning
 
@@ -8,12 +8,13 @@
 # Updated on 03/03/2026 to remove use of combined failures (defined in
 # reduced_dictionaries.py) given small size of network. Determine speed
 # of building network with this expanded approach
+# Updated on 03/06/2026 to replace addition of the "No Anomalies Present" CPD with that for an "Unknown Anomaly"
 
 from noisy_MAX import noisy_MAX
 from pgmpy.factors.discrete import TabularCPD
 from itertools import product
 from math import prod
-from reduced_dictionaries import subgroup_dict, nap_dict
+from reduced_dictionaries import subgroup_dict, unknown_anomaly_dict
 import time
 import numpy as np
 
@@ -208,9 +209,9 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
 
         model.add_cpds(subgroup_cpd)
 
-    print('Creating NAP CPD...')
+    print('Creating Unknown Anomaly CPD...')
     # Add CPD for the No Anomalies Present node conditoned on the state of each of the subgroups
-    for nap, subgroups in nap_dict.items():
+    for ua, subgroups in unknown_anomaly_dict.items():
         num_groups = len(subgroups)
 
         # Create all possible True/False combinations of the subgroup states
@@ -219,30 +220,30 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
         # Create an empty list to store the CPT for each combination of group states
         cpt_values = []
         for state_combo in group_states:
-            # If any of the subgroups is True, set the probability of NAP being False to ~1
+            # If any of the subgroups is True, set the probability of an unknown anomaly being False to ~1
             if any(state_combo):
                 cpt_values.append([0.9999, 0.0001])
-            # If none of the subgroups are True, set the probability of NAP being True to ~1
+            # If none of the subgroups are True, set the probability of an unknown anomaly being True to ~1
             else:
                 cpt_values.append([0.0001, 0.9999])
 
         # Reshape the CPT values to align with TabularCPD formatting
         cpt_values = list(zip(*cpt_values))
 
-        # Create the CPD for No Anomalies Present conditioned on the states of the subgroups
-        nap_cpd = TabularCPD(
-            variable = nap,
+        # Create the CPD for an Unknown Anomaly conditioned on the states of the subgroups
+        ua_cpd = TabularCPD(
+            variable = ua,
             variable_card = 2,
             values = cpt_values,
             evidence = subgroups,
             evidence_card = [2] * num_groups
         )
 
-        model.add_cpds(nap_cpd)
+        model.add_cpds(ua_cpd)
 
     # Verify expected parents
     if print_cpds:
-        testparam = 'No Anomalies Present'
+        testparam = 'Unknown Anomaly'
         print(f"Expected parents for {testparam}: {model.get_parents(testparam)}")
         print(model.get_cpds(testparam))
 
