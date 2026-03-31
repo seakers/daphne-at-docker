@@ -25,3 +25,8 @@ daphne-at-interface/dist/
 daphne_brain/.env
 bayesian-daphne-at/*
 *.npy
+config.xml
+ticks.jsonl
+biosim_full.csv
+biosim_training_dataset.csv
+all_cpds*.txt
