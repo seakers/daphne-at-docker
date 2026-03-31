@@ -63,7 +63,8 @@ print('you are here---')
 # Configuration-to-Anomaly Mapping
 # Resolve paths relative to this script's location so it works from any CWD
 _mars_repos_dir = os.path.abspath(os.path.join(current_dir, '..', '..', '..', '..', '..'))
-CONFIG_DIR = os.path.join(_mars_repos_dir, 'biosim-daphne', 'configuration')
+# CONFIG_DIR = os.path.join(_mars_repos_dir, 'biosim-daphne', 'configuration')
+CONFIG_DIR = os.path.abspath(os.path.join(current_dir,'configuration'))
 
 CONFIG_ANOMALY_MAP = {
     # 'default.biosim':       {'anomaly': 'CDRA Failure (IHab)',                     'tick': 200},
