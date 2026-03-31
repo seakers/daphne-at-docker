@@ -1,6 +1,6 @@
 # reduced_network_struture.py
 # Author: Joshua Elston
-# Last Edited: 03/03/2026
+# Last Edited: 03/31/2026
 
 # Condensed network structure used to evaluate parameter learning performance from
 # Biosim simulation runs (called in learn_probabilities.py)
@@ -16,69 +16,44 @@
 # Additionally, for anomalies where failures can originate in either module, individual
 # module anomaly nodes are retained, without the habitat-wide failure [NEED TO VALIDATE THIS APPROACH]
 # Updated on 03/04/2026 to add "Unknown Anomaly" as a parent of "No Anomalies Present"
+# Updated on 03/31/2026 to condense all anomalies down to a single node, where all child nodes
+# (e.g., from both IHab and HALO) are present; this is used to more accurately learn probabilities
+# for the scenario when the hatch is either open or closed; note that a 'Hatch Status' node is also
+# added, where a value of '1' indicates an open hatch and '0' indicates a closed hatch
 
 from collections import defaultdict
 
 reduced_network = [
-    # Biological Filter Saturation (IHab) <-- point source for failure
-    ("Biological Filter Saturation (IHab)", "high ppCO2_IHab (IHab)"), ("Biological Filter Saturation (IHab)", "high ppCO2_IHab (IHab) (t-1)"),
-    ("Biological Filter Saturation (IHab)", "high ppO2_IHab (IHab)"), ("Biological Filter Saturation (IHab)", "high ppO2_IHab (IHab) (t-1)"),
-    ("Biological Filter Saturation (IHab)", "low ppCO2_IHab (IHab)"), ("Biological Filter Saturation (IHab)", "low ppCO2_IHab (IHab) (t-1)"),
-    ("Biological Filter Saturation (IHab)", "low ppO2_IHab (IHab)"), ("Biological Filter Saturation (IHab)", "low ppO2_IHab (IHab) (t-1)"),
-    ("Biological Filter Saturation (IHab)", "[HIDDEN] BFS Component"),
+    # Biological Filter Saturation <-- IHab is point source for failure
+    ("Biological Filter Saturation", "high ppCO2_IHab (IHab)"), ("Biological Filter Saturation", "high ppCO2_IHab (IHab) (t-1)"),
+    ("Biological Filter Saturation", "high ppO2_IHab (IHab)"), ("Biological Filter Saturation", "high ppO2_IHab (IHab) (t-1)"),
+    ("Biological Filter Saturation", "low ppCO2_IHab (IHab)"), ("Biological Filter Saturation", "low ppCO2_IHab (IHab) (t-1)"),
+    ("Biological Filter Saturation", "low ppO2_IHab (IHab)"), ("Biological Filter Saturation", "low ppO2_IHab (IHab) (t-1)"),
+    ("Biological Filter Saturation", "high ppCO2_HALO (HALO)"), ("Biological Filter Saturation", "high ppCO2_HALO (HALO) (t-1)"),
+    ("Biological Filter Saturation", "high ppO2_HALO (HALO)"), ("Biological Filter Saturation", "high ppO2_HALO (HALO) (t-1)"),
+    ("Biological Filter Saturation", "low ppCO2_HALO (HALO)"), ("Biological Filter Saturation", "low ppCO2_HALO (HALO) (t-1)"),
+    ("Biological Filter Saturation", "low ppO2_HALO (HALO)"), ("Biological Filter Saturation", "low ppO2_HALO (HALO) (t-1)"),
+    ("Biological Filter Saturation", "Hatch Status"),
+    ("Biological Filter Saturation", "[HIDDEN] BFS Component"),
 
-    # Biological Filter Saturation (Habitat) <-- symptoms manifested throughout Gateway
-    ("Biological Filter Saturation (Habitat)", "high ppCO2_IHab (IHab)"), ("Biological Filter Saturation (Habitat)", "high ppCO2_IHab (IHab) (t-1)"),
-    ("Biological Filter Saturation (Habitat)", "high ppO2_IHab (IHab)"), ("Biological Filter Saturation (Habitat)", "high ppO2_IHab (IHab) (t-1)"),
-    ("Biological Filter Saturation (Habitat)", "low ppCO2_IHab (IHab)"), ("Biological Filter Saturation (Habitat)", "low ppCO2_IHab (IHab) (t-1)"),
-    ("Biological Filter Saturation (Habitat)", "low ppO2_IHab (IHab)"), ("Biological Filter Saturation (Habitat)", "low ppO2_IHab (IHab) (t-1)"),
-    ("Biological Filter Saturation (Habitat)", "high ppCO2_HALO (HALO)"), ("Biological Filter Saturation (Habitat)", "high ppCO2_HALO (HALO) (t-1)"),
-    ("Biological Filter Saturation (Habitat)", "high ppO2_HALO (HALO)"), ("Biological Filter Saturation (Habitat)", "high ppO2_HALO (HALO) (t-1)"),
-    ("Biological Filter Saturation (Habitat)", "low ppCO2_HALO (HALO)"), ("Biological Filter Saturation (Habitat)", "low ppCO2_HALO (HALO) (t-1)"),
-    ("Biological Filter Saturation (Habitat)", "low ppO2_HALO (HALO)"), ("Biological Filter Saturation (Habitat)", "low ppO2_HALO (HALO) (t-1)"),
-    ("Biological Filter Saturation (Habitat)", "[HIDDEN] BFS Component"),
+    # CDRA Failure <-- IHab is point source for failure
+    ("CDRA Failure", "high Humidity_IHab (IHab)"), ("CDRA Failure", "high Humidity_IHab (IHab) (t-1)"), 
+    ("CDRA Failure", "high ppCO2_IHab (IHab)"), ("CDRA Failure", "high ppCO2_IHab (IHab) (t-1)"), 
+    ("CDRA Failure", "high ppO2_IHab (IHab)"), ("CDRA Failure", "high ppO2_IHab (IHab) (t-1)"), 
+    ("CDRA Failure", "low Humidity_IHab (IHab)"), ("CDRA Failure", "low Humidity_IHab (IHab) (t-1)"),
+    ("CDRA Failure", "low ppCO2_IHab (IHab)"), ("CDRA Failure", "low ppCO2_IHab (IHab) (t-1)"),
+    ("CDRA Failure", "low ppO2_IHab (IHab)"), ("CDRA Failure", "low ppO2_IHab (IHab) (t-1)"),
+    ("CDRA Failure", "high Humidity_HALO (HALO)"), ("CDRA Failure", "high Humidity_HALO (HALO) (t-1)"),
+    ("CDRA Failure", "high ppCO2_HALO (HALO)"), ("CDRA Failure", "high ppCO2_HALO (HALO) (t-1)"),
+    ("CDRA Failure", "high ppO2_HALO (HALO)"), ("CDRA Failure", "high ppO2_HALO (HALO) (t-1)"),
+    ("CDRA Failure", "low Humidity_HALO (HALO)"), ("CDRA Failure", "low Humidity_HALO (HALO) (t-1)"),
+    ("CDRA Failure", "low ppCO2_HALO (HALO)"), ("CDRA Failure", "low ppCO2_HALO (HALO) (t-1)"),
+    ("CDRA Failure", "low ppO2_HALO (HALO)"), ("CDRA Failure", "low ppO2_HALO (HALO) (t-1)"),
+    ("CDRA Failure", "Hatch Status"),
+    ("CDRA Failure", "[HIDDEN] CDRA Failure Component"),
 
-    # CDRA Failure (IHab) <-- point source for failure
-    ("CDRA Failure (IHab)", "high Humidity_IHab (IHab)"), ("CDRA Failure (IHab)", "high Humidity_IHab (IHab) (t-1)"), 
-    ("CDRA Failure (IHab)", "high ppCO2_IHab (IHab)"), ("CDRA Failure (IHab)", "high ppCO2_IHab (IHab) (t-1)"), 
-    ("CDRA Failure (IHab)", "high ppO2_IHab (IHab)"), ("CDRA Failure (IHab)", "high ppO2_IHab (IHab) (t-1)"), 
-    ("CDRA Failure (IHab)", "low Humidity_IHab (IHab)"), ("CDRA Failure (IHab)", "low Humidity_IHab (IHab) (t-1)"),
-    ("CDRA Failure (IHab)", "low ppCO2_IHab (IHab)"), ("CDRA Failure (IHab)", "low ppCO2_IHab (IHab) (t-1)"),
-    ("CDRA Failure (IHab)", "low ppO2_IHab (IHab)"), ("CDRA Failure (IHab)", "low ppO2_IHab (IHab) (t-1)"),
-    ("CDRA Failure (IHab)", "[HIDDEN] CDRA Failure Component"),
-
-    # CDRA Failure (Habitat) <-- symptoms manifested throughout Gateway
-    ("CDRA Failure (Habitat)", "high Humidity_IHab (IHab)"), ("CDRA Failure (Habitat)", "high Humidity_IHab (IHab) (t-1)"), 
-    ("CDRA Failure (Habitat)", "high ppCO2_IHab (IHab)"), ("CDRA Failure (Habitat)", "high ppCO2_IHab (IHab) (t-1)"), 
-    ("CDRA Failure (Habitat)", "high ppO2_IHab (IHab)"), ("CDRA Failure (Habitat)", "high ppO2_IHab (IHab) (t-1)"), 
-    ("CDRA Failure (Habitat)", "low Humidity_IHab (IHab)"), ("CDRA Failure (Habitat)", "low Humidity_IHab (IHab) (t-1)"),
-    ("CDRA Failure (Habitat)", "low ppCO2_IHab (IHab)"), ("CDRA Failure (Habitat)", "low ppCO2_IHab (IHab) (t-1)"),
-    ("CDRA Failure (Habitat)", "low ppO2_IHab (IHab)"), ("CDRA Failure (Habitat)", "low ppO2_IHab (IHab) (t-1)"),
-    ("CDRA Failure (Habitat)", "high Humidity_HALO (HALO)"), ("CDRA Failure (Habitat)", "high Humidity_HALO (HALO) (t-1)"),
-    ("CDRA Failure (Habitat)", "high ppCO2_HALO (HALO)"), ("CDRA Failure (Habitat)", "high ppCO2_HALO (HALO) (t-1)"),
-    ("CDRA Failure (Habitat)", "high ppO2_HALO (HALO)"), ("CDRA Failure (Habitat)", "high ppO2_HALO (HALO) (t-1)"),
-    ("CDRA Failure (Habitat)", "low Humidity_HALO (HALO)"), ("CDRA Failure (Habitat)", "low Humidity_HALO (HALO) (t-1)"),
-    ("CDRA Failure (Habitat)", "low ppCO2_HALO (HALO)"), ("CDRA Failure (Habitat)", "low ppCO2_HALO (HALO) (t-1)"),
-    ("CDRA Failure (Habitat)", "low ppO2_HALO (HALO)"), ("CDRA Failure (Habitat)", "low ppO2_HALO (HALO) (t-1)"),
-    ("CDRA Failure (Habitat)", "[HIDDEN] CDRA Failure Component"),
-
-    # # CDRA LiOH Canister Saturation (IHab) <-- for parameter learning, proposing to remove the 'LiOH CO2 Saturation parameter, as that could be the additional evidence
-    # ("CDRA LiOH Canister Saturation (IHab)", "high ppCO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation (IHab)", "high ppCO2_IHab (IHab) (t-1)"),
-    # ("CDRA LiOH Canister Saturation (IHab)", "high ppO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation (IHab)", "high ppO2_IHab (IHab) (t-1)"),
-    # ("CDRA LiOH Canister Saturation (IHab)", "high LiOH CO2 Saturation"), ("CDRA LiOH Canister Saturation (IHab)", "high LiOH CO2 Saturation (t-1)"),
-    # ("CDRA LiOH Canister Saturation (IHab)", "low ppCO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation (IHab)", "low ppCO2_IHab (IHab) (t-1)"),
-    # ("CDRA LiOH Canister Saturation (IHab)", "low ppO2_IHab (IHab)"), ("CDRA LiOH Canister Saturation (IHab)", "low ppO2_IHab (IHab) (t-1)"),
-    # ("CDRA LiOH Canister Saturation (IHab)", "low LiOH CO2 Saturation"), ("CDRA LiOH Canister Saturation (IHab)", "low LiOH CO2 Saturation (t-1)"),
-    # ("CDRA LiOH Canister Saturation (IHab)", "[HIDDEN] CDRA LiOH Canister Saturation Component"), # <-- propose just changing name to '[HIDDEN] LiOH CO2 Canister Saturation'
-
-    # # CDRA LiOH Canister Saturation (HALO)
-    # ("CDRA LiOH Canister Saturation (HALO)", "high ppCO2_HALO (HALO)"), ("CDRA LiOH Canister Saturation (HALO)", "high ppCO2_HALO (HALO) (t-1)"),
-    # ("CDRA LiOH Canister Saturation (HALO)", "high ppO2_HALO (HALO)"), ("CDRA LiOH Canister Saturation (HALO)", "high ppO2_HALO (HALO) (t-1)"),
-    # ("CDRA LiOH Canister Saturation (HALO)", "high LiOH CO2 Saturation"), ("CDRA LiOH Canister Saturation (HALO)", "high LiOH CO2 Saturation (t-1)"),
-    # ("CDRA LiOH Canister Saturation (HALO)", "low ppCO2_HALO (HALO)"), ("CDRA LiOH Canister Saturation (HALO)", "low ppCO2_HALO (HALO) (t-1)"),
-    # ("CDRA LiOH Canister Saturation (HALO)", "low ppO2_HALO (HALO)"), ("CDRA LiOH Canister Saturation (HALO)", "low ppO2_HALO (HALO) (t-1)"),
-    # ("CDRA LiOH Canister Saturation (HALO)", "low LiOH CO2 Saturation"), ("CDRA LiOH Canister Saturation (HALO)", "low LiOH CO2 Saturation (t-1)"),
-    # ("CDRA LiOH Canister Saturation (HALO)", "[HIDDEN] CDRA LiOH Canister Saturation Component"),
+    # CDRA LiOH Canister Saturation <-- for parameter learning, proposing to remove the 'LiOH CO2 Saturation parameter,
+    # as that could be the additional evidence
 
     # Emergency O2 System Maintenance (IHab)
     ("Emergency O2 System Maintenance (IHab)", "high ppO2_IHab (IHab)"), ("Emergency O2 System Maintenance (IHab)", "high ppO2_IHab (IHab) (t-1)"),
@@ -117,16 +92,6 @@ reduced_network = [
     ("Loss of Pressure (HALO)", "low ppO2_HALO (HALO)"), ("Loss of Pressure (HALO)", "low ppO2_HALO (HALO) (t-1)"),
     ("Loss of Pressure (HALO)", "low Total_Cabin_Pressure_HALO (HALO)"), ("Loss of Pressure (HALO)", "low Total_Cabin_Pressure_HALO (HALO) (t-1)"),
     ("Loss of Pressure (HALO)", "[HIDDEN] Loss of Pressure Component"),
-
-    # # Unknown Anomaly (tied to all parameters) <-- already done below
-    # ("Unknown Anomaly", "high Humidity_IHab (IHab)"), ("Unknown Anomaly", "low Humidity_IHab (IHab)"),
-    # ("Unknown Anomaly", "high Humidity_HALO (HALO)"), ("Unknown Anomaly", "low Humidity_HALO (HALO)"),
-    # ("Unknown Anomaly", "high ppCO2_IHab (IHab)"), ("Unknown Anomaly", "low ppCO2_IHab (IHab)"),
-    # ("Unknown Anomaly", "hihg ppCO2_HALO (HALO)"), ("Unknown Anomaly", "low ppCO2_HALO (HALO)"),
-    # ("Unknown Anomaly", "high ppO2_IHab (IHab)"), ("Unknown Anomaly", "low ppO2_IHab (IHab)"),
-    # ("Unknown Anomaly", "high ppO2_HALO (HALO)"), ("Unknown Anomaly", "low ppO2_HALO (HALO)"),
-    # ("Unknown Anomaly", "high Total_Cabin_Pressure_IHab (IHab)"), ("Unknown Anomaly", "low Total_Cabin_Pressure_IHab (IHab)"),
-    # ("Unknown Anomaly", "high Total_Cabin_Pressure_HALO (HALO)"), ("Unknown Anomaly", "low Total_Cabin_Pressure_HALO (HALO)")
 ]
 
 network_dict = defaultdict(set)
@@ -147,87 +112,6 @@ for anomaly, parameters in network_dict.items():
 # Merge temporal parameter node edges in network
 reduced_network.extend(new_edges)
 reduced_network.sort() # sort to keep 'current' and temporal parameters together
-
-
-# NOTE: Commented out on 03/05/2026, as Unknown Anomaly now replaces what was previously "No Anomalies Present"
-# ## NEW CODE ON 02/11/2026
-# # Create new edges between all parameters and the 'Unknown Anomaly' Node
-# ua_edges = []
-# for _, parameters in network_dict.items():
-#     for parameter in parameters:
-#         if parameter.startswith("[HIDDEN]"):
-#             continue
-#         ua_edges.append(("Unknown Anomaly", parameter))
-# # Merge edges into existing network
-# reduced_network.extend(ua_edges)
-# reduced_network.sort()
-
-# NOTE: Re-commented out to retain Groups
-# # Add nodes for subgroups related to NAP node
-# # Flipped such that the NAP node is a child of the groups, as its state is deterministic based on the status of the subgroups
-# no_anomalies_nodes = [
-#     ("Biological Filter Saturation (IHab)", "No Anomalies Present"),
-#     ("Biological Filter Saturation (Habitat)", "No Anomalies Present"),
-#     ("CDRA Failure (IHab)", "No Anomalies Present"),
-#     ("CDRA Failure (Habitat)", "No Anomalies Present"),
-#     ("Emergency O2 System Maintenance (IHab)", "No Anomalies Present"),
-#     ("Emergency O2 System Maintenance (HALO)", "No Anomalies Present"),
-#     ("Excess CO2 in Cabin (IHab)", "No Anomalies Present"),
-#     ("Excess CO2 in Cabin (HALO)", "No Anomalies Present"),
-#     ("Loss of Pressure (IHab)", "No Anomalies Present"),
-#     ("Loss of Pressure (HALO)", "No Anomalies Present"),
-#     ("Unknown Anomaly", "No Anomalies Present")
-# ]
-
-# for nap in no_anomalies_nodes:
-#     reduced_network.append(nap)
-
-
-# COMMENTED OUT ON 02/11/2026 TO SEE IF REDUCED NETWORK CAN BE BUILT W/O SUBGROUPS
-# # Add combined failure nodes to the network (done here to prevent previous (t-1) automation from impacting anomalies)
-# # Updated on 11/01/2025 to correct relationships between high-level and level-specific anomalies (flipping the order)
-# combined_failure_nodes = [
-#     # Biological Filter Saturation (Combined)
-#     ("Biological Filter Saturation (IHab)", "Biological Filter Saturation"),
-#     ("Biological Filter Saturation (HALO)", "Biological Filter Saturation"),
-
-#     # CDRA Failure (Combined)
-#     ("CDRA Failure (IHab)", "CDRA Failure"),
-#     ("CDRA Failure (HALO)", "CDRA Failure"),
-
-#     # Emergency O2 System Maintenance (Combined)
-#     ("Emergency O2 System Maintenance (IHab)", "Emergency O2 System Maintenance"),
-#     ("Emergency O2 System Maintenance (HALO)", "Emergency O2 System Maintenance"),
-
-#     # Excess CO2 in Cabin (Combined)
-#     ("Excess CO2 in Cabin (IHab)", "Excess CO2 in Cabin"),
-#     ("Excess CO2 in Cabin (HALO)", "Excess CO2 in Cabin"),
-
-#     # Loss of Pressure (Combined)
-#     ("Loss of Pressure (IHab)", "Loss of Pressure"),
-#     ("Loss of Pressure (HALO)", "Loss of Pressure"),
-# ]
-
-# # Extract the new parent node names
-# new_nodes = {parent for parent, _ in combined_failure_nodes}
-
-# # Add any new nodes to the network_dict (parents not already keys)
-# for node in new_nodes:
-#     if node not in network_dict:
-#         network_dict[node] = set()  # initialize an empty set of children
-
-# # Now safely add edges to the network_dict
-# for parent, child in combined_failure_nodes:
-#     network_dict[parent].add(child)
-
-# # Merge edges back into the main network list
-# for parent, children in network_dict.items():
-#     for child in children:
-#         edge = (parent, child)
-#         if edge not in reduced_network:   # avoid duplicates
-#             reduced_network.append(edge)
-
-# reduced_network.sort()
 
 # Add connections between temporal variables (e.g., ppO2_IHab (IHab) (t-1) and ppO2_IHab (IHab)). Note that the previous
 # time step parameter is added first, as the older measurement has an impact on the current reading
@@ -267,8 +151,7 @@ for edge in spatial_nodes:
 # Flipped such that the groups are child nodes of their related anomalies, as the group state is deterministic based on the status of the related anomalies
 group_nodes = [
     # Group 1: Carbon Dioxide Removal
-    ("CDRA Failure (IHab)", "Group 1"),
-    ("CDRA Failure (Habitat)", "Group 1"),
+    ("CDRA Failure", "Group 1"),
     ("Emergency O2 System Maintenance (IHab)", "Group 1"),
     ("Emergency O2 System Maintenance (HALO)", "Group 1"),
     ("Excess CO2 in Cabin (IHab)", "Group 1"),
@@ -277,9 +160,8 @@ group_nodes = [
     # Group 2: Trace Contaminants
    
     # Group 3: Water
-    ("Biological Filter Saturation (IHab)", "Group 3"),
-    ("Biological Filter Saturation (Habitat)", "Group 3"),
-    
+    ("Biological Filter Saturation", "Group 3"),
+
     # Group 4: Power
     
     # Group 5: MOXIE
