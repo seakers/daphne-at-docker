@@ -103,7 +103,7 @@ new_edges = [] # create an empty list to store new edges
 for anomaly, parameters in network_dict.items():
     for parameter in parameters:
         # Only add new edges for telemetry parameters (i.e., not for additional evidence)
-        if parameter.startswith("[HIDDEN]") or "(t-1)" in parameter:
+        if parameter.startswith("[HIDDEN]") or "(t-1)" in parameter or parameter == "Hatch Status":
             continue
         temporal_parameter = f"{parameter} (t-1)"
         if temporal_parameter not in parameters:
