@@ -1,4 +1,3 @@
-
 # learn_probabilities.py
 # Author: Joshua Elston
 # Last Edited: 04/06/2026
@@ -20,25 +19,22 @@ import os, json, subprocess, requests, time
 import pandas as pd
 from math import prod
 
-from pgmpy.utils import get_example_model
-print(get_example_model(model='alarm'))
-
 from pgmpy.models import BayesianNetwork
-from pgmpy.factors.discrete import TabularCPD
 from reduced_network_structure import reduced_network
-from reduced_prior_probabilities import reduced_prior_probabilities
-from reduced_add_cpds import add_cpds
+# from pgmpy.factors.discrete import TabularCPD
+# from reduced_prior_probabilities import reduced_prior_probabilities
+# from reduced_add_cpds import add_cpds
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-reduced_split_probability_dict = os.path.join(current_dir, "reduced_split_probabilities_dict.json")
-reduced_hidden_probabilities_dict = os.path.join(current_dir, "reduced_hidden_probabilities_dict.json")
-with open(reduced_split_probability_dict, "r") as file:
-    reduced_split_probability_dict = json.load(file)
-with open(reduced_hidden_probabilities_dict, "r") as file:
-    reduced_hidden_probabilities_dict = json.load(file)
+# reduced_split_probability_dict = os.path.join(current_dir, "reduced_split_probabilities_dict.json")
+# reduced_hidden_probabilities_dict = os.path.join(current_dir, "reduced_hidden_probabilities_dict.json")
+# with open(reduced_split_probability_dict, "r") as file:
+#     reduced_split_probability_dict = json.load(file)
+# with open(reduced_hidden_probabilities_dict, "r") as file:
+#     reduced_hidden_probabilities_dict = json.load(file)
 
-# Define the cardinality of each anomaly as 2, where 0 represents the anomaly not being present (False) and 1 represents the anomaly being present (True)
-anomaly_cardinality = 2
+# # Define the cardinality of each anomaly as 2, where 0 represents the anomaly not being present (False) and 1 represents the anomaly being present (True)
+# anomaly_cardinality = 2
 
 # Create the Bayesian Network
 model = BayesianNetwork(reduced_network)
