@@ -54,8 +54,10 @@ _start_lock = threading.Lock()
 CONFIG_ANOMALY_MAP = {
     'low_o2_ihab.biosim':   {'anomaly': 'Emergency O2 System Maintenance (IHab)',  'tick': 200},
     'low_o2_halo.biosim':   {'anomaly': 'Emergency O2 System Maintenance (HALO)',  'tick': 200},
-    'default_leak.biosim': {'anomaly': 'Loss of Pressure (IHab)',             'tick': 200,
-                            'second_anomaly': 'Loss of Pressure (HALO)'},
+    'default_leak_ihab.biosim':   {'anomaly': 'Loss of Pressure (IHab)',  'tick': 200},
+    'default_leak_halo.biosim':   {'anomaly': 'Loss of Pressure (HALO)',  'tick': 200},
+    # 'default_leak.biosim': {'anomaly': 'Loss of Pressure (IHab)',             'tick': 200,
+    #                         'second_anomaly': 'Loss of Pressure (HALO)'},
     'high_co2_ihab.biosim': {'anomaly': 'Excess CO2 in Cabin (IHab)',              'tick': 200},
     'high_co2_halo.biosim': {'anomaly': 'Excess CO2 in Cabin (HALO)',              'tick': 200},
     'bio_filter.biosim':    {'anomaly': 'Biological Filter Saturation',   'hatch_status': 'open', 'tick': 200},
