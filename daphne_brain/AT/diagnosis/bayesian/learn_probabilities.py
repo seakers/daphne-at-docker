@@ -70,12 +70,13 @@ CONFIG_ANOMALY_MAP = {
     # 'default.biosim':       {'anomaly': 'CDRA Failure (IHab)',                     'tick': 200},
     'low_o2_ihab.biosim':   {'anomaly': 'Emergency O2 System Maintenance (IHab)',  'tick': 200},
     'low_o2_halo.biosim':   {'anomaly': 'Emergency O2 System Maintenance (HALO)',  'tick': 200},
+    'low_o2.biosim':        {'anomaly': 'Emergency O2 System Maintenance (IHab)', 'second_anomaly': 'Emergency O2 System Maintenance (HALO)', 'tick': 200},
     'default_leak_ihab.biosim':   {'anomaly': 'Loss of Pressure (IHab)',  'tick': 200},
     'default_leak_halo.biosim':   {'anomaly': 'Loss of Pressure (HALO)',  'tick': 200},
-    # 'default_leak.biosim': {'anomaly': 'Loss of Pressure (IHab)',             'tick': 200,
-    #                         'second_anomaly': 'Loss of Pressure (HALO)'},
+    'default_leak.biosim': {'anomaly': 'Loss of Pressure (IHab)', 'second_anomaly': 'Loss of Pressure (HALO)', 'tick': 200},
     'high_co2_ihab.biosim': {'anomaly': 'Excess CO2 in Cabin (IHab)',              'tick': 200},
     'high_co2_halo.biosim': {'anomaly': 'Excess CO2 in Cabin (HALO)',              'tick': 200},
+    'high_co2.biosim':      {'anomaly': 'Excess CO2 in Cabin (IHab)', 'second_anomaly': 'Excess CO2 in Cabin (HALO)', 'tick': 200},
     # 'bio_filter.biosim':    {'anomaly': 'Biological Filter Saturation (IHab)',     'tick': 200,
     #                          'halo_anomaly': 'Biological Filter Saturation (Habitat)',
     #                          'halo_sensors': ['ppO2_HALO']},
@@ -314,7 +315,7 @@ def parse_simulation_ticks(data, anomaly_name, anomaly_tick, anomalies_list,
             if anomaly_name in ANOMALY_SYMPTOMS:
                 comp = ANOMALY_SYMPTOMS[anomaly_name]["component"]
                 sensor_row[comp] = int(tick_num >= anomaly_tick)
-            # For second_anomaly (e.g., default_leak sets both IHab and HALO)
+            # For second_anomaly
             if second_anomaly is not None and second_anomaly in ANOMALY_SYMPTOMS:
                 comp2 = ANOMALY_SYMPTOMS[second_anomaly]["component"]
                 sensor_row[comp2] = int(tick_num >= anomaly_tick)
