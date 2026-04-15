@@ -1,6 +1,6 @@
 # reduced_network_struture.py
 # Author: Joshua Elston
-# Last Edited: 03/31/2026
+# Last Edited: 04/13/2026
 
 # Condensed network structure used to evaluate parameter learning performance from
 # Biosim simulation runs (called in learn_probabilities.py)
@@ -20,6 +20,8 @@
 # (e.g., from both IHab and HALO) are present; this is used to more accurately learn probabilities
 # for the scenario when the hatch is either open or closed; note that a 'Hatch Status' node is also
 # added, where a value of '1' indicates an open hatch and '0' indicates a closed hatch
+# Updated on 04/13/2026 such that 'Hatch Status' is more accurately named to 'Fan Status' and is a
+# parent of parameters measured seperately in different modules for which different anomalies can occur
 
 from collections import defaultdict
 
@@ -33,7 +35,7 @@ reduced_network = [
     ("Biological Filter Saturation", "high ppO2_HALO (HALO)"), ("Biological Filter Saturation", "high ppO2_HALO (HALO) (t-1)"),
     ("Biological Filter Saturation", "low ppCO2_HALO (HALO)"), ("Biological Filter Saturation", "low ppCO2_HALO (HALO) (t-1)"),
     ("Biological Filter Saturation", "low ppO2_HALO (HALO)"), ("Biological Filter Saturation", "low ppO2_HALO (HALO) (t-1)"),
-    ("Biological Filter Saturation", "Hatch Status"),
+    # ("Biological Filter Saturation", "Hatch Status"),
     ("Biological Filter Saturation", "[HIDDEN] BFS Component"),
 
     # CDRA Failure <-- IHab is point source for failure
@@ -49,7 +51,7 @@ reduced_network = [
     ("CDRA Failure", "low Humidity_HALO (HALO)"), ("CDRA Failure", "low Humidity_HALO (HALO) (t-1)"),
     ("CDRA Failure", "low ppCO2_HALO (HALO)"), ("CDRA Failure", "low ppCO2_HALO (HALO) (t-1)"),
     ("CDRA Failure", "low ppO2_HALO (HALO)"), ("CDRA Failure", "low ppO2_HALO (HALO) (t-1)"),
-    ("CDRA Failure", "Hatch Status"),
+    # ("CDRA Failure", "Hatch Status"),
     ("CDRA Failure", "[HIDDEN] CDRA Failure Component"),
 
     # CDRA LiOH Canister Saturation <-- for parameter learning, proposing to remove the 'LiOH CO2 Saturation parameter,
@@ -92,6 +94,20 @@ reduced_network = [
     ("Loss of Pressure (HALO)", "low ppO2_HALO (HALO)"), ("Loss of Pressure (HALO)", "low ppO2_HALO (HALO) (t-1)"),
     ("Loss of Pressure (HALO)", "low Total_Cabin_Pressure_HALO (HALO)"), ("Loss of Pressure (HALO)", "low Total_Cabin_Pressure_HALO (HALO) (t-1)"),
     ("Loss of Pressure (HALO)", "[HIDDEN] Loss of Pressure Component"),
+
+    # Add 'Fan Status' as a part of parameters measured seperately in different modules
+    ("Fan Status", "high Humidity_IHab (IHab)"), ("Fan Status", "high Humidity_IHab (IHab) (t-1)"), 
+    ("Fan Status", "high ppCO2_IHab (IHab)"), ("Fan Status", "high ppCO2_IHab (IHab) (t-1)"),
+    ("Fan Status", "high ppO2_IHab (IHab)"), ("Fan Status", "high ppO2_IHab (IHab) (t-1)"),
+    ("Fan Status", "low Humidity_IHab (IHab)"), ("Fan Status", "low Humidity_IHab (IHab) (t-1)"), 
+    ("Fan Status", "low ppCO2_IHab (IHab)"), ("Fan Status", "low ppCO2_IHab (IHab) (t-1)"),
+    ("Fan Status", "low ppO2_IHab (IHab)"), ("Fan Status", "low ppO2_IHab (IHab) (t-1)"),
+    ("Fan Status", "high Humidity_HALO (HALO)"), ("Fan Status", "high Humidity_HALO (HALO) (t-1)"),
+    ("Fan Status", "high ppCO2_HALO (HALO)"), ("Fan Status", "high ppCO2_HALO (HALO) (t-1)"),
+    ("Fan Status", "high ppO2_HALO (HALO)"), ("Fan Status", "high ppO2_HALO (HALO) (t-1)"),
+    ("Fan Status", "low Humidity_HALO (HALO)"), ("Fan Status", "low Humidity_HALO (HALO) (t-1)"),
+    ("Fan Status", "low ppCO2_HALO (HALO)"), ("Fan Status", "low ppCO2_HALO (HALO) (t-1)"),
+    ("Fan Status", "low ppO2_HALO (HALO)"), ("Fan Status", "low ppO2_HALO (HALO) (t-1)")
 ]
 
 network_dict = defaultdict(set)
@@ -103,7 +119,7 @@ new_edges = [] # create an empty list to store new edges
 for anomaly, parameters in network_dict.items():
     for parameter in parameters:
         # Only add new edges for telemetry parameters (i.e., not for additional evidence)
-        if parameter.startswith("[HIDDEN]") or "(t-1)" in parameter or parameter == "Hatch Status":
+        if parameter.startswith("[HIDDEN]") or "(t-1)" in parameter or parameter == "Fan Status":
             continue
         temporal_parameter = f"{parameter} (t-1)"
         if temporal_parameter not in parameters:
