@@ -6,13 +6,13 @@
 	<SimBioModules>
 		<environment>
 			<SimEnvironment moduleName="IHab" initialVolume="22900">
-				<percentageInitialization totalPressure="102.5" o2Percentage="0.2025" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
+				<percentageInitialization totalPressure="102.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
 			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900">
-				<percentageInitialization totalPressure="102.5" o2Percentage="0.2025" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
+				<percentageInitialization totalPressure="102.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
 			</SimEnvironment>
 			<Dehumidifier moduleName="Main_Dehumidifier">
-				<airConsumer inputs="IHab" desiredFlowRates="0.2965" maxFlowRates="0.2965" />
+				<airConsumer inputs="HALO" desiredFlowRates="0.2965" maxFlowRates="0.2965" />
 				<dirtyWaterProducer desiredFlowRates="10000" outputs="Dirty_Water_Store" maxFlowRates="10000" />
 			</Dehumidifier>
 			<Fan moduleName="IHab_to_HALO_Fan">
@@ -37,18 +37,18 @@
 			</NitrogenStore>
 			<VCCR moduleName="Main_VCCR" logLevel="INFO">
 				<powerConsumer inputs="General_Power_Store" desiredFlowRates="500" maxFlowRates="1000" />
-				<airConsumer inputs="IHab" desiredFlowRates="9885" maxFlowRates="9885" />
-				<airProducer desiredFlowRates="9885" outputs="IHab" maxFlowRates="9885" />
+				<airConsumer inputs="HALO" desiredFlowRates="9885" maxFlowRates="9885" />
+				<airProducer desiredFlowRates="9885" outputs="HALO" maxFlowRates="9885" />
 				<CO2Producer desiredFlowRates="20000" outputs="CO2_Store" maxFlowRates="20000" />
-				<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="200" />
 			</VCCR>
 			<OGS moduleName="OGS">
 				<powerConsumer inputs="General_Power_Store" desiredFlowRates="1000" maxFlowRates="1000" />
 				<potableWaterConsumer inputs="Potable_Water_Store" desiredFlowRates="10" maxFlowRates="10" />
 				<O2Producer desiredFlowRates="1000" outputs="O2_Store" maxFlowRates="1000" />
 				<H2Producer desiredFlowRates="1000" outputs="H2_Store" maxFlowRates="1000" />
+				<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="200" />
 			</OGS>
-			<O2Store capacity="10000" moduleName="O2_Store" level="1000">
+			<O2Store capacity="10" moduleName="O2_Store" level="10">
 			</O2Store>
 			<H2Store capacity="10000" moduleName="H2_Store" level="0" />
 			<CO2Store capacity="1000" moduleName="CO2_Store" level="0">
@@ -56,15 +56,15 @@
 		</air>
 		<framework>
 			<Injector moduleName="Oxygen_Injector_IHab">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.2" maxFlowRates="2.0">
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.0" maxFlowRates="0.0">
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.2" outputs="IHab" maxFlowRates="2.0">
+				<O2Producer desiredFlowRates="0.0" outputs="IHab" maxFlowRates="0.0">
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Oxygen_Injector_HALO">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.0" maxFlowRates="0.5">
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.2" maxFlowRates="2.0">
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.0" outputs="HALO" maxFlowRates="0.5">
+				<O2Producer desiredFlowRates="0.2" outputs="HALO" maxFlowRates="2.0">
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Nitrogen_Injector_HALO">
@@ -108,13 +108,13 @@
 			<CrewGroup moduleName="IHab_Group">
 				<potableWaterConsumer inputs="Potable_Water_Store" desiredFlowRates="3" maxFlowRates="3">
 				</potableWaterConsumer>
-				<airConsumer inputs="IHab" desiredFlowRates="0" maxFlowRates="0" />
+				<airConsumer inputs="HALO" desiredFlowRates="0" maxFlowRates="0" />
 				<foodConsumer inputs="Food_Store" desiredFlowRates="5" maxFlowRates="5">
 				</foodConsumer>
 				<dirtyWaterProducer desiredFlowRates="100" outputs="Dirty_Water_Store" maxFlowRates="100">
 				</dirtyWaterProducer>
 				<greyWaterProducer desiredFlowRates="100" outputs="Grey_Water_Store" maxFlowRates="100" />
-				<airProducer desiredFlowRates="0" outputs="IHab" maxFlowRates="0" />
+				<airProducer desiredFlowRates="0" outputs="HALO" maxFlowRates="0" />
 				<dryWasteProducer desiredFlowRates="10" outputs="Dry_Waste_Store" maxFlowRates="10">
 				</dryWasteProducer>
 				<crewPerson age="35" name="Wilma Deering" sex="FEMALE" weight="55">
