@@ -1,13 +1,17 @@
 # reduce_entropy.py
 # Author: Joshua Elston
-# Last Edited: 10/29/2025
+# Last Edited: 04/20/2026
 
 # Allows VA to intelligently select pieces of additional evidence to obtain to reduce the entropy in the current
 # probabilitiy distribution (to maximize information gain)
 # Changes on 10/29/2025 remove parameters from list of query variables (i.e., purely retaining them as evidence)
+# Changes on 04/20/2026 seek to introduce threading to compute inference more quickly
 
 import time
 import math
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 # Function queries the Bayesian network for each additional piece of evidence
 # at each value that the evidence can take (avoids the print statements present
@@ -51,19 +55,48 @@ def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, 
     anomalies_to_query.append("No Anomalies Present")
     # print('Anomalies to query:', anomalies_to_query)
 
+    # Create a worker function that runs a single infer.query call for one anomaly
+    # (i.e., piece of hidden evidence)
+    def query_single_anomaly(anomaly):
+        evidence_copy = dict(evidence)
+        result = infer.query(variables=anomaly, evidence = evidence_copy)
+        probability_of_anomaly_present = result.values[1] # [0] --> anomaly absent
+        return anomaly, probability_of_anomaly_present
+
     # Initialize a dictionary to store the probability of each anomaly being present
     anomaly_probabilities = {}
 
     # Perform the inference one anomaly at a time
+    # Updated to use threading to perform multiple hidden parameter queries at once
     try:
-        for anomaly in anomalies_to_query:
-            result = infer.query(variables = [anomaly], evidence = evidence)
-            # print(f"Result: {result}")
-            probability_of_anomaly_present = result.values[1] # [0] --> anomaly absent
-            anomaly_probabilities[anomaly] = probability_of_anomaly_present
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = {
+                executor.submit(query_single_anomaly, anomaly): anomaly
+                for anomaly in anomalies_to_query
+            }
 
+            for future in as_completed(futures):
+                anomaly_name = futures[future]
+                try:
+                    anomaly, probability = future.result()
+                    anomaly_probabilities[anomaly] = probability
+                except Exception as e:
+                    raise RuntimeError(f"Error querying anomaly '{anomaly_name}': {e}")
+
+    except RuntimeError:
+        raise  # re-raise so the caller sees it
     except Exception as e:
-        raise RuntimeError(f"Error during inference: {e}")
+        raise RuntimeError(f"Error during threaded inference: {e}")
+
+        # Previous function (COMMENTED OUT TO ENABLE THREADING)
+    #     for anomaly in anomalies_to_query:
+    #         result = infer.query(variables = [anomaly], evidence = evidence)
+    #         # print(f"Result: {result}")
+    #         probability_of_anomaly_present = result.values[1] # [0] --> anomaly absent
+    #         anomaly_probabilities[anomaly] = probability_of_anomaly_present
+
+    # except Exception as e:
+    #     raise RuntimeError(f"Error during inference: {e}")
 
     # Create a dictionary to store the normalized probabilities of each anomaly
     normalized_probabilities = {}
