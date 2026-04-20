@@ -1,6 +1,6 @@
 import json
 import os
-from AT.diagnosis.bayesian.ECLSS_Bayesian_Network import get_probabilities
+from AT.diagnosis.bayesian.ECLSS_Bayesian_Network_Learned import get_probabilities
 from AT.diagnosis.bayesian.reduce_entropy import calculate_entropy, select_best_evidence
 import re
 

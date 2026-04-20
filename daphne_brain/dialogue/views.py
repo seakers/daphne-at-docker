@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from auth_API.helpers import get_or_create_user_information
 from daphne_context.models import DialogueHistory, DialogueContext
 from dialogue.bayesian_query_handler import BayesianQueryHandler
-from AT.diagnosis.bayesian.ECLSS_Bayesian_Network import get_probabilities
+from AT.diagnosis.bayesian.ECLSS_Bayesian_Network_Learned import get_probabilities
 from AT.neo4j_queries.query_functions import get_astrobee_procedure_list_from_pride, \
     retrieve_fancy_steps_from_procedure, retrieve_objective_from_procedure
 from AT.views import StartAstrobeeProcedure, RequestPhysicsDiagnosis

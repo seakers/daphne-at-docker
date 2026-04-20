@@ -10,11 +10,11 @@
 # of building network with this expanded approach
 # Updated on 03/06/2026 to replace addition of the "No Anomalies Present" CPD with that for an "Unknown Anomaly"
 
-from noisy_MAX import noisy_MAX
+from AT.diagnosis.bayesian.noisy_MAX import noisy_MAX
 from pgmpy.factors.discrete import TabularCPD
 from itertools import product
 from math import prod
-from reduced_dictionaries import subgroup_dict, unknown_anomaly_dict
+from AT.diagnosis.bayesian.reduced_dictionaries import subgroup_dict, unknown_anomaly_dict
 import time
 import numpy as np
 

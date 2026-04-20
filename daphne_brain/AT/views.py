@@ -22,7 +22,7 @@ from AT.neo4j_queries.query_functions import retrieve_objective_from_procedure
 from AT.neo4j_queries.query_functions import retrieve_procedures_fTitle_from_anomaly
 from auth_API.helpers import get_or_create_user_information
 from daphne_context.models import UserInformation
-from AT.diagnosis.bayesian.ECLSS_Bayesian_Network import get_probabilities
+from AT.diagnosis.bayesian.ECLSS_Bayesian_Network_Learned import get_probabilities
 from AT.diagnosis.physics.physics_diagnosis import create_physics_diagnosis_report
 from AT.diagnosis.physics.telemetry_storage import telemetry_storage
 from django.conf import settings

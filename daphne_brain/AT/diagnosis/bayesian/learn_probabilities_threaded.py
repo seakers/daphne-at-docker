@@ -23,7 +23,7 @@
 # Usage:
 #   python learn_probabilities_threaded.py # default: 4 workers, 1000 ticks
 #   python learn_probabilities_threaded.py --workers 14 --ticks 500 
-#   python learn_probabilities_threaded.py --benchmark # run full testing across different threads and ticks
+#   python learn_probabilities_threaded.py --testing # run full testing across different threads and ticks
 
 import os, json, subprocess, requests, time, argparse, sys
 import pandas as pd
@@ -31,6 +31,7 @@ from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 from math import prod
+import pickle
 
 from pgmpy.models import BayesianNetwork
 from reduced_network_structure import reduced_network
@@ -168,6 +169,104 @@ anomalies = ["Biological Filter Saturation", "CDRA Failure",
              "Loss of Pressure (IHab)", "Loss of Pressure (HALO)",
              "Unknown Anomaly", "Group 1", "Group 3", "Group 7"]
 
+NOMINAL_DATA_TICKS = 1000
+
+# Nominal sensor values 
+NOMINAL_SENSOR_TEMPLATE = {
+    # ppO2 IHab
+    'high ppO2_IHab (IHab)': 0, 'low ppO2_IHab (IHab)': 0,
+    'high ppO2_IHab (IHab) (t-1)': 0, 'low ppO2_IHab (IHab) (t-1)': 0,
+    'ppO2_IHab (IHab)_value': 20.762852,
+    'ppO2_IHab (IHab)_monitoringResult': 'NOMINAL',
+    'ppO2_IHab (IHab)_range': "{'min': 0.0, 'max': 3.4028235e+38}",
+    'ppO2_IHab (IHab)_alarmThresholds': "{'WARNING_LOW': {'max': 20.665, 'min': 19.0}, 'WARNING_HIGH': {'max': 24.6646, 'min': 23.3314}, 'CRITICAL_LOW': {'max': 19.0, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 4000.0, 'min': 24.6646}}",
+    'ppO2_IHab (IHab)_input': 'IHab.O2',
+    # ppO2 HALO
+    'high ppO2_HALO (HALO)': 0, 'low ppO2_HALO (HALO)': 0,
+    'high ppO2_HALO (HALO) (t-1)': 0, 'low ppO2_HALO (HALO) (t-1)': 0,
+    'ppO2_HALO (HALO)_value': 20.750807,
+    'ppO2_HALO (HALO)_monitoringResult': 'NOMINAL',
+    'ppO2_HALO (HALO)_range': "{'min': 0.0, 'max': 3.4028235e+38}",
+    'ppO2_HALO (HALO)_alarmThresholds': "{'WARNING_LOW': {'max': 20.665, 'min': 19.0}, 'WARNING_HIGH': {'max': 24.6646, 'min': 23.3314}, 'CRITICAL_LOW': {'max': 19.0, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 4000.0, 'min': 24.6646}}",
+    'ppO2_HALO (HALO)_input': 'HALO.O2',
+    # Humidity HALO
+    'high Humidity_HALO (HALO)': 0, 'low Humidity_HALO (HALO)': 0,
+    'high Humidity_HALO (HALO) (t-1)': 0, 'low Humidity_HALO (HALO) (t-1)': 0,
+    'Humidity_HALO (HALO)_value': 0.51796305,
+    'Humidity_HALO (HALO)_monitoringResult': 'NOMINAL',
+    'Humidity_HALO (HALO)_range': "{'min': 0.0, 'max': 1.0}",
+    'Humidity_HALO (HALO)_alarmThresholds': "{'WARNING_LOW': {'max': 0.5, 'min': 0.4}, 'WARNING_HIGH': {'max': 0.7, 'min': 0.61}, 'CRITICAL_LOW': {'max': 0.4, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 1.0, 'min': 0.7}}",
+    'Humidity_HALO (HALO)_input': 'HALO.Vapor',
+    # ppCO2 IHab
+    'high ppCO2_IHab (IHab)': 0, 'low ppCO2_IHab (IHab)': 0,
+    'high ppCO2_IHab (IHab) (t-1)': 0, 'low ppCO2_IHab (IHab) (t-1)': 0,
+    'ppCO2_IHab (IHab)_value': 0.04107719,
+    'ppCO2_IHab (IHab)_monitoringResult': 'NOMINAL',
+    'ppCO2_IHab (IHab)_range': "{'min': 0.0, 'max': 3.4028235e+38}",
+    'ppCO2_IHab (IHab)_alarmThresholds': "{'WARNING_LOW': {'max': 0.0, 'min': 0.026}, 'WARNING_HIGH': {'max': 0.25, 'min': 0.15}, 'CRITICAL_LOW': {'max': 0.0, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 100.0, 'min': 0.25}}",
+    'ppCO2_IHab (IHab)_input': 'IHab.CO2',
+    # Humidity IHab
+    'high Humidity_IHab (IHab)': 0, 'low Humidity_IHab (IHab)': 0,
+    'high Humidity_IHab (IHab) (t-1)': 0, 'low Humidity_IHab (IHab) (t-1)': 0,
+    'Humidity_IHab (IHab)_value': 0.51272607,
+    'Humidity_IHab (IHab)_monitoringResult': 'NOMINAL',
+    'Humidity_IHab (IHab)_range': "{'min': 0.0, 'max': 1.0}",
+    'Humidity_IHab (IHab)_alarmThresholds': "{'WARNING_LOW': {'max': 0.5, 'min': 0.4}, 'WARNING_HIGH': {'max': 0.7, 'min': 0.61}, 'CRITICAL_LOW': {'max': 0.4, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 1.0, 'min': 0.7}}",
+    'Humidity_IHab (IHab)_input': 'IHab.Vapor',
+    # ppCO2 HALO
+    'high ppCO2_HALO (HALO)': 0, 'low ppCO2_HALO (HALO)': 0,
+    'high ppCO2_HALO (HALO) (t-1)': 0, 'low ppCO2_HALO (HALO) (t-1)': 0,
+    'ppCO2_HALO (HALO)_value': 0.043024577,
+    'ppCO2_HALO (HALO)_monitoringResult': 'NOMINAL',
+    'ppCO2_HALO (HALO)_range': "{'min': 0.0, 'max': 3.4028235e+38}",
+    'ppCO2_HALO (HALO)_alarmThresholds': "{'WARNING_LOW': {'max': 0.0, 'min': 0.026}, 'WARNING_HIGH': {'max': 0.25, 'min': 0.15}, 'CRITICAL_LOW': {'max': 0.0, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 100.0, 'min': 0.25}}",
+    'ppCO2_HALO (HALO)_input': 'HALO.CO2',
+    # Total Cabin Pressure IHab
+    'high Total_Cabin_Pressure_IHab (IHab)': 0, 'low Total_Cabin_Pressure_IHab (IHab)': 0,
+    'high Total_Cabin_Pressure_IHab (IHab) (t-1)': 0, 'low Total_Cabin_Pressure_IHab (IHab) (t-1)': 0,
+    'Total_Cabin_Pressure_IHab (IHab)_value': 102.53237,
+    'Total_Cabin_Pressure_IHab (IHab)_monitoringResult': 'NOMINAL',
+    'Total_Cabin_Pressure_IHab (IHab)_range': "{'min': 0.0, 'max': 3.4028235e+38}",
+    'Total_Cabin_Pressure_IHab (IHab)_alarmThresholds': "{'WARNING_LOW': {'max': 100.31872, 'min': 87.56342}, 'WARNING_HIGH': {'max': 104.8003, 'min': 102.7319}, 'CRITICAL_LOW': {'max': 87.56342, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 110.0, 'min': 104.8003}}",
+    'Total_Cabin_Pressure_IHab (IHab)_input': 'IHab',
+    # Total Cabin Pressure HALO
+    'high Total_Cabin_Pressure_HALO (HALO)': 0, 'low Total_Cabin_Pressure_HALO (HALO)': 0,
+    'high Total_Cabin_Pressure_HALO (HALO) (t-1)': 0, 'low Total_Cabin_Pressure_HALO (HALO) (t-1)': 0,
+    'Total_Cabin_Pressure_HALO (HALO)_value': 102.50009,
+    'Total_Cabin_Pressure_HALO (HALO)_monitoringResult': 'NOMINAL',
+    'Total_Cabin_Pressure_HALO (HALO)_range': "{'min': 0.0, 'max': 3.4028235e+38}",
+    'Total_Cabin_Pressure_HALO (HALO)_alarmThresholds': "{'WARNING_LOW': {'max': 100.31872, 'min': 87.56342}, 'WARNING_HIGH': {'max': 104.8003, 'min': 102.7319}, 'CRITICAL_LOW': {'max': 87.56342, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 110.0, 'min': 104.8003}}",
+    'Total_Cabin_Pressure_HALO (HALO)_input': 'HALO',
+    # Anomalies and groups — all nominal
+    'Biological Filter Saturation': 0, 'CDRA Failure': 0,
+    'Emergency O2 System Maintenance (IHab)': 0, 'Emergency O2 System Maintenance (HALO)': 0,
+    'Excess CO2 in Cabin (IHab)': 0, 'Excess CO2 in Cabin (HALO)': 0,
+    'Loss of Pressure (IHab)': 0, 'Loss of Pressure (HALO)': 0,
+    'Unknown Anomaly': 0, 'Group 1': 0, 'Group 3': 0, 'Group 7': 0,
+    'No Anomalies Present': 1,
+    # Hidden components — all inactive
+    '[HIDDEN] CDRA Failure Component': 0,
+    '[HIDDEN] BFS Component': 0,
+    '[HIDDEN] Emergency O2 System Maintenance Component': 0,
+    '[HIDDEN] Excess CO2 in Cabin Component': 0,
+    '[HIDDEN] Loss of Pressure Component': 0,
+}
+
+
+def generate_nominal_rows(n, fan_status=None):
+    # Generate n rows of nominal data
+    base_row = dict(NOMINAL_SENSOR_TEMPLATE)
+    if fan_status is None or fan_status == 'open':
+        base_row['Hatch Status'] = 1
+    elif fan_status == 'closed':
+        base_row['Hatch Status'] = 0
+    final_rows = []
+    for i in range(n):
+        row = base_row.copy()
+        row['tick'] = i
+        final_rows.append(row)
+    return final_rows
+
 
 def parse_simulation_ticks(data, anomaly_name, anomaly_tick, anomalies_list,
                           halo_anomaly=None, halo_sensors=None, second_anomaly=None, fan_status=None):
@@ -195,7 +294,7 @@ def parse_simulation_ticks(data, anomaly_name, anomaly_tick, anomalies_list,
     for idx, tick in enumerate(data.get('ticks', [])):
         tick_num = tick.get('tick', idx)
         modules_state = tick.get('modules', {})
-        sensor_row = {'tick': tick_num}
+        sensor_row = {'tick': tick_num + NOMINAL_DATA_TICKS}
 
         param_names = []
         for mod_name, mod in modules_state.items():
@@ -393,8 +492,12 @@ def run_single_config(config_name, config_info, server_url, num_ticks):
     rows = parse_simulation_ticks(data, anomaly_name, anomaly_tick, anomalies,
                                  halo_anomaly=halo_anomaly, halo_sensors=halo_sensors,
                                  second_anomaly=second_anomaly, fan_status=fan_status)
+    
+    # Prepend hardcoded nominal data before the anomaly rows
+    nominal_rows = generate_nominal_rows(NOMINAL_DATA_TICKS, fan_status=fan_status)
+    all_config_rows = nominal_rows + rows
     elapsed = time.time() - t0
-    return config_name, rows, elapsed
+    return config_name, all_config_rows, elapsed
 
 
 def get_ordered_bn_columns(all_nodes):
@@ -582,11 +685,11 @@ def run_parameter_learning(all_rows, output_prefix="threaded"):
     with open(cpds_filepath, 'w') as f:
         f.write("=== Learned CPDs ===\n\n")
         for cpd in learned_cpds:
-            f.write(str(cpd))
-            f.write('\n\n')
-            # f.write(f"Variable: {cpd.variable}\n")
-            # f.write(f"Parents: {cpd.variables[1:]}\n")
-            # f.write(f"Values:\n{cpd.get_values()}\n\n")
+            # f.write(str(cpd))
+            # f.write('\n\n')
+            f.write(f"Variable: {cpd.variable}\n")
+            f.write(f"Parents: {cpd.variables[1:]}\n")
+            f.write(f"Values:\n{cpd.get_values()}\n\n")
         f.write("=== Known CPDs ===\n\n")
         for cpd in known_cpds:
             f.write(str(cpd))
@@ -599,6 +702,12 @@ def run_parameter_learning(all_rows, output_prefix="threaded"):
     # Add learned CPDs to known deterministic CPDs previously defined
     new_model.add_cpds(*learned_cpds, *known_cpds)
     print('Model valid:', new_model.check_model())
+
+    # Save the model
+    model_filepath = os.path.join(current_dir, 'learned_model.pkl')
+    with open(model_filepath, 'wb') as f:
+        pickle.dump(new_model, f)
+    print(f'Saved trained model to {model_filepath}')
 
     be_elapsed = time.time() - t0
     print(f'Parameter learning took {be_elapsed:.2f}s')
