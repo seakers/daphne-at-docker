@@ -137,7 +137,10 @@ def query_additional_evidence(infer, measurement_ranges, split_probability_dict,
             #         break
 
         if additional_evidence: # proceed if additional evidence provided
-            evidence.update(additional_evidence) # add the additional evidence to the main evidence dictionary
+            mapped_additional = {}
+            for key, val in additional_evidence.items():
+                mapped_additional[key] = 0 if val in [1, 2] else 1
+            evidence.update(mapped_additional) 
 
             print(f'Mapped evidence: {evidence}')
 
@@ -163,7 +166,7 @@ def query_additional_evidence(infer, measurement_ranges, split_probability_dict,
 
             anomalies_to_query = list(unique_anomalies)
             # Add the No Anomalies Present node to the set of anomalies to be queried based on the telemetry feed evidence
-            anomalies_to_query.append("No Anomalies Present")
+            # anomalies_to_query.append("No Anomalies Present")
             # print('Anomalies to query:', anomalies_to_query)
 
             # Initialize a dictionary to store the probability of each anomaly being present

@@ -3434,21 +3434,31 @@ export default {
         });
         this.activeSimpleTab = this.simpleTabs.length - 1;
 
-        setTimeout(() => {
-          if (this.bestEvidence) {
-            this.$store.commit('addDialoguePiece', {
-              "voice_message": `I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
-              "visual_message_type": ["text"],
-              "visual_message": [`I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
-              "writer": "daphne",
-              "options": ["Yes", "No"],
-              "optionsCallbackEvent": "bestEvidenceResponse"
-            });
+         this.isLoading = false;
+  this.bestEvidencePrompted = false;
+      
+      // Set up monitoring for best evidence if it's being calculated
+      if (diagnosisReport.calculating_best_evidence) {
+        this.monitorBestEvidence();
+      } else {
+        this.promptBestEvidenceIfReady();
+      }
+
+        // setTimeout(() => {
+        //   if (this.bestEvidence) {
+        //     this.$store.commit('addDialoguePiece', {
+        //       "voice_message": `I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
+        //       "visual_message_type": ["text"],
+        //       "visual_message": [`I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
+        //       "writer": "daphne",
+        //       "options": ["Yes", "No"],
+        //       "optionsCallbackEvent": "bestEvidenceResponse"
+        //     });
             
-            // Set up listener for response
-            this.setupBestEvidenceListener();
-          }
-        }, 1000);
+        //     // Set up listener for response
+        //     this.setupBestEvidenceListener();
+        //   }
+        // }, 1000);
 
       } catch (error) {
         console.error('Error updating diagnosis with additional evidence:', error);

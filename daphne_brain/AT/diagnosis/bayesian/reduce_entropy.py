@@ -51,14 +51,14 @@ def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, 
 
     anomalies_to_query = list(unique_anomalies)
     # Add the No Anomalies Present node to the set of anomalies to be queried based on the telemetry feed evidence
-    anomalies_to_query.append("No Anomalies Present")
+    # anomalies_to_query.append("No Anomalies Present")
     # print('Anomalies to query:', anomalies_to_query)
 
     # Create a worker function that runs a single infer.query call for one anomaly
     # (i.e., piece of hidden evidence)
     def query_single_anomaly(anomaly):
         evidence_copy = dict(evidence)
-        result = infer.query(variables=anomaly, evidence = evidence_copy)
+        result = infer.query(variables=[anomaly], evidence=evidence_copy)
         probability_of_anomaly_present = result.values[1] # [0] --> anomaly absent
         return anomaly, probability_of_anomaly_present
 

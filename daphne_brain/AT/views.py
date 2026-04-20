@@ -22,7 +22,7 @@ from AT.neo4j_queries.query_functions import retrieve_objective_from_procedure
 from AT.neo4j_queries.query_functions import retrieve_procedures_fTitle_from_anomaly
 from auth_API.helpers import get_or_create_user_information
 from daphne_context.models import UserInformation
-from AT.diagnosis.bayesian.ECLSS_Bayesian_Network_Learned import get_probabilities
+from AT.diagnosis.bayesian.ECLSS_Bayesian_Network_Learned import get_probabilities, update_probabilities_additional
 from AT.diagnosis.physics.physics_diagnosis import create_physics_diagnosis_report
 from AT.diagnosis.physics.telemetry_storage import telemetry_storage
 from django.conf import settings
@@ -616,11 +616,17 @@ class RequestDiagnosis(APIView):
         diagnosis_list = []
         
         # Get initial probabilities WITHOUT calculating best evidence (for faster response)
-        probabilities, _, hidden_components = get_probabilities(
-            telemetry_values, 
-            additional_evidence=addtional_evidence,
-            calculate_best_evidence=False  # Skip best evidence for now
-        )
+        if 'additionalEvidence' in request.data:
+            probabilities, _, hidden_components = update_probabilities_additional(
+                telemetry_values, 
+                additional_evidence=addtional_evidence,
+            )
+        else:
+            probabilities, _, hidden_components = get_probabilities(
+                telemetry_values, 
+                additional_evidence=addtional_evidence,
+                calculate_best_evidence=False  # Skip best evidence for now
+            )
         
         top_5_probabilities = dict(sorted(probabilities.items(), 
                                      key=lambda item: item[1], 
@@ -656,8 +662,10 @@ class RequestDiagnosis(APIView):
             'hidden_components': hidden_components,
             'astrobee_procedure_list': astrobee_procedure_list,
             'current_telemetry_values': telemetry_values,
-            'calculating_best_evidence': True  # Flag to indicate best evidence is being calculated
+            'calculating_best_evidence': True
         }
+
+        print("final diagnosis report", diagnosis_report)
 
         return Response(diagnosis_report)
 
@@ -673,7 +681,7 @@ class CalculateBestEvidence(APIView):
         if 'additionalEvidence' in request.data:
             additional_evidence = json.loads(request.data['additionalEvidence'])
         
-        print("Calculating best evidence for telemetry values")
+        print("Calculating best evidence for telemetry values", additional_evidence)
         
         # Now calculate with best evidence
         probabilities, best_evidence, hidden_components = get_probabilities(

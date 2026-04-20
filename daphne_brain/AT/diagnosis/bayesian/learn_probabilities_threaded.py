@@ -397,6 +397,12 @@ def parse_simulation_ticks(data, anomaly_name, anomaly_tick, anomalies_list,
                         for sensor, threshold in ihab_sensors)
 
                 sensor_row[anom_name] = int(all_symptoms_met)
+
+                # BFS appears at caution (state 1), not warning (state 2)
+                if anom_name == "Biological Filter Saturation" and sensor_row[anom_name] == 1:
+                    bfs_sensors = [s for s, _ in anom_info["sensors"]]
+                    if any(sensor_row.get(s, 0) >= 2 for s in bfs_sensors):
+                        sensor_row[anom_name] = 0
             else:
                 sensor_row.setdefault(anom_name, 0)
 

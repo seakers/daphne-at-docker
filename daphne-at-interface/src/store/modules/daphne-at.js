@@ -842,6 +842,41 @@ const actions = {
                 hour12: true    // Use 12-hour format with AM/PM
             });
             commit('mutateLastUpdatedDiagnosisTimestamp', formattedDate);
+
+            // If best evidence is being calculated, fetch it asynchronously
+            if (diagnosis_report.calculating_best_evidence) {
+                console.log("Fetching best evidence in background...");
+                
+                // Make second request for best evidence
+                (async () => {
+                    try {
+                        let evidenceReqData = new FormData();
+                        evidenceReqData.append('telemetryValues', JSON.stringify(diagnosis_report.current_telemetry_values));
+                        evidenceReqData.append('additionalEvidence', JSON.stringify(requestPayload['additional_evidence']));
+                        let evidenceResponse = await fetchPost('/api/at/calculateBestEvidence', evidenceReqData);
+                        if (evidenceResponse.ok) {
+                            let evidenceData = await evidenceResponse.json();
+                            console.log("Best evidence calculated:", evidenceData.best_evidence);
+                            
+                            // Create a NEW object with updated best evidence (don't mutate existing state)
+                            let updatedDiagnosisReport = {
+                                ...diagnosis_report,
+                                best_evidence: evidenceData.best_evidence,
+                                hidden_components: evidenceData.hidden_components,
+                                calculating_best_evidence: false
+                            };
+                            //console.log("Updating diagnosis report with best evidence:", updatedDiagnosisReport);
+                            
+                            commit('mutateDiagnosisReport', updatedDiagnosisReport);
+                            // console.log("Diagnosis report updated with best evidence.");
+                        } else {
+                            console.log('Error calculating best evidence');
+                        }
+                    } catch (error) {
+                        console.error('Error fetching best evidence:', error);
+                    }
+                })();
+            }
         } else {
             console.log('Error requesting a diagnosis report.')
             return [];

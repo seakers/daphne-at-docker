@@ -57,13 +57,13 @@ from AT.diagnosis.bayesian.user_input import query_parameters, query_additional_
 from AT.diagnosis.bayesian.reduce_entropy import calculate_entropy, select_best_evidence
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-split_probability_dict = os.path.join(current_dir, "split_probability_dict.json")
-hidden_probabilities_dict = os.path.join(current_dir, "hidden_probabilities_dict.json")
+split_probability_dict = os.path.join(current_dir, "reduced_split_probabilities_dict.json")
+hidden_probabilities_dict = os.path.join(current_dir, "reduced_hidden_probabilities_dict.json")
 
-def load_initial_model(telemetry_values):
+def load_initial_model(telemetry_values, additional_evidence):
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    split_probability_dict = os.path.join(current_dir, "split_probability_dict.json")
-    hidden_probabilities_dict = os.path.join(current_dir, "hidden_probabilities_dict.json")
+    split_probability_dict = os.path.join(current_dir, "reduced_split_probabilities_dict.json")
+    hidden_probabilities_dict = os.path.join(current_dir, "reduced_hidden_probabilities_dict.json")
     with open(split_probability_dict, "r") as file:
         split_probability_dict = json.load(file)
     with open(hidden_probabilities_dict, "r") as file:
@@ -74,18 +74,18 @@ def load_initial_model(telemetry_values):
 
     # To perform inference on the Bayesian Network, the Variable Elimination algorithm is used.
     # For more information on VariableElimination within the pgmpy library, refer here:
-    # https://pgmpy.org/exact_infer/ve.html
+    # https://pgmpy.org/exact_infer/ve.html 
     infer = VariableElimination(model)
 
     # Add user-provided evidence to the Bayesian network and update the beliefs about the presence of anomalies
     # print(query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict))
-    probabilities, evidence = query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict)
+    probabilities, evidence = query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict)
 
-    return infer, probabilities, evidence
+    return infer, probabilities, evidence, split_probability_dict, hidden_probabilities_dict
 
 def get_probabilities(telemetry_values, additional_evidence=None, calculate_best_evidence=True):
 
-    infer, probabilities, evidence = load_initial_model(telemetry_values)
+    infer, probabilities, evidence, split_probability_dict, hidden_probabilities_dict = load_initial_model(telemetry_values, additional_evidence)
 
 
     # Only calculate best evidence if requested
@@ -103,9 +103,9 @@ def get_probabilities(telemetry_values, additional_evidence=None, calculate_best
 
     return probabilities, best_evidence, hidden_components
 
-def update_probabilities_additional(telemetry_values, additional_evidence):
+def update_probabilities_additional(telemetry_values, additional_evidence, calculate_best_evidence=True):
     # Read .json files with probability dictionary (such that these do not need to computed each time the script is ran)
-    infer, probabilities, evidence = load_initial_model(telemetry_values)
+    infer, probabilities, evidence, split_probability_dict, hidden_probabilities_dict = load_initial_model(telemetry_values, additional_evidence)
 
     if probabilities:
         # Calculate the initial entropy of the probability distribution based on only readings from the telemetry feed
