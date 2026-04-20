@@ -33,20 +33,37 @@ from pgmpy.factors.discrete import TabularCPD
 from pgmpy.inference import VariableElimination
 
 # Import dictionaries from other files
-from AT.diagnosis.bayesian.network_struture import network
-from AT.diagnosis.bayesian.prior_probabilities import prior_probabilities
-from AT.diagnosis.bayesian.ranges import measurement_ranges
+# # ----- FULL NETWORK -----
+# from AT.diagnosis.bayesian.network_struture import network
+# from AT.diagnosis.bayesian.prior_probabilities import prior_probabilities
+# from AT.diagnosis.bayesian.ranges import measurement_ranges
+# # from probabilities import split_probability_dict # NOTE: Imported as a .json --> make sure probabilities are updated
+# # from hidden_probabilities import hidden_probabilities_dict # NOTE: Imported as a .json --> make sure probabilities are updated
+# from AT.diagnosis.bayesian.add_cpds import add_cpds
+# # from plot_bayesian_network import plot_bayesian_network # NOTE: This currently does not include hidden nodes
+# from AT.diagnosis.bayesian.user_input import query_parameters, query_additional_evidence
+# from AT.diagnosis.bayesian.reduce_entropy import calculate_entropy, select_best_evidence
+
+# ----- REDUCED NETWORK -----
+from AT.diagnosis.bayesian.reduced_network_structure import reduced_network
+from AT.diagnosis.bayesian.reduced_prior_probabilities import reduced_prior_probabilities
+from AT.diagnosis.bayesian.reduced_ranges import measurement_ranges
 # from probabilities import split_probability_dict # NOTE: Imported as a .json --> make sure probabilities are updated
 # from hidden_probabilities import hidden_probabilities_dict # NOTE: Imported as a .json --> make sure probabilities are updated
-from AT.diagnosis.bayesian.add_cpds import add_cpds
+from AT.diagnosis.bayesian.reduced_add_cpds import add_cpds
 # from plot_bayesian_network import plot_bayesian_network # NOTE: This currently does not include hidden nodes
 from AT.diagnosis.bayesian.user_input import query_parameters, query_additional_evidence
 from AT.diagnosis.bayesian.reduce_entropy import calculate_entropy, select_best_evidence
 
+
 def get_probabilities(telemetry_values, additional_evidence=None, calculate_best_evidence=True):
+    # NOTE: Top line represents full feature set, bottom line represents reduced feature set
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    split_probability_dict = os.path.join(current_dir, "split_probability_dict.json")
-    hidden_probabilities_dict = os.path.join(current_dir, "hidden_probabilities_dict.json")
+    # split_probability_dict = os.path.join(current_dir, "split_probability_dict.json")
+    split_probability_dict = os.path.join(current_dir, "reduced_split_probability_dict.json")
+    # hidden_probabilities_dict = os.path.join(current_dir, "hidden_probabilities_dict.json")
+    hidden_probabilities_dict = os.path.join(current_dir, "reduced_hidden_probabilities_dict.json")
+
     with open(split_probability_dict, "r") as file:
         split_probability_dict = json.load(file)
     with open(hidden_probabilities_dict, "r") as file:
@@ -65,7 +82,8 @@ def get_probabilities(telemetry_values, additional_evidence=None, calculate_best
     anomaly_cardinality = 2
 
     # Create the Bayesian Network
-    model = BayesianNetwork(network)
+    # model = BayesianNetwork(network)
+    model = BayesianNetwork(reduced_network)
 
     # NOTE: Given that the anomalies are no longer the top layer in the network, they
     # do not have prior probabilities defined given their subgroup parents
@@ -73,7 +91,14 @@ def get_probabilities(telemetry_values, additional_evidence=None, calculate_best
     prior_cpds_dict = {}
 
     # From the prior probabilities, add CPDs for the anomalies
-    for anomaly, prior_probability in prior_probabilities.items():
+    # for anomaly, prior_probability in prior_probabilities.items():
+    #     model.add_cpds(TabularCPD(
+    #                             variable = anomaly, 
+    #                             variable_card = anomaly_cardinality, 
+    #                             values = [[1 - prior_probability], [prior_probability]] # ordered as [False, True]
+    #                             ))
+    #     prior_cpds_dict[anomaly] = {'False': 1 - prior_probability, 'True': prior_probability}
+    for anomaly, prior_probability in reduced_prior_probabilities.items():
         model.add_cpds(TabularCPD(
                                 variable = anomaly, 
                                 variable_card = anomaly_cardinality, 
@@ -126,7 +151,8 @@ def update_probabilities_additional(telemetry_values, additional_evidence):
     anomaly_cardinality = 2
 
     # Create the Bayesian Network
-    model = BayesianNetwork(network)
+    # model = BayesianNetwork(network)
+    model = BayesianNetwork(reduced_network)
 
     # NOTE: Given that the anomalies are no longer the top layer in the network, they
     # do not have prior probabilities defined given their subgroup parents
@@ -134,7 +160,14 @@ def update_probabilities_additional(telemetry_values, additional_evidence):
     prior_cpds_dict = {}
 
     # From the prior probabilities, add CPDs for the anomalies
-    for anomaly, prior_probability in prior_probabilities.items():
+    # for anomaly, prior_probability in prior_probabilities.items():
+    #     model.add_cpds(TabularCPD(
+    #                             variable = anomaly, 
+    #                             variable_card = anomaly_cardinality, 
+    #                             values = [[1 - prior_probability], [prior_probability]] # ordered as [False, True]
+    #                             ))
+    #     prior_cpds_dict[anomaly] = {'False': 1 - prior_probability, 'True': prior_probability}
+    for anomaly, prior_probability in reduced_prior_probabilities.items():
         model.add_cpds(TabularCPD(
                                 variable = anomaly, 
                                 variable_card = anomaly_cardinality, 
@@ -212,6 +245,7 @@ print("Hidden Components:")
 for component in HIDDEN_COMPONENTS:
     print(f" - {component}")
 
-test_model = BayesianNetwork(network)
+# test_model = BayesianNetwork(network)
+test_model = BayesianNetwork(reduced_network)
 print("Number of nodes:", test_model.number_of_nodes())
 print("Number of edges:", test_model.number_of_edges())

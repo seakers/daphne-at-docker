@@ -11,7 +11,6 @@ import time
 import math
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import threading
 
 # Function queries the Bayesian network for each additional piece of evidence
 # at each value that the evidence can take (avoids the print statements present
