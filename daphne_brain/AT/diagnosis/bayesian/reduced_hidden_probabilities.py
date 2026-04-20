@@ -12,19 +12,7 @@ import os, json
 
 reduced_hidden_probabilities_dict = {
     "[HIDDEN] BFS Component": {
-        "Biological Filter Saturation (IHab)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'True': 0.985,
-                    'False': 0.015
-                },
-                False: { # probabilities when the anomaly is absent
-                    'True': 0.08,
-                    'False': 0.92
-                },
-            },
-        },
-        "Biological Filter Saturation (Habitat)": {
+        "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.985,
@@ -38,19 +26,7 @@ reduced_hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] CDRA Failure Component": {
-        "CDRA Failure (IHab)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'True': 0.9988,
-                    'False': 0.0012
-                },
-                False: { # probabilities when the anomaly is absent
-                    'True': 0.08,
-                    'False': 0.92
-                },
-            },
-        },
-        "CDRA Failure (Habitat)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9988,

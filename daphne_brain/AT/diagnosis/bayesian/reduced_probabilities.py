@@ -59,26 +59,7 @@ reduced_probability_dict = {
             'value_ranges': measurement_ranges["Humidity_IHab (IHab)"]
         },
         # Anomaly probabilities
-        "CDRA Failure (IHab)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.20,
-                    'Exceeds_UpperCautionLimit': 0.78,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Humidity_IHab (IHab)"]
-        },
-        "CDRA Failure (Habitat)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.20,
@@ -202,7 +183,7 @@ reduced_probability_dict = {
             'value_ranges': measurement_ranges["Humidity_HALO (HALO)"]
         },
         # Anomaly probabilities
-        "CDRA Failure (Habitat)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.20,
@@ -285,7 +266,7 @@ reduced_probability_dict = {
             'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
         },
         # Anomaly probabilities
-        "Biological Filter Saturation (IHab)": {
+        "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.18,
@@ -304,45 +285,7 @@ reduced_probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
         },
-        "Biological Filter Saturation (Habitat)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.18,
-                    'Exceeds_UpperCautionLimit': 0.79,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
-        },
-        "CDRA Failure (IHab)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.75,
-                    'Exceeds_UpperCautionLimit': 0.23,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["ppCO2_IHab (IHab)"]
-        },
-        "CDRA Failure (Habitat)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.75,
@@ -504,7 +447,7 @@ reduced_probability_dict = {
             'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
         },
         # Anomaly probabilities
-        "Biological Filter Saturation (Habitat)": {
+        "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.18,
@@ -523,7 +466,7 @@ reduced_probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2_HALO (HALO)"]
         },
-        "CDRA Failure (Habitat)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.75,
@@ -644,7 +587,7 @@ reduced_probability_dict = {
             'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
         },
         # Anomaly probabilities <-- updated to reflect level-specific failures
-        "Biological Filter Saturation (IHab)": {
+        "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -663,45 +606,7 @@ reduced_probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
         },
-        "Biological Filter Saturation (Habitat)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.81,
-                    'Exceeds_LowerWarningLimit': 0.16
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
-        },
-        "CDRA Failure (IHab)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.78,
-                    'Exceeds_LowerWarningLimit': 0.19
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["ppO2_IHab (IHab)"]
-        },
-        "CDRA Failure (Habitat)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -863,7 +768,7 @@ reduced_probability_dict = {
             'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
         },
         # Anomaly probabilities <-- updated to reflect level-specific failures
-        "Biological Filter Saturation (Habitat)": {
+        "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -882,7 +787,7 @@ reduced_probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2_HALO (HALO)"]
         },
-        "CDRA Failure (Habitat)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
