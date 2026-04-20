@@ -32,6 +32,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 from math import prod
 import pickle
+import numpy as np
 
 from pgmpy.models import BayesianNetwork
 from reduced_network_structure import reduced_network
@@ -675,6 +676,15 @@ def run_parameter_learning(all_rows, output_prefix="threaded"):
             node,
             prior_type='dirichlet',
             pseudo_counts=node_pseudo_counts) # can update pseudo_counts dictionary if priors too uniform
+        
+        cpd.values = np.round(cpd.values, decimals=4)
+        # Renormalize along axis 0 (each column of parent combinations sums to 1)
+        # NOTE: Confirm that the follow normalization does not introduce any issues
+        col_sums = cpd.values.sum(axis=0, keepdims=True)
+        cpd.values = cpd.values / col_sums
+        cpd.values = np.round(cpd.values, decimals=4)  # re-round after normalizing
+    
+
         learned_cpds.append(cpd)
 
     for cpd in learned_cpds:
