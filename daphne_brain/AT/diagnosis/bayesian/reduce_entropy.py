@@ -16,6 +16,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # at each value that the evidence can take (avoids the print statements present
 # in query_network/query_parameters)
 def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, potential_evidence, evidence_state):
+    print('~~~~~Threading called here for inference!!~~~~~')
 
     additional_evidence = {}
 

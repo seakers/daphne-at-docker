@@ -118,6 +118,7 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
 
     anomalies_to_query = list(unique_anomalies)
     print("done querying till now")
+    print('```query not using threading```')
     # Add the No Anomalies Present node to the set of anomalies to be queried based on the telemetry feed evidence
     # anomalies_to_query.append("No Anomalies Present")
     # print('Anomalies to query:', anomalies_to_query)
