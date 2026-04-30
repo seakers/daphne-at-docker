@@ -13,7 +13,7 @@
 			<SimEnvironment moduleName="HALO" initialVolume="22900" />
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="IHab"
-					desiredFlowRates="0.3" maxFlowRates="0.3"></airConsumer>
+					desiredFlowRates="0.2" maxFlowRates="0.2"></airConsumer>
 				<dirtyWaterProducer desiredFlowRates="10000"
 					outputs="Dirty_Water_Store" maxFlowRates="10000" />
 				<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="100"/>

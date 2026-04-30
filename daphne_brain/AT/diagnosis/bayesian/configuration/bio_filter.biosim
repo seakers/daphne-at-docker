@@ -19,19 +19,19 @@
 			</Dehumidifier>
 			<Fan moduleName="IHab_to_HALO_Fan">
 				<airConsumer inputs="IHab"
-					desiredFlowRates="1.5" maxFlowRates="1.5" />
+					desiredFlowRates="5.0" maxFlowRates="5.0" />
 				<powerConsumer inputs="General_Power_Store"
 					desiredFlowRates="9000" maxFlowRates="9000" ></powerConsumer>
-				<airProducer desiredFlowRates="1.5"
-					outputs="HALO" maxFlowRates="1.5" ></airProducer>
+				<airProducer desiredFlowRates="5.0"
+					outputs="HALO" maxFlowRates="5.0" ></airProducer>
 			</Fan>
 			<Fan moduleName="HALO_to_IHab_Fan">
 				<airConsumer inputs="HALO"
-					desiredFlowRates="1.5" maxFlowRates="1.5" />
+					desiredFlowRates="5.0" maxFlowRates="5.0" />
 				<powerConsumer inputs="General_Power_Store" desiredFlowRates="50"
 					maxFlowRates="50"></powerConsumer>
-				<airProducer desiredFlowRates="1.5"
-					outputs="IHab" maxFlowRates="1.5" ></airProducer>
+				<airProducer desiredFlowRates="5.0"
+					outputs="IHab" maxFlowRates="5.0" ></airProducer>
 			</Fan>
 		</environment>
 		<air>

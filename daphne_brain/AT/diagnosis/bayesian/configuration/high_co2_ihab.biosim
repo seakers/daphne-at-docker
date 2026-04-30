@@ -40,7 +40,7 @@
 				<airConsumer inputs="IHab" desiredFlowRates="9885" maxFlowRates="9885" />
 				<airProducer desiredFlowRates="9885" outputs="IHab" maxFlowRates="9885" />
 				<CO2Producer desiredFlowRates="20000" outputs="CO2_Store" maxFlowRates="20000" />
-				<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="200" />
+				<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="400" />
 			</VCCR>
 			<OGS moduleName="OGS">
 				<powerConsumer inputs="General_Power_Store" desiredFlowRates="1000" maxFlowRates="1000" />
