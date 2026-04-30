@@ -1,12 +1,14 @@
 # reduced_known_probabilities.py
 # Author: Joshua Elston
-# Last Edited: 04/13/2026
+# Last Edited: 04/30/2026
 
 # Script stores known deterministic CPDs for group-level and
 # unknown anomaly nodes in the Biosim ECLSS Bayesian Network.
 # These are then stored to the overall network and combined
 # with the learned parameter-level CPDs in
 # learn_probabilities_threaded.py.
+# Updated to include known CPD for No Anomalies Present (trying to see
+# if inclusion impacts use of nominal data)
 
 import numpy as np
 from pgmpy.factors.discrete import TabularCPD
@@ -45,4 +47,17 @@ unknown_anomaly = TabularCPD(variable='Unknown Anomaly',
                              evidence=['Group 1', 'Group 3', 'Group 7'],
                              evidence_card=[2,2,2])
 
-known_cpds = [group1, group3, group7, unknown_anomaly]
+# ADD CPD FOR NO ANOMALIES PRESENT
+nap_true = np.ones(2**4, dtype='float')
+nap_true[0] = 0
+nap_false = 1 - nap_true
+nap = TabularCPD(variable='No Anomalies Present',
+                    variable_card=2,
+                    values=np.array([nap_false, nap_true]),
+                    evidence=['Group 1',
+                    'Group 3',
+                    'Group 7',
+                    'Unknown Anomaly'],
+                    evidence_card=[2,2,2,2])
+
+known_cpds = [group1, group3, group7, unknown_anomaly, nap]

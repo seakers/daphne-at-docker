@@ -1,6 +1,6 @@
 # reduced_network_struture.py
 # Author: Joshua Elston
-# Last Edited: 04/13/2026
+# Last Edited: 04/30/2026
 
 # Condensed network structure used to evaluate parameter learning performance from
 # Biosim simulation runs (called in learn_probabilities.py)
@@ -22,6 +22,8 @@
 # added, where a value of '1' indicates an open hatch and '0' indicates a closed hatch
 # Updated on 04/13/2026 such that 'Hatch Status' is more accurately named to 'Fan Status' and is a
 # parent of parameters measured seperately in different modules for which different anomalies can occur
+# Updated on 04/30/2026 to add edges for No Anomalies Present (to see if nominal data from parameter
+# learning is correctly added to the dataset)
 
 from collections import defaultdict
 
@@ -208,3 +210,14 @@ unknown_anomaly_nodes = [
 
 for ua in unknown_anomaly_nodes:
     reduced_network.append(ua)
+
+# ADD EDGES BETWEEN GROUPS + UNKNOWN ANOMALY AND NO ANOMALIES PRESENT
+nap_nodes = [
+    ("Group 1", "No Anomalies Present"),
+    ("Group 3", "No Anomalies Present"),
+    ("Group 7", "No Anomalies Present"),
+    ("Unknown Anomaly", "No Anomalies Present")
+]
+
+for nap in nap_nodes:
+    reduced_network.append(nap)
