@@ -59,13 +59,13 @@ _start_lock = threading.Lock()
 
 
 CONFIG_ANOMALY_MAP = {
-    'low_o2_ihab.biosim':   {'anomaly': 'Emergency O2 System Maintenance (IHab)',  'tick': 200},
-    'low_o2_halo.biosim':   {'anomaly': 'Emergency O2 System Maintenance (HALO)',  'tick': 200},
-    'low_o2.biosim':        {'anomaly': 'Emergency O2 System Maintenance (IHab)', 'second_anomaly': 'Emergency O2 System Maintenance (HALO)', 'tick': 200},
-    'default_leak_ihab.biosim':   {'anomaly': 'Loss of Pressure (IHab)',  'tick': 200},
-    'default_leak_halo.biosim':   {'anomaly': 'Loss of Pressure (HALO)',  'tick': 200},
-    'default_leak.biosim': {'anomaly': 'Loss of Pressure (IHab)', 'second_anomaly': 'Loss of Pressure (HALO)', 'tick': 200},
-    'high_co2_ihab.biosim': {'anomaly': 'Excess CO2 in Cabin (IHab)',              'tick': 200},
+    'low_o2_ihab.biosim':   {'anomaly': 'Emergency O2 System Maintenance (IHab)',  'tick': 100},
+    'low_o2_halo.biosim':   {'anomaly': 'Emergency O2 System Maintenance (HALO)',  'tick': 100},
+    'low_o2.biosim':        {'anomaly': 'Emergency O2 System Maintenance (IHab)', 'second_anomaly': 'Emergency O2 System Maintenance (HALO)', 'tick': 100},
+    'default_leak_ihab.biosim':   {'anomaly': 'Loss of Pressure (IHab)',  'tick': 0},
+    'default_leak_halo.biosim':   {'anomaly': 'Loss of Pressure (HALO)',  'tick': 0},
+    'default_leak.biosim': {'anomaly': 'Loss of Pressure (IHab)', 'second_anomaly': 'Loss of Pressure (HALO)', 'tick': 0},
+    'high_co2_ihab.biosim': {'anomaly': 'Excess CO2 in Cabin (IHab)',              'tick': 400},
     'high_co2_halo.biosim': {'anomaly': 'Excess CO2 in Cabin (HALO)',              'tick': 200},
     'high_co2.biosim':      {'anomaly': 'Excess CO2 in Cabin (IHab)', 'second_anomaly': 'Excess CO2 in Cabin (HALO)', 'tick': 200},
     'bio_filter.biosim':    {'anomaly': 'Biological Filter Saturation',   'fan_status': 'on', 'tick': 200},
@@ -75,7 +75,7 @@ CONFIG_ANOMALY_MAP = {
     'high_o2.biosim':       {'anomaly': 'Unknown Anomaly',                         'tick': 200},
     'high_pressure.biosim': {'anomaly': 'Unknown Anomaly',                         'tick': 200},
     'final_vccr.biosim':    {'anomaly': 'CDRA Failure', 'fan_status': 'on',      'tick': 200},
-    'default_vccr_ihab.biosim':    {'anomaly': 'CDRA Failure', 'fan_status': 'off', 'tick': 200},
+    # 'default_vccr_ihab.biosim':    {'anomaly': 'CDRA Failure', 'fan_status': 'off', 'tick': 100},
     'low_co2.biosim':       {'anomaly': 'Unknown Anomaly',                         'tick': 0},
 }
 
@@ -244,7 +244,7 @@ NOMINAL_SENSOR_TEMPLATE = {
     'Excess CO2 in Cabin (IHab)': 0, 'Excess CO2 in Cabin (HALO)': 0,
     'Loss of Pressure (IHab)': 0, 'Loss of Pressure (HALO)': 0,
     'Unknown Anomaly': 0, 'Group 1': 0, 'Group 3': 0, 'Group 7': 0,
-    'No Anomalies Present': 1,
+    # 'No Anomalies Present': 1,
     # Hidden components — all inactive
     '[HIDDEN] CDRA Failure Component': 0,
     '[HIDDEN] BFS Component': 0,
@@ -258,9 +258,9 @@ def generate_nominal_rows(n, fan_status=None):
     # Generate n rows of nominal data
     base_row = dict(NOMINAL_SENSOR_TEMPLATE)
     if fan_status is None or fan_status == 'open':
-        base_row['Hatch Status'] = 1
+        base_row['Fan Status'] = 1
     elif fan_status == 'closed':
-        base_row['Hatch Status'] = 0
+        base_row['Fan Status'] = 0
     final_rows = []
     for i in range(n):
         row = base_row.copy()
@@ -397,12 +397,6 @@ def parse_simulation_ticks(data, anomaly_name, anomaly_tick, anomalies_list,
                         for sensor, threshold in ihab_sensors)
 
                 sensor_row[anom_name] = int(all_symptoms_met)
-
-                # BFS appears at caution (state 1), not warning (state 2)
-                if anom_name == "Biological Filter Saturation" and sensor_row[anom_name] == 1:
-                    bfs_sensors = [s for s, _ in anom_info["sensors"]]
-                    if any(sensor_row.get(s, 0) >= 2 for s in bfs_sensors):
-                        sensor_row[anom_name] = 0
             else:
                 sensor_row.setdefault(anom_name, 0)
 
@@ -426,10 +420,10 @@ def parse_simulation_ticks(data, anomaly_name, anomaly_tick, anomalies_list,
         else:
             sensor_row['Unknown Anomaly'] = 0
 
-        if no_known_anomalies and no_active_params:
-            sensor_row['No Anomalies Present'] = 1
-        else:
-            sensor_row['No Anomalies Present'] = 0
+        # if no_known_anomalies and no_active_params:
+        #     sensor_row['No Anomalies Present'] = 1
+        # else:
+        #     sensor_row['No Anomalies Present'] = 0
 
         # Only store if sensor values are found
         if len(sensor_row) > 1: # more than just tick
