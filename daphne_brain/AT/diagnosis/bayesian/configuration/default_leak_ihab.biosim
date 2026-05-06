@@ -219,7 +219,7 @@
 					<critical_low min="0" max="87.56342"/>
 					<warning_low min="87.56342" max="100.31872"/>
 					<warning_high min="102.7319" max="104.8003"/>
-					<critical_high min="102.7319" max="104.8003"/>
+					<critical_high min="104.8003" max="110" />
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</TotalPressureSensor>
@@ -256,7 +256,7 @@
 					<critical_low min="0" max="87.56342"/>
 					<warning_low min="87.56342" max="100.31872"/>
 					<warning_high min="102.7319" max="104.8003"/>
-					<critical_high min="102.7319" max="104.8003"/>
+					<critical_high min="104.8003" max="110" />
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</TotalPressureSensor>

@@ -10,8 +10,12 @@
 	</Globals>
 	<SimBioModules>
 		<environment>
-			<SimEnvironment moduleName="IHab" initialVolume="22900" />
-			<SimEnvironment moduleName="HALO" initialVolume="22900" />
+			<SimEnvironment moduleName="IHab" initialVolume="22900">
+				<percentageInitialization totalPressure="100.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="00.26961" />
+			</SimEnvironment>
+			<SimEnvironment moduleName="HALO" initialVolume="22900">
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.26961" />
+			</SimEnvironment>
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="IHab"
 					desiredFlowRates="0.3" maxFlowRates="0.3"></airConsumer>
@@ -21,19 +25,19 @@
 			</Dehumidifier>
 			<Fan moduleName="IHab_to_HALO_Fan">
 				<airConsumer inputs="IHab"
-					desiredFlowRates="5.0" maxFlowRates="5.0" />
+					desiredFlowRates="40" maxFlowRates="40" />
 				<powerConsumer inputs="General_Power_Store"
 					desiredFlowRates="9000" maxFlowRates="9000" ></powerConsumer>
-				<airProducer desiredFlowRates="5.0"
-					outputs="HALO" maxFlowRates="5.0" ></airProducer>
+				<airProducer desiredFlowRates="40"
+					outputs="HALO" maxFlowRates="40" ></airProducer>
 			</Fan>
 			<Fan moduleName="HALO_to_IHab_Fan">
 				<airConsumer inputs="HALO"
-					desiredFlowRates="5.0" maxFlowRates="5.0" />
+					desiredFlowRates="40" maxFlowRates="40" />
 				<powerConsumer inputs="General_Power_Store" desiredFlowRates="50"
 					maxFlowRates="50"></powerConsumer>
-				<airProducer desiredFlowRates="5.0"
-					outputs="IHab" maxFlowRates="5.0" ></airProducer>
+				<airProducer desiredFlowRates="40"
+					outputs="IHab" maxFlowRates="40" ></airProducer>
 			</Fan>
 		</environment>
 		<air>
@@ -86,14 +90,21 @@
 					outputs="HALO" maxFlowRates="0.0" >
 				</O2Producer>
 			</Injector>
-			<Injector moduleName="Nitrogen_Injector_HALO">
+			<!-- Inject nitrogen into IHab module to counter decrease in pressure -->
+			<Injector moduleName="Nitrogen_Injector_IHab">
+				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.15" maxFlowRates="0.15">
+				</nitrogenConsumer>
+				<nitrogenProducer desiredFlowRates="0.15" outputs="IHab" maxFlowRates="0.15">
+				</nitrogenProducer>
+			</Injector>
+			<!-- <Injector moduleName="Nitrogen_Injector_HALO">
 				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0"
 					maxFlowRates="0.0" >
 				</nitrogenConsumer>
 				<nitrogenProducer desiredFlowRates="0.0"
 					outputs="HALO" maxFlowRates="0.0" >
 				</nitrogenProducer>
-			</Injector>
+			</Injector> -->
 		</framework>
 		<water>
 			<WaterRS moduleName="Water_Distiller"
@@ -215,7 +226,7 @@
 					<critical_low min="0" max="87.56342"/>
 					<warning_low min="87.56342" max="100.31872"/>
 					<warning_high min="102.7319" max="104.8003"/>
-					<critical_high min="102.7319" max="104.8003"/>
+					<critical_high min="104.8003" max="110" />
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</TotalPressureSensor>
@@ -251,7 +262,7 @@
 					<critical_low min="0" max="87.56342"/>
 					<warning_low min="87.56342" max="100.31872"/>
 					<warning_high min="102.7319" max="104.8003"/>
-					<critical_high min="102.7319" max="104.8003"/>
+					<critical_high min="104.8003" max="110" />
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</TotalPressureSensor>
