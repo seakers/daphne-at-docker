@@ -75,8 +75,8 @@ CONFIG_ANOMALY_MAP = {
     'high_o2.biosim':       {'anomaly': 'Unknown Anomaly',                         'tick': 200},
     'high_pressure.biosim': {'anomaly': 'Unknown Anomaly',                         'tick': 200},
     'final_vccr.biosim':    {'anomaly': 'CDRA Failure', 'fan_status': 'on',      'tick': 200},
-    # 'default_vccr_ihab.biosim':    {'anomaly': 'CDRA Failure', 'fan_status': 'off', 'tick': 100},
-    'low_co2.biosim':       {'anomaly': 'Unknown Anomaly',                         'tick': 0},
+    # # 'default_vccr_ihab.biosim':    {'anomaly': 'CDRA Failure', 'fan_status': 'off', 'tick': 100},
+    # 'low_co2.biosim':       {'anomaly': 'Unknown Anomaly',                         'tick': 0},
 }
 
 ANOMALY_GROUPS = {
@@ -373,32 +373,58 @@ def parse_simulation_ticks(data, anomaly_name, anomaly_tick, anomalies_list,
                 comp2 = ANOMALY_SYMPTOMS[second_anomaly]["component"]
                 sensor_row[comp2] = int(tick_num >= anomaly_tick)
 
-        # 2. Set each anomaly = 1 only when its hidden component is active
-        #    AND ALL expected symptoms meet their threshold.
-        #    If component is active but symptoms have decayed, anomaly stays 0
-        #    (Unknown Anomaly will catch it later).
+        # 2. Identify anomalies based on symptoms and also if there is high ppco2 in ihab it triggers excess co2 ihab and similar for halo and emergency o2
+        # And if ppo2 is low in ihab and halo and if ppco2 is high only in ihab, it would trigger bfs and also emergency o2 in halo but if ppco2 is also high in halo, then it only triggers bfs. similar for cdra
+        met_anomalies = []
         for anom_name, anom_info in ANOMALY_SYMPTOMS.items():
-            comp_col = anom_info["component"]
-            component_active = sensor_row.get(comp_col, 0) == 1
-            # if component_active:
-            ihab_sensors = []
-            for i in anom_info["sensors"]:
-                if i[0].endswith("(IHab)"):
-                    ihab_sensors.append(i)
+            ihab_sensors = [i for i in anom_info["sensors"] if i[0].endswith("(IHab)")]
+            halo_sensors = [i for i in anom_info["sensors"] if i[0].endswith("(HALO)")]
 
-            if fan_status == 'on' or fan_status is None:
+            if fan_status == 'off':
+                subsets_to_check = [ihab_sensors]
+            else:
+                subsets_to_check = [anom_info["sensors"], ihab_sensors, halo_sensors]
+
+            best_met_sensors = None
+            for sensors_subset in subsets_to_check:
+                if not sensors_subset:
+                    continue
+
                 all_symptoms_met = all(
                     sensor_row.get(sensor, 0) >= threshold
-                    for sensor, threshold in anom_info["sensors"]
+                    for sensor, threshold in sensors_subset
                 )
-            elif fan_status == 'off':
-                all_symptoms_met = all(
-                    sensor_row.get(sensor, 0) >= threshold
-                    for sensor, threshold in ihab_sensors)
+                
+                if all_symptoms_met:
+                    # Keep the largest subset of symptoms that is met
+                    if best_met_sensors is None or len(sensors_subset) > len(best_met_sensors):
+                        best_met_sensors = set(sensor for sensor, threshold in sensors_subset)
+            
+            if best_met_sensors:
+                met_anomalies.append({
+                    'name': anom_name,
+                    'sensors': best_met_sensors
+                })
 
-            sensor_row[anom_name] = int(all_symptoms_met)
-            # else:
-            #     sensor_row.setdefault(anom_name, 0)
+        # Ensure all anomaly columns exist with default 0
+        for anomaly in anomalies_list:
+            sensor_row.setdefault(anomaly, 0)
+
+        # Filter out anomalies whose symptoms are a subset of another met anomaly
+        final_anomalies = []
+        for anom in met_anomalies:
+            is_subset = False
+            for other_anom in met_anomalies:
+                if anom['name'] != other_anom['name']:
+                    # If this anomaly's sensors are a strict subset of another anomaly's sensors
+                    if anom['sensors'].issubset(other_anom['sensors']):
+                        is_subset = True
+                        break
+            if not is_subset:
+                final_anomalies.append(anom['name'])
+
+        for anom_name in final_anomalies:
+            sensor_row[anom_name] = 1
 
         # Ensure all anomaly columns exist with default 0
         for anomaly in anomalies_list:
