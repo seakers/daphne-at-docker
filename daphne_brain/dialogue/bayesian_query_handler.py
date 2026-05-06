@@ -23,6 +23,25 @@ class BayesianQueryHandler:
             self.split_probability_dict = json.load(file)
         with open(self.hidden_probabilities_dict_path, "r") as file:
             self.hidden_probabilities_dict = json.load(file)
+            
+        self.measurement_nodes = [
+            "high ppO2_IHab (IHab)", "low ppO2_IHab (IHab)",
+            "high ppO2_IHab (IHab) (t-1)", "low ppO2_IHab (IHab) (t-1)",
+            "high ppO2_HALO (HALO)", "low ppO2_HALO (HALO)",
+            "high ppO2_HALO (HALO) (t-1)", "low ppO2_HALO (HALO) (t-1)",
+            "high ppCO2_IHab (IHab)", "low ppCO2_IHab (IHab)",
+            "high ppCO2_IHab (IHab) (t-1)", "low ppCO2_IHab (IHab) (t-1)",
+            "high ppCO2_HALO (HALO)", "low ppCO2_HALO (HALO)",
+            "high ppCO2_HALO (HALO) (t-1)", "low ppCO2_HALO (HALO) (t-1)",
+            "high Humidity_IHab (IHab)", "low Humidity_IHab (IHab)",
+            "high Humidity_IHab (IHab) (t-1)", "low Humidity_IHab (IHab) (t-1)",
+            "high Humidity_HALO (HALO)", "low Humidity_HALO (HALO)",
+            "high Humidity_HALO (HALO) (t-1)", "low Humidity_HALO (HALO) (t-1)",
+            "high Total_Cabin_Pressure_IHab (IHab)", "low Total_Cabin_Pressure_IHab (IHab)",
+            "high Total_Cabin_Pressure_IHab (IHab) (t-1)", "low Total_Cabin_Pressure_IHab (IHab) (t-1)",
+            "high Total_Cabin_Pressure_HALO (HALO)", "low Total_Cabin_Pressure_HALO (HALO)",
+            "high Total_Cabin_Pressure_HALO (HALO) (t-1)", "low Total_Cabin_Pressure_HALO (HALO) (t-1)"
+        ]
     
     def get_hidden_components(self):
         """Return a list of all hidden components in the model"""
@@ -62,67 +81,104 @@ class BayesianQueryHandler:
         }
         return explanation
         
-    def what_if_evidence(self, current_telemetry, current_evidence, additional_evidence_user):
+    def what_if_evidence(self, current_telemetry, current_evidence, hypothetical_context):
         """
-        Calculate how probabilities would change if we add evidence about a component
-        
-        Args:
-            current_telemetry: Current telemetry values
-            component: The hidden component to add evidence for
-            state: The state of the component (True/False for present/absent)
-        
-        Returns:
-            Updated probabilities and a comparison to previous probabilities
+        Calculate how probabilities would change if we add evidence about components and measurements
         """
-        # Check if component is valid
-        print("component for bayesian query", additional_evidence_user)
-        
-
         # Get current probabilities without the new evidence
-        print("current evidence for bayesian query", current_evidence)
-        print("current telemetry for bayesian query", current_telemetry)
-        
         current_probs, _, _ = get_probabilities(current_telemetry, current_evidence)
-        print("current probs for bayesian query", current_probs)
         
         # Create evidence dictionary with the new component evidence
         additional_evidence = current_evidence.copy()
-        for i in additional_evidence_user:
-            additional_evidence[i] = additional_evidence_user[i]
+        if "components" in hypothetical_context:
+            for component, state in hypothetical_context["components"].items():
+                additional_evidence[component] = state
 
-        print("additional evidence for bayesian query", additional_evidence)
+        # The llm is return low/high + measurement name, so to find that in measurement ranges, stripping it of low/high
+        from AT.diagnosis.bayesian.reduced_ranges import measurement_ranges
         
-        # Calculate new probabilities with the added evidence
-        new_probs, _, _ = get_probabilities(current_telemetry, additional_evidence)
-        print("new probs for bayesian query", new_probs)
+        updated_telemetry = current_telemetry.copy()
+        print("hypothetical context", hypothetical_context)
+        if "measurements" in hypothetical_context:
+            for parameter, state_value in hypothetical_context["measurements"].items():
+                state_value = int(state_value)
+                
+                # Determine low/high and strip prefix
+                direction = None
+                base_param = parameter
+                if parameter.startswith("high "):
+                    direction = "high"
+                    base_param = parameter[len("high "):]
+                elif parameter.startswith("low "):
+                    direction = "low"
+                    base_param = parameter[len("low "):]
+                
+                # Strip (t-1) suffix to lookup in measurement_ranges 
+                lookup_param = base_param.replace(" (t-1)", "")
+                
+                # Map direction + state to threshold name
+                if state_value == 0:
+                    threshold_name = "Nominal"
+                elif direction == "high" and state_value == 1:
+                    threshold_name = "Exceeds_UpperCautionLimit"
+                elif direction == "high" and state_value == 2:
+                    threshold_name = "Exceeds_UpperWarningLimit"
+                elif direction == "low" and state_value == 1:
+                    threshold_name = "Exceeds_LowerCautionLimit"
+                elif direction == "low" and state_value == 2:
+                    threshold_name = "Exceeds_LowerWarningLimit"
+                else:
+                    print(f"Unknown direction/state: {direction}/{state_value}")
+                    continue
+
+                print("look up param", lookup_param)
+                
+                if lookup_param not in measurement_ranges:
+                    print(f"Parameter {lookup_param} not found in measurement_ranges")
+                    continue
+                print("look up param in measurement ranges")
+                bounds = measurement_ranges[lookup_param].get(threshold_name)
+                if bounds:
+                    low, high, _, _ = bounds
+                    if low is not None and high is not None:
+                        val = (low + high) / 2.0
+                    elif low is not None:
+                        val = low + (low * 0.1) if low != 0 else 1.0
+                    elif high is not None:
+                        val = high - (abs(high) * 0.1) if high != 0 else -1.0
+                    else:
+                        val = 0.0
+                    print("final vallll", val)
+                    
+                    # Set both current and t-1 telemetry to the same value
+                    updated_telemetry[lookup_param] = val
+                    updated_telemetry[f"{lookup_param} (t-1)"] = val
+                    print(f"Telemetry override: {lookup_param} = {val} (threshold: {threshold_name})")
+
+        # Calculate new probabilities with the added evidence (includes best_evidence)
+        new_probs, best_evidence, _ = get_probabilities(updated_telemetry, additional_evidence)
         
         top_5_probabilities = dict(sorted(new_probs.items(), 
                                      key=lambda item: item[1], 
                                      reverse=True)[:5])
-        # Find the top 5 anomalies with the biggest changes
-        changes = {}
-        for anomaly in current_probs:
-            if anomaly in new_probs:
-                changes[anomaly] = new_probs[anomaly] - current_probs[anomaly]
         
-        top_changes = sorted(changes.items(), key=lambda x: abs(x[1]), reverse=True)[:5]
-        print("top changes for bayesian query", top_changes)
-        
-        # Create response with comparison
+        # Create response
         evidence_list = []
-        for component, state in additional_evidence_user.items():
-            evidence_list.append(f"{component}")
+        if "components" in hypothetical_context:
+            for component, state in hypothetical_context["components"].items():
+                state_str = "damaged" if state == 4 else "normal"
+                evidence_list.append(f"{component} is {state_str}")
+                
+        if "measurements" in hypothetical_context:
+            for param, state in hypothetical_context["measurements"].items():
+                evidence_list.append(f"{param} is {state}")
 
-        # Format the evidence as a readable string
         evidence_display = ", ".join(evidence_list) if evidence_list else "None"
 
-        # Create response with both the evidence and new probabilities
         formatted_probabilities = "\n".join([f"{anomaly}: {prob:.4f}" for anomaly, prob in top_5_probabilities.items()])
-        visual_message = [f"If this evidence is added: {evidence_display}\n\nThe new probabilities would be:\n{formatted_probabilities}"]
-                
-        # for anomaly, change in top_changes:
-        #     direction = "increase" if change > 0 else "decrease"
-        #     visual_message.append(f"{anomaly}: {current_probs[anomaly]:.4f} → {new_probs[anomaly]:.4f} ({direction} by {abs(change):.4f})")
+        visual_message = [f"If this hypothetical evidence is added: {evidence_display}\n\nThe new probabilities would be:\n{formatted_probabilities}"]
+
+        print("best evidenceee in hypothetical", best_evidence)
         
         return {
             "voice_message": f"Adding the evidence would change anomaly probabilities.",
@@ -131,9 +187,11 @@ class BayesianQueryHandler:
             "writer": "daphne",
             "options": ["Add to Diagnosis History"],
             "optionsCallbackEvent": "addHypotheticalDiagnosis",
+            "hypothetical_context": hypothetical_context,
             "hypothetical_data": {
                 "probabilities": new_probs,
-                "additional_evidence": additional_evidence_user,
+                "additional_evidence": additional_evidence,
+                "best_evidence": best_evidence,
                 "diagnosis_list": [{
                     "anomaly": anomaly,
                     "probability": prob
@@ -144,14 +202,7 @@ class BayesianQueryHandler:
     def best_evidence_to_collect(self, current_telemetry, current_evidence):
         """
         Determine which evidence would be most informative to collect next
-        
-        Args:
-            current_telemetry: Current telemetry values
-        
-        Returns:
-            Information about the most informative evidence to collect
         """
-        # Get current probabilities and the best evidence
         _, best_evidence, hidden_components = get_probabilities(current_telemetry, current_evidence)
         
         if not best_evidence:
@@ -162,12 +213,10 @@ class BayesianQueryHandler:
                 "writer": "daphne"
             }
         
-        # Get the anomaly associated with this evidence
         associated_anomalies = []
         for anomaly, data in self.hidden_probabilities_dict.get(best_evidence, {}).items():
             associated_anomalies.append(anomaly)
         
-        # Create response
         return {
             "voice_message": f"Collecting evidence about {best_evidence} would be most informative.",
             "visual_message_type": ["text"],
@@ -182,21 +231,12 @@ class BayesianQueryHandler:
     def explain_evidence_impact(self, anomaly):
         """
         Explain which evidence has the most impact on a specific anomaly
-        
-        Args:
-            anomaly: The anomaly to explain evidence for
-        
-        Returns:
-            Explanation of what evidence most affects this anomaly
         """
         relevant_components = []
-        
-        # Find hidden components related to this anomaly
         for component, anomalies in self.hidden_probabilities_dict.items():
             if anomaly in anomalies:
                 relevant_components.append(component)
         
-        # Find measurements related to this anomaly
         relevant_measurements = []
         for measurement, anomalies in self.split_probability_dict.items():
             if anomaly in anomalies:
@@ -213,60 +253,75 @@ class BayesianQueryHandler:
             "writer": "daphne"
         }
     
-    def handle_query(self, query, current_telemetry, current_evidence=None):
+    def handle_query(self, query, current_telemetry, current_evidence=None, hypothetical_context=None):
         """
         Main method to handle various Bayesian queries using LLM for intent classification
-        
-        Args:
-            query: The user's query text
-            current_telemetry: Current telemetry values
-            current_evidence: Any additional evidence already collected
-            
-        Returns:
-            Response to the query
         """
-        # Use LLM to classify the query intent
+        if hypothetical_context is None:
+            hypothetical_context = {"components": {}, "measurements": {}}
+            
         intent = self.classify_query_intent(query)
         print("intent for bayesian query", intent)
         
-        # Handle different types of intents based on LLM classification
         if intent == "probability_calculation_explanation":
-            return self.explain_probability_calculation()
+            res = self.explain_probability_calculation()
+            res["hypothetical_context"] = hypothetical_context
+            return res
             
         elif intent == "model_structure_explanation":
-            return self.explain_model_structure()
+            res = self.explain_model_structure()
+            res["hypothetical_context"] = hypothetical_context
+            return res
             
         elif intent == "what_if_evidence":
-            # Extract component and state from query using LLM
-            additional_evidence = self.extract_component_and_state(query)
+            extracted_data = self.extract_hypothetical_evidence(query)
             
-            if additional_evidence:
-                # Check if component exists in our model
-                return self.what_if_evidence(current_telemetry, current_evidence, additional_evidence)
-    
+            if extracted_data.get("needs_clarification"):
+                return {
+                    "voice_message": "I need some clarification.",
+                    "visual_message_type": ["text"],
+                    "visual_message": [extracted_data["needs_clarification"]],
+                    "writer": "daphne",
+                    "hypothetical_context": hypothetical_context
+                }
+            
+            if extracted_data.get("is_continuation"):
+                if "components" not in hypothetical_context:
+                    hypothetical_context["components"] = {}
+                if "measurements" not in hypothetical_context:
+                    hypothetical_context["measurements"] = {}
+                hypothetical_context["components"].update(extracted_data.get("components", {}))
+                hypothetical_context["measurements"].update(extracted_data.get("measurements", {}))
+            else:
+                hypothetical_context["components"] = extracted_data.get("components", {})
+                hypothetical_context["measurements"] = extracted_data.get("measurements", {})
+            
+            if hypothetical_context["components"] or hypothetical_context["measurements"]:
+                return self.what_if_evidence(current_telemetry, current_evidence, hypothetical_context)
             else:
                 return {
-                    "voice_message": "I need to know which component you're asking about.",
+                    "voice_message": "I need to know which component or measurement you're asking about.",
                     "visual_message_type": ["text"],
                     "visual_message": [
-                        "To answer 'what if' queries, I need to know which component you're asking about.",
-                        "For example: 'What if CDRA Failure Component showed damage?'",
-                        "Available components include: " + ", ".join(list(self.hidden_probabilities_dict.keys())[:3]) + "..."
+                        "To answer 'what if' queries, I need to know which component or measurement you're asking about.",
+                        "For example: 'What if CDRA Failure Component showed damage?' or 'What if ppO2 IHab is nominal?'"
                     ],
-                    "writer": "daphne"
+                    "writer": "daphne",
+                    "hypothetical_context": hypothetical_context
                 }
                 
         elif intent == "best_evidence":
-            return self.best_evidence_to_collect(current_telemetry, current_evidence)
+            res = self.best_evidence_to_collect(current_telemetry, current_evidence)
+            res["hypothetical_context"] = hypothetical_context
+            return res
             
         elif intent == "evidence_impact":
-            # Extract anomaly from query using LLM
             anomaly = self.extract_anomaly(query)
             
             if anomaly:
-                return self.explain_evidence_impact(anomaly)
+                res = self.explain_evidence_impact(anomaly)
             else:
-                return {
+                res = {
                     "voice_message": "I need to know which anomaly you're asking about.",
                     "visual_message_type": ["text"],
                     "visual_message": [
@@ -313,7 +368,11 @@ class BayesianQueryHandler:
         Classify the following user query about a Bayesian network diagnostic system into one of these categories:
         - probability_calculation_explanation: Questions about how probabilities are calculated
         - model_structure_explanation: Questions about the structure of the Bayesian network
-        - what_if_evidence: Questions about hypothetical scenarios like what if i add eveidence that something is damaged, or what if this evidence was added or how would the probabilities change if this evidence was removed and so on
+        - what_if_evidence: Questions about hypothetical scenarios like:
+            * "what if CDRA component is damaged"
+            * "what if ppO2 is nominal"
+            * "what if humidity is in warning and excess CO2 component is active"
+            * "also add ppCO2 as very high" (continuation of previous scenario)
         - best_evidence: Questions about what evidence would be most informative to collect
         - evidence_impact: Questions about which evidence impacts specific anomalies
 
@@ -345,76 +404,85 @@ class BayesianQueryHandler:
             # Default to 'other' in case of errors
             return 'other'
 
-    def extract_component_and_state(self, query):
+    def extract_hypothetical_evidence(self, query):
         """
-        Use LLM to extract component name and state from a query
-        
-        Args:
-            query: The user's query text
-            
-        Returns:
-            Tuple of (component_name, state_boolean)
+        Use LLM to extract component names and measurement overrides from a query
         """
         from openai import OpenAI
         import os
         
-        # Initialize the OpenAI client
         client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         
-        # Get list of valid components to include in prompt
-        valid_components = list(self.hidden_probabilities_dict.keys())  # Limit to 10 for reasonable prompt size
+        valid_components = list(self.hidden_probabilities_dict.keys())
+        valid_measurements = self.measurement_nodes
         
-        # Prepare the prompt for entity extraction
         prompt = f"""
-        Extract the component name and its state from the following query about a Bayesian network.
-        The query is asking what would happen if a particular component had evidence indicating it was in a particular state.
-        
+        Extract the component names and measurement overrides from the following query about a Bayesian network.
+        The query is asking what would happen if components or measurements had certain evidence.
+
         Valid components include: {', '.join(valid_components)}
-        
+        Valid measurements include: {', '.join(valid_measurements)}
+
         Query: {query}
-        
-        For the state values, map them according to these rules:
-        - Map to "true" if the user says: damaged, positive, present, abnormal, fault, failure, or values 3, 4, 5
-        - Map to "false" if the user says: undamaged, negative, absent, normal, intact, working, operational, or values 1, 2
-        
-        Output format:
-        Return the output in JSON format of component names and states in the format - "component name1": "state1", "component name2": "state2" and so on.`
-    
-        Make sure to match the users component to the one in the list and return that exact name from the list. Make sure to include the [HIDDEN] in the name as in the list. DONOT change anything.
-    
-        DONOT return anything else only the JSON.
+
+        If the user's query is ambiguous about measurements (e.g., "ppO2 is low" without specifying IHab or HALO, or without specifying if it's the current reading or previous reading t-1), set "needs_clarification" to a string asking them to clarify. Example: "Which module are you referring to — IHab or HALO? And should this apply to the current reading, the previous reading (t-1), or both?". If they say "current ppO2 IHab is low", that is not ambiguous.
+
+        For component states:
+        - Map to "true" if user says: damaged, positive, present, abnormal, fault, failure, or values 3, 4, 5
+        - Map to "false" if user says: undamaged, negative, absent, normal, intact, working, operational, or values 1, 2
+
+        For measurement states:
+        - Map to 0 if user says: nominal, normal
+        - Map to 1 if user says: caution, slightly high/low
+        - Map to 2 if user says: critical, warning, very high/low
+
+        Note for measurements: "low ppO2" refers to the "low ppO2_..." nodes, while "high ppO2" refers to "high ppO2_..." nodes. If a user says "nominal", it means both high and low nodes are 0.
+
+        Also determine if this is a continuation of a previous scenario ("also add...", "what about if...") or a new scenario. Set "is_continuation" to true or false.
+
+        Output MUST be valid JSON only:
+        {{
+          "components": {{"[HIDDEN] CDRA Failure Component": "true"}},
+          "measurements": {{"high ppCO2_IHab (IHab)": 2}},
+          "needs_clarification": null,
+          "is_continuation": false
+        }}
         """
         
         try:
-            # Call the LLM API for entity extraction
             response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0,  # Low temperature for consistent responses
-                max_tokens=100    # Limit response length
+                temperature=0,
+                max_tokens=250
             )
             
-            # Extract the information from the response
             result_text = response.choices[0].message.content.strip()
-            result_text = re.sub(r'```(\w+)?\s*', '', result_text)
+            result_text = re.sub(r'```(?:json)?\s*', '', result_text)
             result_text = re.sub(r'\s*```', '', result_text)
-            print("result text for bayesian query", result_text)
-            
-            # Parse the result
-            additional_evidence = {}
+            print("extracted hypothetical evidence:", result_text)
             
             json_data = json.loads(result_text)
-            if json_data:
-                for key, value in json_data.items():
-                    # Check if the component is valid
-                    if key in valid_components:
-                        additional_evidence[key] = 4 if value.lower() == "true" else 1
             
-            return additional_evidence
+            # process components
+            components = {}
+            for key, value in json_data.get("components", {}).items():
+                if key in valid_components:
+                    components[key] = 4 if str(value).lower() == "true" else 1
+            json_data["components"] = components
+            
+            # measurements don't need translation, they are already 0, 1, 2
+            measurements = {}
+            for key, value in json_data.get("measurements", {}).items():
+                if key in valid_measurements:
+                    measurements[key] = value
+            json_data["measurements"] = measurements
+            
+            return json_data
             
         except Exception as e:
             print(f"Error in LLM entity extraction: {e}")
-            return None, True
+            return {"components": {}, "measurements": {}, "needs_clarification": None, "is_continuation": False}
 
     def extract_anomaly(self, query):
         """

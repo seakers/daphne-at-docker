@@ -3265,6 +3265,8 @@ export default {
         hidden_components: lastMessage.hypothetical_data.hidden_components || [],
         current_telemetry_values: lastMessage.hypothetical_data.current_telemetry_values || {}
       };
+
+      console.log("hypothetical evicenceeeeeeee", hypotheticalDiagnosis);
       
       // Add to diagnostic history (old tabs - keep for compatibility)
       this.diagnosticHistory.push(hypotheticalDiagnosis);
@@ -3284,11 +3286,25 @@ export default {
       this.activeDiagnosticTab = this.diagnosticHistory.length - 1;
       this.activeSimpleTab = this.simpleTabs.length - 1;
       
-      // Confirm to the user
+      // Confirm to the user and show best evidence suggestion
+      const bestEvidence = hypotheticalDiagnosis.best_evidence;
+      console.log("best evidenceeeeeeee in hypothetical", bestEvidence)
+      let confirmMessage = "I've added this hypothetical scenario to your diagnosis history tabs.";
+      let confirmVisual = [confirmMessage];
+      
+      if (bestEvidence) {
+        console.log("printing if you want to continueeeeee")
+        confirmVisual.push(`If you want to continue updating this hypothetical diagnosis, you could collect the suggested evidence below:`);
+        confirmVisual.push(`Best evidence to collect: ${bestEvidence}`);
+      }
+      
+      // visual_message_type must match visual_message length (1:1 mapping)
+      const messageTypes = confirmVisual.map(() => "text");
+      
       this.$store.commit('addDialoguePiece', {
-        "voice_message": "I've added this hypothetical scenario to your diagnosis history tabs.",
-        "visual_message_type": ["text"],
-        "visual_message": ["I've added this hypothetical scenario to your diagnosis history tabs. You can switch between tabs to compare different evidence scenarios."],
+        "voice_message": confirmMessage,
+        "visual_message_type": messageTypes,
+        "visual_message": confirmVisual,
         "writer": "daphne"
       });
     },

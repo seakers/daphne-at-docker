@@ -65,7 +65,7 @@ CONFIG_ANOMALY_MAP = {
     'default_leak_ihab.biosim':   {'anomaly': 'Loss of Pressure (IHab)',  'tick': 0},
     'default_leak_halo.biosim':   {'anomaly': 'Loss of Pressure (HALO)',  'tick': 0},
     'default_leak.biosim': {'anomaly': 'Loss of Pressure (IHab)', 'second_anomaly': 'Loss of Pressure (HALO)', 'tick': 0},
-    'high_co2_ihab.biosim': {'anomaly': 'Excess CO2 in Cabin (IHab)',              'tick': 400},
+    'high_co2_ihab.biosim': {'anomaly': 'Excess CO2 in Cabin (IHab)',              'tick': 200},
     'high_co2_halo.biosim': {'anomaly': 'Excess CO2 in Cabin (HALO)',              'tick': 200},
     'high_co2.biosim':      {'anomaly': 'Excess CO2 in Cabin (IHab)', 'second_anomaly': 'Excess CO2 in Cabin (HALO)', 'tick': 200},
     'bio_filter.biosim':    {'anomaly': 'Biological Filter Saturation',   'fan_status': 'on', 'tick': 200},
@@ -168,7 +168,7 @@ anomalies = ["Biological Filter Saturation", "CDRA Failure",
              "Emergency O2 System Maintenance (IHab)","Emergency O2 System Maintenance (HALO)",
              "Excess CO2 in Cabin (IHab)","Excess CO2 in Cabin (HALO)",
              "Loss of Pressure (IHab)", "Loss of Pressure (HALO)",
-             "Unknown Anomaly", "Group 1", "Group 3", "Group 7"]
+             "Unknown Anomaly", "Group 1", "Group 3", "Group 7", "No Anomalies Present"]
 
 NOMINAL_DATA_TICKS = 1000
 
@@ -244,7 +244,7 @@ NOMINAL_SENSOR_TEMPLATE = {
     'Excess CO2 in Cabin (IHab)': 0, 'Excess CO2 in Cabin (HALO)': 0,
     'Loss of Pressure (IHab)': 0, 'Loss of Pressure (HALO)': 0,
     'Unknown Anomaly': 0, 'Group 1': 0, 'Group 3': 0, 'Group 7': 0,
-    # 'No Anomalies Present': 1,
+    'No Anomalies Present': 1,
     # Hidden components — all inactive
     '[HIDDEN] CDRA Failure Component': 0,
     '[HIDDEN] BFS Component': 0,
@@ -380,25 +380,25 @@ def parse_simulation_ticks(data, anomaly_name, anomaly_tick, anomalies_list,
         for anom_name, anom_info in ANOMALY_SYMPTOMS.items():
             comp_col = anom_info["component"]
             component_active = sensor_row.get(comp_col, 0) == 1
-            if component_active:
-                ihab_sensors = []
-                for i in anom_info["sensors"]:
-                    if i[0].endswith("(IHab)"):
-                        ihab_sensors.append(i)
+            # if component_active:
+            ihab_sensors = []
+            for i in anom_info["sensors"]:
+                if i[0].endswith("(IHab)"):
+                    ihab_sensors.append(i)
 
-                if fan_status == 'on' or fan_status is None:
-                    all_symptoms_met = all(
-                        sensor_row.get(sensor, 0) >= threshold
-                        for sensor, threshold in anom_info["sensors"]
-                    )
-                elif fan_status == 'off':
-                    all_symptoms_met = all(
-                        sensor_row.get(sensor, 0) >= threshold
-                        for sensor, threshold in ihab_sensors)
+            if fan_status == 'on' or fan_status is None:
+                all_symptoms_met = all(
+                    sensor_row.get(sensor, 0) >= threshold
+                    for sensor, threshold in anom_info["sensors"]
+                )
+            elif fan_status == 'off':
+                all_symptoms_met = all(
+                    sensor_row.get(sensor, 0) >= threshold
+                    for sensor, threshold in ihab_sensors)
 
-                sensor_row[anom_name] = int(all_symptoms_met)
-            else:
-                sensor_row.setdefault(anom_name, 0)
+            sensor_row[anom_name] = int(all_symptoms_met)
+            # else:
+            #     sensor_row.setdefault(anom_name, 0)
 
         # Ensure all anomaly columns exist with default 0
         for anomaly in anomalies_list:
@@ -420,10 +420,10 @@ def parse_simulation_ticks(data, anomaly_name, anomaly_tick, anomalies_list,
         else:
             sensor_row['Unknown Anomaly'] = 0
 
-        # if no_known_anomalies and no_active_params:
-        #     sensor_row['No Anomalies Present'] = 1
-        # else:
-        #     sensor_row['No Anomalies Present'] = 0
+        if no_known_anomalies and no_active_params:
+            sensor_row['No Anomalies Present'] = 1
+        else:
+            sensor_row['No Anomalies Present'] = 0
 
         # Only store if sensor values are found
         if len(sensor_row) > 1: # more than just tick

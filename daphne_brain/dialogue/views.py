@@ -780,8 +780,19 @@ class Command(APIView):
                     # Initialize the Bayesian query handler
                     bayesian_handler = BayesianQueryHandler()
                     
+                    if 'hypothetical_context' not in self.session_state:
+                        self.session_state['hypothetical_context'] = {"components": {}, "measurements": {}}
+                    
                     # Handle the query and get a response
-                    response = bayesian_handler.handle_query(enhanced_query, current_telemetry, current_evidence)
+                    response = bayesian_handler.handle_query(
+                        enhanced_query, 
+                        current_telemetry, 
+                        current_evidence,
+                        self.session_state['hypothetical_context']
+                    )
+                    
+                    if "hypothetical_context" in response:
+                        self.session_state['hypothetical_context'] = response["hypothetical_context"]
 
                     self.session_state['user_input'].append(enhanced_query)
                     self.session_state['generated'].append(response)
