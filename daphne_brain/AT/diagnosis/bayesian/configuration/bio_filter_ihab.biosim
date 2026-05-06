@@ -3,13 +3,16 @@
 <biosim xmlns="http://www.traclabs.com/biosim"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
+	<!-- Scenario: Biological Filter Saturation (IHab) -->
 	<Globals driverStutterLength="50"
 		crewsToWatch="IHab_Group"
 		runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
 	</Globals>
 	<SimBioModules>
 		<environment>
-			<SimEnvironment moduleName="IHab" initialVolume="22900" />
+			<SimEnvironment moduleName="IHab" initialVolume="22900">
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.2035" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27611" />
+			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900" />
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="IHab"
@@ -85,12 +88,13 @@
 					outputs="HALO" maxFlowRates="0.0" >
 				</O2Producer>
 			</Injector>
-			<Injector moduleName="Nitrogen_Injector_HALO">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0"
-					maxFlowRates="0.0" >
+			<!-- Inject nitrogen into IHab to counteract drop in pressure -->
+			<Injector moduleName="Nitrogen_Injector_IHab">
+				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.075"
+					maxFlowRates="0.075" >
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.0"
-					outputs="HALO" maxFlowRates="0.0" >
+				<nitrogenProducer desiredFlowRates="0.075"
+					outputs="IHab" maxFlowRates="0.075" >
 				</nitrogenProducer>
 			</Injector>
 		</framework>
@@ -184,8 +188,10 @@
 		<environment>
 			<GasPressureSensor input="IHab" moduleName="ppCO2_IHab" gasType="CO2">
 				<alarms>
-					<warning_high min="0.15" max="0.25"/>
-					<critical_high min="0.25" max="100"/>
+					<critical_low min="0" max="0" />
+					<warning_low min="0.026" max="0" />
+					<warning_high min="0.15" max="0.164" />
+					<critical_high min="0.164" max="100" />
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</GasPressureSensor>
@@ -218,8 +224,10 @@
 			</TotalPressureSensor>
 			<GasPressureSensor input="HALO" moduleName="ppCO2_HALO" gasType="CO2">
 				<alarms>
-					<warning_high min="0.15" max="0.25"/>
-					<critical_high min="0.25" max="100"/>
+					<critical_low min="0" max="0" />
+					<warning_low min="0.026" max="0" />
+					<warning_high min="0.15" max="0.164" />
+					<critical_high min="0.164" max="100" />
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</GasPressureSensor>

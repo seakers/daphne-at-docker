@@ -146,8 +146,8 @@
 				<alarms>
 					<critical_low min="0" max="0" />
 					<warning_low min="0.026" max="0" />
-					<warning_high min="0.15" max="0.25" />
-					<critical_high min="0.25" max="100" />
+					<warning_high min="0.15" max="0.164" />
+					<critical_high min="0.164" max="100" />
 				</alarms>
 				<normalStochasticFilter deviation="0.001" />
 			</GasPressureSensor>
@@ -182,8 +182,8 @@
 				<alarms>
 					<critical_low min="0" max="0" />
 					<warning_low min="0.026" max="0" />
-					<warning_high min="0.15" max="0.25" />
-					<critical_high min="0.25" max="100" />
+					<warning_high min="0.15" max="0.164" />
+					<critical_high min="0.164" max="100" />
 				</alarms>
 				<normalStochasticFilter deviation="0.0025" />
 			</GasPressureSensor>
