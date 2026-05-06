@@ -1,15 +1,18 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <?xml-stylesheet type="text/xsl" href="../../style/table.xsl"?>
 <biosim xmlns="http://www.traclabs.com/biosim" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
+	<!-- Scenario: Emergency O2 System Maintenance (IHab) -->
 	<Globals driverStutterLength="50" crewsToWatch="IHab_Group" runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
 	</Globals>
 	<SimBioModules>
 		<environment>
 			<SimEnvironment moduleName="IHab" initialVolume="22900">
-				<percentageInitialization totalPressure="102.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
+				<!-- Decrease IHab initial pressure to 101.5kPa to remain within nominal bounds during simulation -->
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
 			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900">
-				<percentageInitialization totalPressure="102.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
+				<!-- Decrease HALO initial pressure to 101.5kPa to remain within nominal bounds during simulation -->
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
 			</SimEnvironment>
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="IHab"
@@ -60,7 +63,7 @@
 			<Injector moduleName="Oxygen_Injector_IHab">
 				<O2Consumer inputs="O2_Store" desiredFlowRates="0.0" maxFlowRates="0.0">
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.2" outputs="IHab" maxFlowRates="0.0">
+				<O2Producer desiredFlowRates="0.0" outputs="IHab" maxFlowRates="0.0">
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Oxygen_Injector_HALO">
@@ -69,10 +72,11 @@
 				<O2Producer desiredFlowRates="0" outputs="HALO" maxFlowRates="2.0">
 				</O2Producer>
 			</Injector>
+			<!-- Inject nitrogen into IHab module to counter decrease in pressure -->
 			<Injector moduleName="Nitrogen_Injector_HALO">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0" maxFlowRates="2.0">
+				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.15" maxFlowRates="2.0">
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.0" outputs="IHab" maxFlowRates="2.0">
+				<nitrogenProducer desiredFlowRates="0.15" outputs="IHab" maxFlowRates="2.0">
 				</nitrogenProducer>
 			</Injector>
 		</framework>
@@ -145,7 +149,7 @@
 					<warning_high min="0.15" max="0.25" />
 					<critical_high min="0.25" max="100" />
 				</alarms>
-				<normalStochasticFilter deviation="0.005" />
+				<normalStochasticFilter deviation="0.001" />
 			</GasPressureSensor>
 			<GasPressureSensor input="IHab" moduleName="ppO2_IHab" gasType="O2">
 				<alarms>
@@ -163,7 +167,7 @@
 					<warning_high min="0.61" max="0.70" />
 					<critical_high min="0.70" max="1.00" />
 				</alarms>
-				<normalStochasticFilter deviation="0.005" />
+				<normalStochasticFilter deviation="0.001" />
 			</GasConcentrationSensor>
 			<TotalPressureSensor input="IHab" moduleName="Total_Cabin_Pressure_IHab">
 				<alarms>
@@ -181,7 +185,7 @@
 					<warning_high min="0.15" max="0.25" />
 					<critical_high min="0.25" max="100" />
 				</alarms>
-				<normalStochasticFilter deviation="0.005" />
+				<normalStochasticFilter deviation="0.0025" />
 			</GasPressureSensor>
 			<GasPressureSensor input="HALO" moduleName="ppO2_HALO" gasType="O2">
 				<alarms>

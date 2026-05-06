@@ -16,7 +16,7 @@
 					desiredFlowRates="0.2" maxFlowRates="0.2"></airConsumer>
 				<dirtyWaterProducer desiredFlowRates="10000"
 					outputs="Dirty_Water_Store" maxFlowRates="10000" />
-				<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="100"/>
+				<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="200"/>
 			</Dehumidifier>
 			<Fan moduleName="IHab_to_HALO_Fan">
 				<airConsumer inputs="IHab"
@@ -48,7 +48,7 @@
 					outputs="IHab" maxFlowRates="10000" />
 				<CO2Producer desiredFlowRates="10000" outputs="CO2_Store"
 					maxFlowRates="10000"></CO2Producer>
-				<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="100"/>
+				<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="200"/>
 			</VCCR>
 			<OGS moduleName="OGS">
 				<powerConsumer inputs="General_Power_Store"

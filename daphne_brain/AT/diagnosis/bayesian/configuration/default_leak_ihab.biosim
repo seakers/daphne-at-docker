@@ -3,6 +3,7 @@
 <biosim xmlns="http://www.traclabs.com/biosim"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
+	<!-- Scenario: Loss of Pressure (IHab) -->
 	<Globals driverStutterLength="50"
 		crewsToWatch="IHab_Group"
 		runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
@@ -12,28 +13,32 @@
 			<SimEnvironment moduleName="IHab" initialVolume="22900"> 
                 <malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="200"/>
             </SimEnvironment>
-			<SimEnvironment moduleName="HALO" initialVolume="22900" />
+			<!-- Decreased initial HALO pressure (from 102.5 kPa) to remain within nominal bounds -->
+			<SimEnvironment moduleName="HALO" initialVolume="22900">
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
+			</SimEnvironment>
+			<!-- Increased dehumidifer flow rate to 0.5 (from 0.3) to maintain nominal humidity -->
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="IHab"
-					desiredFlowRates="0.3" maxFlowRates="0.3"></airConsumer>
+					desiredFlowRates="0.5" maxFlowRates="1"></airConsumer>
 				<dirtyWaterProducer desiredFlowRates="10000"
 					outputs="Dirty_Water_Store" maxFlowRates="10000" />
 			</Dehumidifier>
 			<Fan moduleName="IHab_to_HALO_Fan">
 				<airConsumer inputs="IHab"
-					desiredFlowRates="0" maxFlowRates="40" />
+					desiredFlowRates="0" maxFlowRates="0" />
 				<powerConsumer inputs="General_Power_Store"
 					desiredFlowRates="9000" maxFlowRates="9000" ></powerConsumer>
 				<airProducer desiredFlowRates="0"
-					outputs="HALO" maxFlowRates="40" ></airProducer>
+					outputs="HALO" maxFlowRates="0" ></airProducer>
 			</Fan>
 			<Fan moduleName="HALO_to_IHab_Fan">
 				<airConsumer inputs="HALO"
-					desiredFlowRates="0" maxFlowRates="40" />
+					desiredFlowRates="0" maxFlowRates="0" />
 				<powerConsumer inputs="General_Power_Store" desiredFlowRates="50"
 					maxFlowRates="50"></powerConsumer>
 				<airProducer desiredFlowRates="0"
-					outputs="IHab" maxFlowRates="40" ></airProducer>
+					outputs="IHab" maxFlowRates="0" ></airProducer>
 			</Fan>
 		</environment>
 		<air>
@@ -218,12 +223,13 @@
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</TotalPressureSensor>
+			<!-- Mirrored CO2 limits from Emergency O2 System Maintenance config -->
 			<GasPressureSensor input="HALO" moduleName="ppCO2_HALO" gasType="CO2">
 				<alarms>
-					<critical_low min="0" max="0.05"/>
-					<warning_low min="0.05" max="0.1"/>
-					<warning_high min="0.25" max="0.35"/>
-					<critical_high min="0.35" max="100"/>
+					<critical_low min="0" max="0" />
+					<warning_low min="0.026" max="0" />
+					<warning_high min="0.15" max="0.25" />
+					<critical_high min="0.25" max="100" />
 				</alarms>
 				<normalStochasticFilter deviation="0.005"/>
 			</GasPressureSensor>

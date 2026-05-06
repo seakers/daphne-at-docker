@@ -170,7 +170,7 @@ anomalies = ["Biological Filter Saturation", "CDRA Failure",
              "Loss of Pressure (IHab)", "Loss of Pressure (HALO)",
              "Unknown Anomaly", "Group 1", "Group 3", "Group 7", "No Anomalies Present"]
 
-NOMINAL_DATA_TICKS = 1000
+NOMINAL_DATA_TICKS = 1 # 1000
 
 # Nominal sensor values 
 NOMINAL_SENSOR_TEMPLATE = {
@@ -204,7 +204,7 @@ NOMINAL_SENSOR_TEMPLATE = {
     'ppCO2_IHab (IHab)_value': 0.04107719,
     'ppCO2_IHab (IHab)_monitoringResult': 'NOMINAL',
     'ppCO2_IHab (IHab)_range': "{'min': 0.0, 'max': 3.4028235e+38}",
-    'ppCO2_IHab (IHab)_alarmThresholds': "{'WARNING_LOW': {'max': 0.0, 'min': 0.026}, 'WARNING_HIGH': {'max': 0.25, 'min': 0.15}, 'CRITICAL_LOW': {'max': 0.0, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 100.0, 'min': 0.25}}",
+    'ppCO2_IHab (IHab)_alarmThresholds': "{'WARNING_LOW': {'max': 0.0, 'min': 0.026}, 'WARNING_HIGH': {'max': 0.164, 'min': 0.15}, 'CRITICAL_LOW': {'max': 0.0, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 100.0, 'min': 0.164}}",
     'ppCO2_IHab (IHab)_input': 'IHab.CO2',
     # Humidity IHab
     'high Humidity_IHab (IHab)': 0, 'low Humidity_IHab (IHab)': 0,
@@ -220,7 +220,7 @@ NOMINAL_SENSOR_TEMPLATE = {
     'ppCO2_HALO (HALO)_value': 0.043024577,
     'ppCO2_HALO (HALO)_monitoringResult': 'NOMINAL',
     'ppCO2_HALO (HALO)_range': "{'min': 0.0, 'max': 3.4028235e+38}",
-    'ppCO2_HALO (HALO)_alarmThresholds': "{'WARNING_LOW': {'max': 0.0, 'min': 0.026}, 'WARNING_HIGH': {'max': 0.25, 'min': 0.15}, 'CRITICAL_LOW': {'max': 0.0, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 100.0, 'min': 0.25}}",
+    'ppCO2_HALO (HALO)_alarmThresholds': "{'WARNING_LOW': {'max': 0.0, 'min': 0.026}, 'WARNING_HIGH': {'max': 0.164, 'min': 0.15}, 'CRITICAL_LOW': {'max': 0.0, 'min': 0.0}, 'CRITICAL_HIGH': {'max': 100.0, 'min': 0.164}}",
     'ppCO2_HALO (HALO)_input': 'HALO.CO2',
     # Total Cabin Pressure IHab
     'high Total_Cabin_Pressure_IHab (IHab)': 0, 'low Total_Cabin_Pressure_IHab (IHab)': 0,
@@ -887,7 +887,7 @@ def main():
                         help='Number of simulation ticks (default: 1000)')
     parser.add_argument('--testing', action='store_true',
                         help='Run a full simulation across different thread and tick combinations')
-    parser.add_argument('--testing-workers', type=str, default='1,2,4,6,8,10,12,14,16',
+    parser.add_argument('--testing-workers', type=str, default='1,2,4,6,8,9,10,12,14,16,18',
                         help='Comma-separated thread counts (default: 1,2,4,6,8,10,12,14,16)')
     parser.add_argument('--testing-ticks', type=str, default='500,1000',
                         help='Comma-separated tick counts (default: 500,1000)')

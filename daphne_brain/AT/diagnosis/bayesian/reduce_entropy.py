@@ -16,20 +16,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # at each value that the evidence can take (avoids the print statements present
 # in query_network/query_parameters)
 def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, potential_evidence, evidence_state):
-    print('~~~~~Threading called here for inference!!~~~~~')
-
     additional_evidence = {}
-
     # Create mappings for the additional evidence
-    additional_evidence_mapping = {
-        'False': 0,
-        'True': 1
-    }
-
+    additional_evidence_mapping = {'False': 0, 'True': 1}
     additional_evidence[potential_evidence] = additional_evidence_mapping[evidence_state]
     # print(f'Analyzing {additional_evidence}')
     # print('---------------------------------------------------------------------------')
-
     evidence.update(additional_evidence)
     # print(f'Updated evidence: {evidence}')
 
@@ -66,37 +58,14 @@ def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, 
     # Initialize a dictionary to store the probability of each anomaly being present
     anomaly_probabilities = {}
 
-    # Perform the inference one anomaly at a time
-    # Updated to use threading to perform multiple hidden parameter queries at once
-    try:
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            futures = {
-                executor.submit(query_single_anomaly, anomaly): anomaly
-                for anomaly in anomalies_to_query
-            }
-
-            for future in as_completed(futures):
-                anomaly_name = futures[future]
-                try:
-                    anomaly, probability = future.result()
-                    anomaly_probabilities[anomaly] = probability
-                except Exception as e:
-                    raise RuntimeError(f"Error querying anomaly '{anomaly_name}': {e}")
-
-    except RuntimeError:
-        raise  # re-raise so the caller sees it
-    except Exception as e:
-        raise RuntimeError(f"Error during threaded inference: {e}")
-
-        # Previous function (COMMENTED OUT TO ENABLE THREADING)
-    #     for anomaly in anomalies_to_query:
-    #         result = infer.query(variables = [anomaly], evidence = evidence)
-    #         # print(f"Result: {result}")
-    #         probability_of_anomaly_present = result.values[1] # [0] --> anomaly absent
-    #         anomaly_probabilities[anomaly] = probability_of_anomaly_present
-
-    # except Exception as e:
-    #     raise RuntimeError(f"Error during inference: {e}")
+    # Serial baseline (no threading) <-- note that this is NOT the same as using n=1, as no
+    # threading setup is required here
+    for anomaly in anomalies_to_query:
+        try:
+            name, prob = query_single_anomaly(anomaly)
+            anomaly_probabilities[name] = prob
+        except Exception as e:
+            raise RuntimeError(f"Error querying anomaly '{anomaly}': {e}")
 
     # Create a dictionary to store the normalized probabilities of each anomaly
     normalized_probabilities = {}
@@ -106,7 +75,7 @@ def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, 
         normalized_probabilities[anomaly] = probability / total_anomaly_probabilities
 
     # Sort anomalies based on the probability of their presence
-    sorted_anomalies = sorted(normalized_probabilities.items(), key = lambda x: x[1], reverse = True)
+    # sorted_anomalies = sorted(normalized_probabilities.items(), key = lambda x: x[1], reverse = True)
 
     # Print the sorted anomalies with their probabilities of being present
     # print()
@@ -172,18 +141,15 @@ def select_best_evidence(infer, measurement_ranges, split_probability_dict, hidd
         print("No relevant hidden components found for top anomalies")
         return None
 
-    evaluated_count = 0
-    # Iterate over relevant hidden components only
-    for potential_evidence in relevant_hidden_components:
-        evaluated_count += 1
-        
+    # Add worker function to use threading correctly (of all pieces of evidence in parallel rather
+    # than sequential passing as before)
+    def evaluate_hidden_component(potential_evidence):
         hidden_based_on_tm = infer.query(variables = [potential_evidence], evidence = current_evidence)
         hp_equals_1 = hidden_based_on_tm.values[1]
       
         entropies = []
-        evidence = current_evidence.copy()
-
         for outcome in ['False', 'True']:
+            evidence = current_evidence.copy()
             new_probabilities = hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, potential_evidence, outcome)
             entropy = calculate_entropy(new_probabilities.values())
             entropy = round(entropy, 8)
@@ -193,14 +159,69 @@ def select_best_evidence(infer, measurement_ranges, split_probability_dict, hidd
         average_entropy = round(average_entropy, 8)
         delta_h = initial_entropy - average_entropy
         delta_h = round(delta_h, 8)
+        return potential_evidence, delta_h
+    
+    # Run benchmark across worker counts
+    worker_counts = [None, 1, 2, 3, 4, 5, 10]
+    serial_time = None
+    total_inference_times = {}
 
+    for n_workers in worker_counts:
+        # Run all anomaly queries with n worker threads. If n_workers=None, queries will be
+        # executed in series (NOT the same thing as n=1)
+        label = 'Serial (no threads)' if n_workers is None else f'{n_workers} workers'
+        component_results = {}
+        inference_start = time.perf_counter()
+
+        try:
+            if n_workers is None:
+                # Serial baseline (no threading)
+                for component in relevant_hidden_components:
+                    name, delta_h = evaluate_hidden_component(component)
+                    component_results[name] = delta_h
+            else:
+                # Use theading to perform multiple hidden parameter queries at once
+                # (can also perform threading with one worker, still requires threading setup)
+                with ThreadPoolExecutor(max_workers=n_workers) as executor:
+                    futures = {
+                        executor.submit(evaluate_hidden_component, component): component
+                        for component in relevant_hidden_components
+                    }
+
+                    for future in as_completed(futures):
+                        component = futures[future]
+                        try:
+                            name, delta_h = future.result()
+                            component_results[name] = delta_h
+                        except Exception as e:
+                            raise RuntimeError(f"Error evaluating component '{component}': {e}")
+        except RuntimeError:
+            raise  # re-raise so the caller sees it
+        except Exception as e:
+            raise RuntimeError(f"Error during threaded inference: {e}")
+
+        # Record elapsed time to perform inference
+        elapsed = time.perf_counter() - inference_start
+        total_inference_times[label] = elapsed
+
+        if serial_time is None:
+            serial_time = elapsed
+            speedup_str = '1.00x (baseline)'
+        else:
+            speedup = serial_time / elapsed if elapsed > 0 else float('inf')
+            speedup_str = f'{speedup:.2f}x'
+
+        print(f'{label}: {elapsed:12.4f} {speedup_str}')
+
+    # Use the results from the serial baseline run to select the best evidence
+    for component, delta_h in component_results.items():
         if delta_h > best_entropy_reduction:
             best_entropy_reduction = delta_h
-            best_evidence = potential_evidence
+            best_evidence = component
             print(f"  New best: {best_evidence} (ΔH = {delta_h:.6f})")
     
     elapsed = time.time() - tic
-    print(f"Best evidence selection completed in {elapsed:.2f}s (evaluated {evaluated_count} components)")
+    print(f"Best evidence selection completed in {elapsed:.2f}s (evaluated {len(relevant_hidden_components)} components)")
     print(f"Selected best evidence: {best_evidence} with entropy reduction: {best_entropy_reduction:.6f}")
 
     return best_evidence

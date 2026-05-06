@@ -6,10 +6,10 @@
 	<SimBioModules>
 		<environment>
 			<SimEnvironment moduleName="IHab" initialVolume="22900">
-				<percentageInitialization totalPressure="102.5" o2Percentage="0.2025" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.204" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27561" />
 			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900">
-				<percentageInitialization totalPressure="102.5" o2Percentage="0.2025" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.204" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27561" />
 			</SimEnvironment>
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="IHab" desiredFlowRates="0.2965" maxFlowRates="0.2965" />
@@ -62,15 +62,22 @@
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Oxygen_Injector_HALO">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.0" maxFlowRates="0.5">
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.04" maxFlowRates="2.0">
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.0" outputs="HALO" maxFlowRates="0.5">
+				<O2Producer desiredFlowRates="0.04" outputs="HALO" maxFlowRates="2.0">
 				</O2Producer>
 			</Injector>
-			<Injector moduleName="Nitrogen_Injector_HALO">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0" maxFlowRates="2.0">
+			<!-- Added nitrogen sinks for both IHab and HALO -->
+			<Injector moduleName="Nitrogen_Sink_IHab">
+				<nitrogenConsumer inputs="IHab" desiredFlowRates="0.04" maxFlowRates="2.0">
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.0" outputs="IHab" maxFlowRates="2.0">
+				<nitrogenProducer desiredFlowRates="0.04" outputs="Nitrogen_Store" maxFlowRates="2.0">
+				</nitrogenProducer>
+			</Injector>
+			<Injector moduleName="Nitrogen_Sink_HALO">
+				<nitrogenConsumer inputs="HALO" desiredFlowRates="0.04" maxFlowRates="2.0">
+				</nitrogenConsumer>
+				<nitrogenProducer desiredFlowRates="0.04" outputs="Nitrogen_Store" maxFlowRates="2.0">
 				</nitrogenProducer>
 			</Injector>
 		</framework>
@@ -140,8 +147,8 @@
 				<alarms>
 					<critical_low min="0" max="0" />
 					<warning_low min="0.026" max="0" />
-					<warning_high min="0.15" max="0.25" />
-					<critical_high min="0.25" max="100" />
+					<warning_high min="0.15" max="0.164" />
+					<critical_high min="0.164" max="100" />
 				</alarms>
 				<normalStochasticFilter deviation="0.005" />
 			</GasPressureSensor>
@@ -176,8 +183,8 @@
 				<alarms>
 					<critical_low min="0" max="0" />
 					<warning_low min="0.026" max="0" />
-					<warning_high min="0.15" max="0.25" />
-					<critical_high min="0.25" max="100" />
+					<warning_high min="0.15" max="0.164" />
+					<critical_high min="0.164" max="100" />
 				</alarms>
 				<normalStochasticFilter deviation="0.005" />
 			</GasPressureSensor>

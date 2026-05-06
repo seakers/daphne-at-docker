@@ -211,13 +211,13 @@ unknown_anomaly_nodes = [
 for ua in unknown_anomaly_nodes:
     reduced_network.append(ua)
 
-# ADD EDGES BETWEEN GROUPS + UNKNOWN ANOMALY AND NO ANOMALIES PRESENT
-nap_nodes = [
-    ("Group 1", "No Anomalies Present"),
-    ("Group 3", "No Anomalies Present"),
-    ("Group 7", "No Anomalies Present"),
-    ("Unknown Anomaly", "No Anomalies Present")
-]
+# # ADD EDGES BETWEEN GROUPS + UNKNOWN ANOMALY AND NO ANOMALIES PRESENT
+# nap_nodes = [
+#     ("Group 1", "No Anomalies Present"),
+#     ("Group 3", "No Anomalies Present"),
+#     ("Group 7", "No Anomalies Present"),
+#     ("Unknown Anomaly", "No Anomalies Present")
+# ]
 
-for nap in nap_nodes:
-    reduced_network.append(nap)
+# for nap in nap_nodes:
+#     reduced_network.append(nap)

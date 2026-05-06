@@ -1,35 +1,40 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <?xml-stylesheet type="text/xsl" href="../../style/table.xsl"?>
 <biosim xmlns="http://www.traclabs.com/biosim" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
+	<!-- Scenario: Emergency O2 System Maintenance (HALO) -->
 	<Globals driverStutterLength="50" crewsToWatch="IHab_Group" runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
 	</Globals>
 	<SimBioModules>
 		<environment>
 			<SimEnvironment moduleName="IHab" initialVolume="22900">
-				<percentageInitialization totalPressure="102.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
+				<!-- Decrease IHab initial pressure to 101.5kPa to remain within nominal bounds during simulation -->
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
 			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900">
-				<percentageInitialization totalPressure="102.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
+				<!-- Decrease HALO initial pressure to 101.5kPa to remain within nominal bounds during simulation -->
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
 			</SimEnvironment>
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="HALO" desiredFlowRates="0.2965" maxFlowRates="0.2965" />
 				<dirtyWaterProducer desiredFlowRates="10000" outputs="Dirty_Water_Store" maxFlowRates="10000" />
 			</Dehumidifier>
 			<Fan moduleName="IHab_to_HALO_Fan">
+				<!-- Reduce fan flow rates to zero to isolate HALO module -->
 				<airConsumer inputs="IHab"
-					desiredFlowRates="0.5" maxFlowRates="0.5" />
+					desiredFlowRates="0" maxFlowRates="0" />
 				<powerConsumer inputs="General_Power_Store"
 					desiredFlowRates="9000" maxFlowRates="9000" ></powerConsumer>
-				<airProducer desiredFlowRates="0.5"
-					outputs="HALO" maxFlowRates="0.5" ></airProducer>
+				<airProducer desiredFlowRates="0"
+					outputs="HALO" maxFlowRates="0" ></airProducer>
 			</Fan>
 			<Fan moduleName="HALO_to_IHab_Fan">
+				<!-- Reduce fan flow rates to zero to isolate HALO module -->
 				<airConsumer inputs="HALO"
-					desiredFlowRates="0.5" maxFlowRates="0.5" />
+					desiredFlowRates="0" maxFlowRates="0" />
 				<powerConsumer inputs="General_Power_Store" desiredFlowRates="50"
 					maxFlowRates="50"></powerConsumer>
-				<airProducer desiredFlowRates="0.5"
-					outputs="IHab" maxFlowRates="0.5" ></airProducer>
+				<airProducer desiredFlowRates="0"
+					outputs="IHab" maxFlowRates="0" ></airProducer>
 			</Fan>
 		</environment>
 		<air>
@@ -62,15 +67,18 @@
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Oxygen_Injector_HALO">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.2" maxFlowRates="2.0">
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.0" maxFlowRates="2.0">
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.2" outputs="HALO" maxFlowRates="2.0">
+				<O2Producer desiredFlowRates="0.0" outputs="HALO" maxFlowRates="2.0">
 				</O2Producer>
 			</Injector>
+			<!-- Inject nitrogen into the HALO module to counter decrease in pressure;
+			note that while injector name is HALO, output changed from IHab to HALO here,
+			confirm if this is acceptable based on Gateway setup -->
 			<Injector moduleName="Nitrogen_Injector_HALO">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0" maxFlowRates="2.0">
+				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.15" maxFlowRates="2.0">
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.0" outputs="IHab" maxFlowRates="2.0">
+				<nitrogenProducer desiredFlowRates="0.15" outputs="HALO" maxFlowRates="2.0">
 				</nitrogenProducer>
 			</Injector>
 		</framework>
@@ -206,7 +214,7 @@
 					<warning_high min="102.7319" max="104.8003" />
 					<critical_high min="104.8003" max="110" />
 				</alarms>
-				<normalStochasticFilter deviation="0.005" />
+				<normalStochasticFilter deviation="0.0025" />
 			</TotalPressureSensor>
 		</environment>
 	</Sensors>

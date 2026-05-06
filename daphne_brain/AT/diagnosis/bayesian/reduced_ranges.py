@@ -40,15 +40,15 @@ measurement_ranges = {
         'Exceeds_LowerWarningLimit': (None, 40, False, True)
     },
     "ppCO2_IHab (IHab)": {
-        'Exceeds_UpperWarningLimit': (1.88, None, True, False),
-        'Exceeds_UpperCautionLimit': (1.13, 1.88, True, False),
+        'Exceeds_UpperWarningLimit': (1.23, None, True, False),
+        'Exceeds_UpperCautionLimit': (1.13, 1.23, True, False),
         'Nominal': (0.2, 1.13, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
         'Exceeds_LowerCautionLimit': (0, 0.2, False, True),
         'Exceeds_LowerWarningLimit': (None, 0, False, True)
     },
     "ppCO2_HALO (HALO)": {
-        'Exceeds_UpperWarningLimit': (1.88, None, True, False),
-        'Exceeds_UpperCautionLimit': (1.13, 1.88, True, False),
+        'Exceeds_UpperWarningLimit': (1.23, None, True, False),
+        'Exceeds_UpperCautionLimit': (1.13, 1.23, True, False),
         'Nominal': (0.2, 1.13, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
         'Exceeds_LowerCautionLimit': (0, 0.2, False, True),
         'Exceeds_LowerWarningLimit': (None, 0, False, True)
