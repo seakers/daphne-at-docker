@@ -192,6 +192,7 @@ class BayesianQueryHandler:
                 "probabilities": new_probs,
                 "additional_evidence": additional_evidence,
                 "best_evidence": best_evidence,
+                "current_telemetry_values": updated_telemetry,
                 "diagnosis_list": [{
                     "anomaly": anomaly,
                     "probability": prob

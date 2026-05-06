@@ -788,31 +788,53 @@ const actions = {
 
         // Make the diagnosis request to the backend
         let reqData = new FormData();
-        let telemetryValuesDict = Object.fromEntries(
-            Object.entries(telemetryValues).map(([key, value]) => [key, { ...value }])
-        );
-
+        
         let parsedTelemetryValues = {};
         let parsedTelemetryValuest1 = {};
 
-
-        for (let i in telemetryValuesDict) {
-            let value = telemetryValuesDict[i];
-            let valueDict = telemetryValuesDict[i];
-            const reversedArray = Object.entries(valueDict)
-                .reverse()  // Reverse the array
-                .map(([key, value]) => [Number(key), value]);  // Convert keys back to numbers if needed
-
-            console.log("telemetry reversed array", reversedArray)
-
-            parsedTelemetryValues[i] = reversedArray[0][1];
-            if (reversedArray.length > 30) {
-                parsedTelemetryValuest1[i] = reversedArray[29][1];
-                console.log("telemetry reversed dict value", reversedArray[29][1])
+        // If the request includes pre-computed telemetry (from a hypothetical what-if),
+        // use those directly instead of re-reading from the live sensor feed
+        if (requestPayload['current_telemetry_values'] && Object.keys(requestPayload['current_telemetry_values']).length > 0) {
+            console.log("Using hypothetical telemetry values from requestPayload");
+            parsedTelemetryValues = requestPayload['current_telemetry_values'];
+            // For t-1, use same hypothetical values (keys with " (t-1)" suffix)
+            for (let key in parsedTelemetryValues) {
+                if (key.endsWith(' (t-1)')) {
+                    parsedTelemetryValuest1[key.replace(' (t-1)', '')] = parsedTelemetryValues[key];
+                }
             }
-            else {
-                parsedTelemetryValuest1[i] = reversedArray[reversedArray.length - 1][1];
-                console.log("telemetry reversed dict value", reversedArray[reversedArray.length - 1][1])
+            // Fill in any missing t-1 keys from the current values
+            for (let key in parsedTelemetryValues) {
+                if (!key.endsWith(' (t-1)') && !(key in parsedTelemetryValuest1)) {
+                    parsedTelemetryValuest1[key] = parsedTelemetryValues[key];
+                }
+            }
+            console.log("Hypothetical parsedTelemetryValues:", parsedTelemetryValues);
+            console.log("Hypothetical parsedTelemetryValuest1:", parsedTelemetryValuest1);
+        } else {
+            // Normal flow: read from live sensor feed
+            let telemetryValuesDict = Object.fromEntries(
+                Object.entries(telemetryValues).map(([key, value]) => [key, { ...value }])
+            );
+
+            for (let i in telemetryValuesDict) {
+                let value = telemetryValuesDict[i];
+                let valueDict = telemetryValuesDict[i];
+                const reversedArray = Object.entries(valueDict)
+                    .reverse()  // Reverse the array
+                    .map(([key, value]) => [Number(key), value]);  // Convert keys back to numbers if needed
+
+                console.log("telemetry reversed array", reversedArray)
+
+                parsedTelemetryValues[i] = reversedArray[0][1];
+                if (reversedArray.length > 30) {
+                    parsedTelemetryValuest1[i] = reversedArray[29][1];
+                    console.log("telemetry reversed dict value", reversedArray[29][1])
+                }
+                else {
+                    parsedTelemetryValuest1[i] = reversedArray[reversedArray.length - 1][1];
+                    console.log("telemetry reversed dict value", reversedArray[reversedArray.length - 1][1])
+                }
             }
         }
 

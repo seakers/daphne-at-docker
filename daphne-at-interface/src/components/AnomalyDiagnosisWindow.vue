@@ -839,6 +839,11 @@ export default {
       diagnosticHistory: [],
       activeDiagnosticTab: 0,
       bestEvidenceListener: null,
+      hypotheticalBestEvidence: null,
+      hypotheticalBestEvidenceListener: false,
+      hypotheticalTelemetry: {},
+      hypotheticalAdditionalEvidence: {},
+      isHypotheticalMode: false,
       showLeftScroll: false,
       showRightScroll: false,
       draggedTabIndex: null,
@@ -2458,6 +2463,22 @@ export default {
       }
 
       if (this.bestEvidence) {
+        // If in hypothetical mode, route through hypothetical listener
+        if (this.isHypotheticalMode) {
+          this.hypotheticalBestEvidence = this.bestEvidence;
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": `I could improve this hypothetical diagnosis if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
+            "visual_message_type": ["text"],
+            "visual_message": [`For this hypothetical scenario, the best evidence to collect is: ${this.bestEvidence}. Would you like to assess its condition?`],
+            "writer": "daphne",
+            "options": ["Yes", "No"],
+            "optionsCallbackEvent": "hypotheticalBestEvidenceResponse"
+          });
+          this.setupHypotheticalBestEvidenceListener();
+          this.bestEvidencePrompted = true;
+          return;
+        }
+
         this.$store.commit('addDialoguePiece', {
           "voice_message": `I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
           "visual_message_type": ["text"],
@@ -3286,27 +3307,111 @@ export default {
       this.activeDiagnosticTab = this.diagnosticHistory.length - 1;
       this.activeSimpleTab = this.simpleTabs.length - 1;
       
-      // Confirm to the user and show best evidence suggestion
+      // Confirm to the user and prompt for best evidence collection
       const bestEvidence = hypotheticalDiagnosis.best_evidence;
       console.log("best evidenceeeeeeee in hypothetical", bestEvidence)
-      let confirmMessage = "I've added this hypothetical scenario to your diagnosis history tabs.";
-      let confirmVisual = [confirmMessage];
       
       if (bestEvidence) {
-        console.log("printing if you want to continueeeeee")
-        confirmVisual.push(`If you want to continue updating this hypothetical diagnosis, you could collect the suggested evidence below:`);
-        confirmVisual.push(`Best evidence to collect: ${bestEvidence}`);
+        // Store the hypothetical context for the slider flow
+        this.hypotheticalBestEvidence = bestEvidence;
+        this.hypotheticalTelemetry = hypotheticalDiagnosis.current_telemetry_values || {};
+        this.hypotheticalAdditionalEvidence = hypotheticalDiagnosis.additional_evidence || {};
+        
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `I've added this hypothetical scenario to your diagnosis history tabs. I could further improve the diagnosis if you assess the condition of ${bestEvidence}. Would you like to provide this information?`,
+          "visual_message_type": ["text", "text"],
+          "visual_message": [
+            "I've added this hypothetical scenario to your diagnosis history tabs.",
+            `For this hypothetical scenario, the best evidence to collect is: ${bestEvidence}. Would you like to assess its condition?`
+          ],
+          "writer": "daphne",
+          "options": ["Yes", "No"],
+          "optionsCallbackEvent": "hypotheticalBestEvidenceResponse"
+        });
+        
+        // Set up listener for Yes/No response
+        this.setupHypotheticalBestEvidenceListener();
+      } else {
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": "I've added this hypothetical scenario to your diagnosis history tabs.",
+          "visual_message_type": ["text"],
+          "visual_message": ["I've added this hypothetical scenario to your diagnosis history tabs."],
+          "writer": "daphne"
+        });
+      }
+    },
+
+    setupHypotheticalBestEvidenceListener() {
+      if (!this.hypotheticalBestEvidenceListener) {
+        this.$root.$on('hypotheticalBestEvidenceResponse', this.handleHypotheticalBestEvidenceResponse);
+        this.hypotheticalBestEvidenceListener = true;
+      }
+    },
+
+    handleHypotheticalBestEvidenceResponse(response) {
+      if (response === "Yes") {
+        // Show damage assessment slider for the hypothetical best evidence
+        this.showHypotheticalDamageSlider();
+      } else {
+        // Exit hypothetical mode
+        this.isHypotheticalMode = false;
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": "Alright, I'll keep the hypothetical diagnosis as is.",
+          "visual_message_type": ["text"],
+          "visual_message": ["Alright, I'll keep the hypothetical diagnosis as is."],
+          "writer": "daphne"
+        });
       }
       
-      // visual_message_type must match visual_message length (1:1 mapping)
-      const messageTypes = confirmVisual.map(() => "text");
-      
+      // Clean up listener
+      this.$root.$off('hypotheticalBestEvidenceResponse', this.handleHypotheticalBestEvidenceResponse);
+      this.hypotheticalBestEvidenceListener = false;
+    },
+
+    showHypotheticalDamageSlider() {
       this.$store.commit('addDialoguePiece', {
-        "voice_message": confirmMessage,
-        "visual_message_type": messageTypes,
-        "visual_message": confirmVisual,
-        "writer": "daphne"
+        "voice_message": `On a scale of 1 to 5, how damaged is the ${this.hypotheticalBestEvidence}? (1 = minimal damage, 5 = severe damage)`,
+        "visual_message_type": ["slider"],
+        "visual_message": [`On a scale of 1 to 5, how damaged is the ${this.hypotheticalBestEvidence}? (1 = minimal damage, 5 = severe damage)`],
+        "writer": "daphne",
+        "sliderOptions": {
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "defaultValue": 3,
+          "callbackEvent": "hypotheticalDamageAssessmentResponse"
+        }
       });
+      
+      // Set up listener for slider response
+      this.$root.$on('hypotheticalDamageAssessmentResponse', this.handleHypotheticalDamageAssessment);
+    },
+
+    handleHypotheticalDamageAssessment(value) {
+      // Merge slider evidence into the hypothetical additional evidence
+      const mergedEvidence = { ...this.hypotheticalAdditionalEvidence };
+      mergedEvidence[this.hypotheticalBestEvidence] = value;
+      
+      console.log("HYPOTHETICAL DAMAGE: slider value =", value);
+      console.log("HYPOTHETICAL DAMAGE: bestEvidence =", this.hypotheticalBestEvidence);
+      console.log("HYPOTHETICAL DAMAGE: mergedEvidence =", mergedEvidence);
+      console.log("HYPOTHETICAL DAMAGE: hypotheticalTelemetry =", this.hypotheticalTelemetry);
+      
+      // Set hypothetical mode so subsequent best evidence rounds stay in hypothetical context
+      this.isHypotheticalMode = true;
+      
+      // Also update this.additionalEvidence so submitAdditionalEvidence uses it
+      this.additionalEvidence = mergedEvidence;
+      this.hypotheticalAdditionalEvidence = mergedEvidence;
+      
+      // Swap telemetry to the hypothetical values
+      this.currentTelemetryValues = this.hypotheticalTelemetry;
+      
+      // Clean up listener
+      this.$root.$off('hypotheticalDamageAssessmentResponse', this.handleHypotheticalDamageAssessment);
+      
+      // Submit the evidence and update diagnosis
+      this.submitAdditionalEvidence();
     },
 
     handleAddBayesianDiagnosis(eventData) {
@@ -3418,8 +3523,16 @@ export default {
         const diagnosisReport = this.$store.getters.getDiagnosisReport;
         
         this.unconfirmedSymptoms = diagnosisReport.hidden_components;
-        this.bestEvidence = diagnosisReport.best_evidence;     
-        this.currentTelemetryValues = diagnosisReport.current_telemetry_values
+        this.bestEvidence = diagnosisReport.best_evidence;
+        
+        // If in hypothetical mode, keep hypothetical telemetry; otherwise update normally
+        if (this.isHypotheticalMode) {
+          // Update hypothetical telemetry with the returned values so the next round uses them
+          this.hypotheticalTelemetry = diagnosisReport.current_telemetry_values;
+          this.currentTelemetryValues = diagnosisReport.current_telemetry_values;
+        } else {
+          this.currentTelemetryValues = diagnosisReport.current_telemetry_values;
+        }
         
         this.$store.commit('addDialoguePiece', {
           "voice_message": "Diagnosis has been updated with your additional evidence!",
@@ -4192,6 +4305,8 @@ export default {
   this.$root.$off('addBayesianDiagnosis', this.handleAddBayesianDiagnosis);
   this.$root.$off('showProcedureListFromChat', this.handleShowProcedureListFromChat);
   this.$root.$off('damageAssessmentResponse', this.handleDamageAssessmentResponse);
+  this.$root.$off('hypotheticalBestEvidenceResponse', this.handleHypotheticalBestEvidenceResponse);
+  this.$root.$off('hypotheticalDamageAssessmentResponse', this.handleHypotheticalDamageAssessment);
 
   if (this.$refs.tabsContainer) {
       this.$refs.tabsContainer.removeEventListener('scroll', this.updateScrollButtons);
