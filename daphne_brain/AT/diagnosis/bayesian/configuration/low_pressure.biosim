@@ -3,7 +3,7 @@
 <biosim xmlns="http://www.traclabs.com/biosim"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
-	<!-- Scenario: Low Pressure (Unknown Anomaly) -->
+	<!-- Scenario: Low Pressure (Unknown Anomaly) (trained with driverStutterLength = 200) -->
 	<Globals driverStutterLength="200"
 		crewsToWatch="IHab_Group"
 		runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">

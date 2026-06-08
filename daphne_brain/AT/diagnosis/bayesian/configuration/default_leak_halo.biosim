@@ -3,7 +3,7 @@
 <biosim xmlns="http://www.traclabs.com/biosim"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
-	<!-- Scenario: Loss of Pressure (HALO) -->
+	<!-- Scenario: Loss of Pressure (HALO) (trained with driverStutterLength = 50) -->
 	<Globals driverStutterLength="50"
 		crewsToWatch="IHab_Group"
 		runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
@@ -16,7 +16,7 @@
 			<SimEnvironment moduleName="IHab" initialVolume="22900" />
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="HALO"
-					desiredFlowRates="0.3" maxFlowRates="0.3"></airConsumer>
+					desiredFlowRates="0.45" maxFlowRates="0.45"></airConsumer>
 				<dirtyWaterProducer desiredFlowRates="10000"
 					outputs="Dirty_Water_Store" maxFlowRates="10000" />
 			</Dehumidifier>
@@ -43,13 +43,13 @@
 			</NitrogenStore>
 			<VCCR moduleName="Main_VCCR" logLevel="INFO">
 				<powerConsumer inputs="General_Power_Store"
-					desiredFlowRates="340" maxFlowRates="1000" ></powerConsumer>
+					desiredFlowRates="500" maxFlowRates="1000" ></powerConsumer>
 				<airConsumer inputs="HALO"
 					desiredFlowRates="10000" maxFlowRates="10000"></airConsumer>
 				<airProducer desiredFlowRates="10000"
 					outputs="HALO" maxFlowRates="10000" />
-				<CO2Producer desiredFlowRates="10000" outputs="CO2_Store"
-					maxFlowRates="10000"></CO2Producer>
+				<CO2Producer desiredFlowRates="20000" outputs="CO2_Store"
+					maxFlowRates="20000"></CO2Producer>
 			</VCCR>
 			<OGS moduleName="OGS">
 				<powerConsumer inputs="General_Power_Store"
@@ -85,6 +85,15 @@
 				<O2Producer desiredFlowRates="0.0"
 					outputs="HALO" maxFlowRates="0.0" >
 				</O2Producer>
+			</Injector>
+			
+			<Injector moduleName="CO2_Sink_HALO">
+				<CO2Consumer inputs="HALO" desiredFlowRates="0.3"
+					maxFlowRates="0.3" >
+				</CO2Consumer>
+				<CO2Producer desiredFlowRates="0.3"
+					outputs="CO2_Store" maxFlowRates="0.3" >
+				</CO2Producer>
 			</Injector>
 			<Injector moduleName="Nitrogen_Injector_HALO">
 				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0"
@@ -139,7 +148,7 @@
 			</DryWasteStore>
 		</waste>
 		<crew>
-			<CrewGroup moduleName="IHab_Group">
+			<CrewGroup moduleName="HALO_Group">
 				<potableWaterConsumer inputs="Potable_Water_Store"
 					desiredFlowRates="3" maxFlowRates="3">
 				</potableWaterConsumer>
@@ -186,7 +195,7 @@
 			<GasPressureSensor input="IHab" moduleName="ppCO2_IHab" gasType="CO2">
 				<alarms>
 					<critical_low min="0" max="0" />
-					<warning_low min="0.026" max="0" />
+					<warning_low min="0" max="0.026" />
 					<warning_high min="0.15" max="0.164" />
 					<critical_high min="0.164" max="100" />
 				</alarms>
@@ -222,7 +231,7 @@
 			<GasPressureSensor input="HALO" moduleName="ppCO2_HALO" gasType="CO2">
 				<alarms>
 					<critical_low min="0" max="0" />
-					<warning_low min="0.026" max="0" />
+					<warning_low min="0" max="0.026" />
 					<warning_high min="0.15" max="0.164" />
 					<critical_high min="0.164" max="100" />
 				</alarms>

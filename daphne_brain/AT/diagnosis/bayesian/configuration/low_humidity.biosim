@@ -3,7 +3,7 @@
 <biosim xmlns="http://www.traclabs.com/biosim"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
-	<!-- Scenario: Low Humidity (Unknown Anomaly) -->
+	<!-- Scenario: Low Humidity (Unknown Anomaly) (trained with driverStutterLength = 200) -->
 	<Globals driverStutterLength="200"
 		crewsToWatch="IHab_Group"
 		runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
@@ -13,15 +13,16 @@
 			<SimEnvironment moduleName="IHab" initialVolume="22900">
 				<percentageInitialization totalPressure="101.325"
 					o2Percentage="0.21" co2Percentage="0.00039"
-					waterPercentage="0.35" otherPercentage="0.0"
-					nitrogenPercentage="0.43961" />
+					waterPercentage="0.32" otherPercentage="0.0"
+					nitrogenPercentage="0.46961" />
 			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900">
 				<percentageInitialization totalPressure="101.325"
 					o2Percentage="0.21" co2Percentage="0.00039"
-					waterPercentage="0.35" otherPercentage="0.0"
-					nitrogenPercentage="0.43961" />
+					waterPercentage="0.32" otherPercentage="0.0"
+					nitrogenPercentage="0.46961" />
 			</SimEnvironment>
+			<!-- Trying to up flow rate from 0.3 moles/tick to see if that decreases humidity -->
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="IHab"
 					desiredFlowRates="0.3" maxFlowRates="0.3"></airConsumer>
@@ -30,19 +31,19 @@
 			</Dehumidifier>
 			<Fan moduleName="IHab_to_HALO_Fan">
 				<airConsumer inputs="IHab"
-					desiredFlowRates="40" maxFlowRates="40" />
+					desiredFlowRates="20" maxFlowRates="20" />
 				<powerConsumer inputs="General_Power_Store"
 					desiredFlowRates="9000" maxFlowRates="9000" ></powerConsumer>
-				<airProducer desiredFlowRates="40"
-					outputs="HALO" maxFlowRates="40" ></airProducer>
+				<airProducer desiredFlowRates="20"
+					outputs="HALO" maxFlowRates="20" ></airProducer>
 			</Fan>
 			<Fan moduleName="HALO_to_IHab_Fan">
 				<airConsumer inputs="HALO"
-					desiredFlowRates="40" maxFlowRates="40" />
+					desiredFlowRates="20" maxFlowRates="20" />
 				<powerConsumer inputs="General_Power_Store" desiredFlowRates="50"
 					maxFlowRates="50"></powerConsumer>
-				<airProducer desiredFlowRates="40"
-					outputs="IHab" maxFlowRates="40" ></airProducer>
+				<airProducer desiredFlowRates="20"
+					outputs="IHab" maxFlowRates="20" ></airProducer>
 			</Fan>
 		</environment>
 		<air>
@@ -79,27 +80,35 @@
 		</air>
 		<framework>
 			<Injector moduleName="Oxygen_Injector_IHab">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.2"
-					maxFlowRates="2.0" >
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.1"
+					maxFlowRates="0.1" >
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.2"
-					outputs="IHab" maxFlowRates="2.0" >
+				<O2Producer desiredFlowRates="0.1"
+					outputs="IHab" maxFlowRates="0.1" >
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Oxygen_Injector_HALO">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.0"
-					maxFlowRates="0.5" >
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.1"
+					maxFlowRates="0.1" >
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.0"
-					outputs="HALO" maxFlowRates="0.5" >
+				<O2Producer desiredFlowRates="0.1"
+					outputs="HALO" maxFlowRates="0.1" >
 				</O2Producer>
 			</Injector>
-			<Injector moduleName="Nitrogen_Injector_HALO">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0"
-					maxFlowRates="0.0" >
+			<Injector moduleName="Nitrogen_Sink_IHab">
+				<nitrogenConsumer inputs="IHab" desiredFlowRates="0.225"
+					maxFlowRates="0.225" >
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.0"
-					outputs="HALO" maxFlowRates="0.0" >
+				<nitrogenProducer desiredFlowRates="0.225"
+					outputs="Nitrogen_Store" maxFlowRates="0.225" >
+				</nitrogenProducer>
+			</Injector>
+			<Injector moduleName="Nitrogen_Sink_HALO">
+				<nitrogenConsumer inputs="HALO" desiredFlowRates="0.1"
+					maxFlowRates="0.1" >
+				</nitrogenConsumer>
+				<nitrogenProducer desiredFlowRates="0.1"
+					outputs="Nitrogen_Store" maxFlowRates="0.1" >
 				</nitrogenProducer>
 			</Injector>
 		</framework>

@@ -71,18 +71,4 @@ unknown_anomaly = TabularCPD(variable='Unknown Anomaly',
                              evidence_card=[2,2,2])
 known_cpds.append(unknown_anomaly)
 
-# # CPD added for No Anomalies Present
-# nap_false = np.ones(2**4, dtype='float')
-# nap_false[0] = 0
-# nap_true = 1 - nap_false
-# nap = TabularCPD(variable='No Anomalies Present',
-#                     variable_card=2,
-#                     values=np.array([nap_false, nap_true]),
-#                     evidence=['Group 1',
-#                     'Group 3',
-#                     'Group 7',
-#                     'Unknown Anomaly'],
-#                     evidence_card=[2,2,2,2])
-# known_cpds.append(nap)
-
 # print(known_cpds)

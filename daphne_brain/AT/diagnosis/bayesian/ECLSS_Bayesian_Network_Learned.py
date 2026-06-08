@@ -1,6 +1,6 @@
 # ECLSS_Bayesian_Network.py
 # Author: Joshua Elston
-# Last Edited: 10/29/2025
+# Last Edited: 06/07/2026
 
 """
 This main script is used to generate a Bayesian network for an ECLSS environment containing anomalies (parent nodes) and parameters (child nodes).
@@ -33,6 +33,9 @@ from pgmpy.factors.discrete import TabularCPD
 # NOTE: using VariableElimination instead of BeliefPropagation (can update if found that this is needed)
 from pgmpy.inference import VariableElimination
 
+# Record run results for current timestep
+from AT.diagnosis.bayesian.run_logger import log_run
+
 # Import dictionaries from other files
 # # ----- FULL NETWORK -----
 # from AT.diagnosis.bayesian.network_struture import network
@@ -47,7 +50,7 @@ from pgmpy.inference import VariableElimination
 
 # ----- REDUCED NETWORK -----
 from AT.diagnosis.bayesian.reduced_network_structure import reduced_network
-from AT.diagnosis.bayesian.reduced_prior_probabilities import reduced_prior_probabilities
+# from AT.diagnosis.bayesian.reduced_prior_probabilities import reduced_prior_probabilities # <-- not used, as priors extracted from reduced_known_probabilities.py
 from AT.diagnosis.bayesian.reduced_ranges import measurement_ranges
 # from probabilities import split_probability_dict # NOTE: Imported as a .json --> make sure probabilities are updated
 # from hidden_probabilities import hidden_probabilities_dict # NOTE: Imported as a .json --> make sure probabilities are updated
@@ -69,8 +72,8 @@ def load_initial_model(telemetry_values, additional_evidence):
     with open(hidden_probabilities_dict, "r") as file:
         hidden_probabilities_dict = json.load(file)
 
-
-    model = pickle.load(open(os.path.join(current_dir, "learned_model.pkl"),'rb'))
+    # Renamed model to differentiate from other experimental runs
+    model = pickle.load(open(os.path.join(current_dir, "final_learned_model.pkl"),'rb'))
 
     # To perform inference on the Bayesian Network, the Variable Elimination algorithm is used.
     # For more information on VariableElimination within the pgmpy library, refer here:
@@ -87,6 +90,8 @@ def get_probabilities(telemetry_values, additional_evidence=None, calculate_best
 
     infer, probabilities, evidence, split_probability_dict, hidden_probabilities_dict = load_initial_model(telemetry_values, additional_evidence)
 
+    initial_entropy = None
+    best_evidence = None
 
     # Only calculate best evidence if requested
     if calculate_best_evidence and probabilities:
@@ -94,12 +99,22 @@ def get_probabilities(telemetry_values, additional_evidence=None, calculate_best
         initial_entropy = calculate_entropy(initial_probabilities)
         print(f'Initial entropy: {initial_entropy}')
         print()
-      
         best_evidence = select_best_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
-    else:
-        best_evidence = None
     
     hidden_components = load_hidden_components()
+
+    # Store run results for just telemetry feed values (without additional evidence)
+    record = log_run(
+        scenario_id='final_vccr.biosim',
+        true_anomaly='CDRA Failure',
+        probabilities=probabilities,
+        initial_entropy=initial_entropy,
+        best_evidence=best_evidence,
+        telemetry_snapshot=telemetry_values
+    )
+
+    print(json.dumps(record, indent=2))
+
 
     return probabilities, best_evidence, hidden_components
 

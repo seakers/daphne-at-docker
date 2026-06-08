@@ -3,7 +3,7 @@
 <biosim xmlns="http://www.traclabs.com/biosim"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
-	<!-- Scenario: High Humidity (Unknown Anomaly) -->
+	<!-- Scenario: High Humidity (Unknown Anomaly) (trained with driverStutterLength = 200) -->
 	<Globals driverStutterLength="200"
 		crewsToWatch="IHab_Group"
 		runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
@@ -95,12 +95,12 @@
 					outputs="HALO" maxFlowRates="0.5" >
 				</O2Producer>
 			</Injector>
-			<Injector moduleName="Nitrogen_Injector_HALO">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0"
-					maxFlowRates="0.0" >
+			<Injector moduleName="Nitrogen_Sink_HALO">
+				<nitrogenConsumer inputs="HALO" desiredFlowRates="0.1"
+					maxFlowRates="0.1" >
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.0"
-					outputs="HALO" maxFlowRates="0.0" >
+				<nitrogenProducer desiredFlowRates="0.1"
+					outputs="Nitrogen_Store" maxFlowRates="0.1" >
 				</nitrogenProducer>
 			</Injector>
 		</framework>

@@ -68,7 +68,7 @@ def query_parameters(infer, telemetry_values, measurement_ranges, split_probabil
             print()
             print("Anomalies ranked by probability of presence:")
             for anomaly, prob in sorted_anomalies[:5]:
-                if anomaly == 'No Anomalies Present':
+                if anomaly == 'Unknown Anomaly':
                     print(f"P({anomaly}): {prob:.6f}")
                 else:
                     print(f"P({anomaly} = 1): {prob:.6f}")

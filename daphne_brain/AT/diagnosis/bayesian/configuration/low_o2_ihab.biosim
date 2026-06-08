@@ -1,14 +1,14 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <?xml-stylesheet type="text/xsl" href="../../style/table.xsl"?>
 <biosim xmlns="http://www.traclabs.com/biosim" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
-	<!-- Scenario: Emergency O2 System Maintenance (IHab) -->
+	<!-- Scenario: Emergency O2 System Maintenance (IHab) (trained with driverStutterLength = 50) -->
 	<Globals driverStutterLength="50" crewsToWatch="IHab_Group" runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
 	</Globals>
 	<SimBioModules>
 		<environment>
 			<SimEnvironment moduleName="IHab" initialVolume="22900">
 				<!-- Decrease IHab initial pressure to 101.5kPa to remain within nominal bounds during simulation -->
-				<percentageInitialization totalPressure="101.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.53" otherPercentage="0.0" nitrogenPercentage="0.25961" />
 			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900">
 				<!-- Decrease HALO initial pressure to 101.5kPa to remain within nominal bounds during simulation -->
@@ -40,11 +40,13 @@
 		<air>
 			<NitrogenStore capacity="10000" moduleName="Nitrogen_Store" level="10000">
 			</NitrogenStore>
+			<!-- Decreased powerConsumer desiredFlowRate from 500 W to 350 W -->
+			<!-- Also reduced CO2Producer desiredFlowRate from 20000 moles/tick to 8000 moles/tick -->
 			<VCCR moduleName="Main_VCCR" logLevel="INFO">
-				<powerConsumer inputs="General_Power_Store" desiredFlowRates="500" maxFlowRates="1000" />
+				<powerConsumer inputs="General_Power_Store" desiredFlowRates="350" maxFlowRates="1200" />
 				<airConsumer inputs="IHab" desiredFlowRates="9885" maxFlowRates="9885" />
 				<airProducer desiredFlowRates="9885" outputs="IHab" maxFlowRates="9885" />
-				<CO2Producer desiredFlowRates="20000" outputs="CO2_Store" maxFlowRates="20000" />
+				<CO2Producer desiredFlowRates="8000" outputs="CO2_Store" maxFlowRates="20000" />
 			</VCCR>
 			<OGS moduleName="OGS">
 				<powerConsumer inputs="General_Power_Store" desiredFlowRates="1000" maxFlowRates="1000" />
@@ -67,16 +69,16 @@
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Oxygen_Injector_HALO">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0" maxFlowRates="2.0">
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.0" maxFlowRates="0.0">
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0" outputs="HALO" maxFlowRates="2.0">
+				<O2Producer desiredFlowRates="0.0" outputs="HALO" maxFlowRates="0.0">
 				</O2Producer>
 			</Injector>
 			<!-- Inject nitrogen into IHab module to counter decrease in pressure -->
-			<Injector moduleName="Nitrogen_Injector_HALO">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.15" maxFlowRates="2.0">
+			<Injector moduleName="Nitrogen_Injector_IHab">
+				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.175" maxFlowRates="0.175">
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.15" outputs="IHab" maxFlowRates="2.0">
+				<nitrogenProducer desiredFlowRates="0.175" outputs="IHab" maxFlowRates="0.175">
 				</nitrogenProducer>
 			</Injector>
 		</framework>
@@ -145,7 +147,7 @@
 			<GasPressureSensor input="IHab" moduleName="ppCO2_IHab" gasType="CO2">
 				<alarms>
 					<critical_low min="0" max="0" />
-					<warning_low min="0.026" max="0" />
+					<warning_low min="0" max="0.026" />
 					<warning_high min="0.15" max="0.164" />
 					<critical_high min="0.164" max="100" />
 				</alarms>
@@ -181,7 +183,7 @@
 			<GasPressureSensor input="HALO" moduleName="ppCO2_HALO" gasType="CO2">
 				<alarms>
 					<critical_low min="0" max="0" />
-					<warning_low min="0.026" max="0" />
+					<warning_low min="0" max="0.026" />
 					<warning_high min="0.15" max="0.164" />
 					<critical_high min="0.164" max="100" />
 				</alarms>

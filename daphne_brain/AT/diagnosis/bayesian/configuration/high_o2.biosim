@@ -3,7 +3,7 @@
 <biosim xmlns="http://www.traclabs.com/biosim"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
-	<!-- Scenario: High O2 (Unknown Anomaly) -->
+	<!-- Scenario: High O2 (Unknown Anomaly) (trained with driverStutterLength = 50) -->
 	<Globals driverStutterLength="50"
 		crewsToWatch="IHab_Group"
 		runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
@@ -24,19 +24,19 @@
 			</Dehumidifier>
 			<Fan moduleName="IHab_to_HALO_Fan">
 				<airConsumer inputs="IHab"
-					desiredFlowRates="40" maxFlowRates="40" />
+					desiredFlowRates="20" maxFlowRates="20" />
 				<powerConsumer inputs="General_Power_Store"
 					desiredFlowRates="9000" maxFlowRates="9000" ></powerConsumer>
-				<airProducer desiredFlowRates="40"
-					outputs="HALO" maxFlowRates="40" ></airProducer>
+				<airProducer desiredFlowRates="20"
+					outputs="HALO" maxFlowRates="20" ></airProducer>
 			</Fan>
 			<Fan moduleName="HALO_to_IHab_Fan">
 				<airConsumer inputs="HALO"
-					desiredFlowRates="40" maxFlowRates="40" />
+					desiredFlowRates="20" maxFlowRates="20" />
 				<powerConsumer inputs="General_Power_Store" desiredFlowRates="50"
 					maxFlowRates="50"></powerConsumer>
-				<airProducer desiredFlowRates="40"
-					outputs="IHab" maxFlowRates="40" ></airProducer>
+				<airProducer desiredFlowRates="20"
+					outputs="IHab" maxFlowRates="20" ></airProducer>
 			</Fan>
 		</environment>
 		<air>
@@ -73,27 +73,35 @@
 		</air>
 		<framework>
 			<Injector moduleName="Oxygen_Injector_IHab">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.15"
-					maxFlowRates="2.0" >
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.25"
+					maxFlowRates="0.5" >
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.15"
-					outputs="IHab" maxFlowRates="2.0" >
+				<O2Producer desiredFlowRates="0.25"
+					outputs="IHab" maxFlowRates="0.5" >
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Oxygen_Injector_HALO">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.15"
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.2"
 					maxFlowRates="0.5" >
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.15"
+				<O2Producer desiredFlowRates="0.2"
 					outputs="HALO" maxFlowRates="0.5" >
 				</O2Producer>
 			</Injector>
-			<Injector moduleName="Nitrogen_Injector_HALO">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0"
-					maxFlowRates="0.0" >
+			<Injector moduleName="Nitrogen_Sink_IHab">
+				<nitrogenConsumer inputs="IHab" desiredFlowRates="0.07"
+					maxFlowRates="0.07" >
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.0"
-					outputs="HALO" maxFlowRates="0.0" >
+				<nitrogenProducer desiredFlowRates="0.07"
+					outputs="Nitrogen_Store" maxFlowRates="0.07" >
+				</nitrogenProducer>
+			</Injector>
+			<Injector moduleName="Nitrogen_Sink_HALO">
+				<nitrogenConsumer inputs="HALO" desiredFlowRates="0.2"
+					maxFlowRates="0.2" >
+				</nitrogenConsumer>
+				<nitrogenProducer desiredFlowRates="0.2"
+					outputs="Nitrogen_Store" maxFlowRates="0.2" >
 				</nitrogenProducer>
 			</Injector>
 		</framework>

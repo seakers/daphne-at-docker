@@ -3,7 +3,7 @@
 <biosim xmlns="http://www.traclabs.com/biosim"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
-	<!-- Scenario: CDRA Failure -->
+	<!-- Scenario: CDRA Failure (trained with driverStutterLength = 50) -->
 	<Globals driverStutterLength="50"
 		crewsToWatch="IHab_Group"
 		runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
@@ -11,17 +11,18 @@
 	<SimBioModules>
 		<environment>
 			<SimEnvironment moduleName="IHab" initialVolume="22900">
-				<percentageInitialization totalPressure="100.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="00.26961" />
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.218" co2Percentage="0.00039" waterPercentage="0.53" otherPercentage="0.0" nitrogenPercentage="00.25161" />
 			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900">
-				<percentageInitialization totalPressure="101.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.26961" />
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.218" co2Percentage="0.00039" waterPercentage="0.53" otherPercentage="0.0" nitrogenPercentage="0.25161" />
 			</SimEnvironment>
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="IHab"
 					desiredFlowRates="0.3" maxFlowRates="0.3"></airConsumer>
 				<dirtyWaterProducer desiredFlowRates="10000"
 					outputs="Dirty_Water_Store" maxFlowRates="10000" />
-				<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="200"/>
+					<!-- Shifted humidity malfunction tick up to 50 (from 200) so that off-nominal values occur earlier -->
+				<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="0"/>
 			</Dehumidifier>
 			<Fan moduleName="IHab_to_HALO_Fan">
 				<airConsumer inputs="IHab"
@@ -53,7 +54,7 @@
 					outputs="IHab" maxFlowRates="10000" />
 				<CO2Producer desiredFlowRates="10000" outputs="CO2_Store"
 					maxFlowRates="10000"></CO2Producer>
-				<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="200"/>
+				<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="115"/>
 			</VCCR>
 			<OGS moduleName="OGS">
 				<powerConsumer inputs="General_Power_Store"
@@ -91,10 +92,10 @@
 				</O2Producer>
 			</Injector>
 			<!-- Inject nitrogen into IHab module to counter decrease in pressure -->
-			<Injector moduleName="Nitrogen_Injector_IHab">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.15" maxFlowRates="0.15">
+			<Injector moduleName="Nitrogen_Sink_IHab">
+				<nitrogenConsumer inputs="IHab" desiredFlowRates="0.14" maxFlowRates="0.14">
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.15" outputs="IHab" maxFlowRates="0.15">
+				<nitrogenProducer desiredFlowRates="0.14" outputs="Nitrogen_Store" maxFlowRates="0.14">
 				</nitrogenProducer>
 			</Injector>
 			<!-- <Injector moduleName="Nitrogen_Injector_HALO">

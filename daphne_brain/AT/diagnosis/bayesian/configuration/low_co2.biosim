@@ -3,7 +3,7 @@
 <biosim xmlns="http://www.traclabs.com/biosim"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
-	<!-- Scenario: Low CO2 (Unknown Anomaly) -->
+	<!-- Scenario: Low CO2 (Unknown Anomaly) (trained with driverStutterLength = 200) -->
 	<Globals driverStutterLength="200"
 		crewsToWatch="IHab_Group"
 		runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
@@ -11,7 +11,15 @@
 	<SimBioModules>
 		<environment>
 			<SimEnvironment moduleName="IHab" initialVolume="22900" />
+				<percentageInitialization totalPressure="101.5"
+					o2Percentage="0.21" co2Percentage="0.00001"
+					waterPercentage="0.52" otherPercentage="0.0"
+					nitrogenPercentage="0.26999" />
 			<SimEnvironment moduleName="HALO" initialVolume="22900" />
+				<percentageInitialization totalPressure="101.5"
+					o2Percentage="0.21" co2Percentage="0.00001"
+					waterPercentage="0.52" otherPercentage="0.0"
+					nitrogenPercentage="0.26999" />
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="IHab"
 					desiredFlowRates="0.3" maxFlowRates="0.3"></airConsumer>
@@ -21,19 +29,19 @@
 			</Dehumidifier>
 			<Fan moduleName="IHab_to_HALO_Fan">
 				<airConsumer inputs="IHab"
-					desiredFlowRates="40" maxFlowRates="40" />
+					desiredFlowRates="0" maxFlowRates="0" />
 				<powerConsumer inputs="General_Power_Store"
 					desiredFlowRates="9000" maxFlowRates="9000" ></powerConsumer>
-				<airProducer desiredFlowRates="40"
-					outputs="HALO" maxFlowRates="40" ></airProducer>
+				<airProducer desiredFlowRates="0"
+					outputs="HALO" maxFlowRates="0" ></airProducer>
 			</Fan>
 			<Fan moduleName="HALO_to_IHab_Fan">
 				<airConsumer inputs="HALO"
-					desiredFlowRates="40" maxFlowRates="40" />
+					desiredFlowRates="0" maxFlowRates="0" />
 				<powerConsumer inputs="General_Power_Store" desiredFlowRates="50"
 					maxFlowRates="50"></powerConsumer>
-				<airProducer desiredFlowRates="40"
-					outputs="IHab" maxFlowRates="40" ></airProducer>
+				<airProducer desiredFlowRates="0"
+					outputs="IHab" maxFlowRates="0" ></airProducer>
 			</Fan>
 		</environment>
 		<air>
@@ -49,7 +57,6 @@
 					outputs="IHab" maxFlowRates="10000" />
 				<CO2Producer desiredFlowRates="20000" outputs="CO2_Store"
 					maxFlowRates="20000"></CO2Producer>
-				<!-- <malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="200"/> -->
 			</VCCR>
 			<OGS moduleName="OGS">
 				<powerConsumer inputs="General_Power_Store"
@@ -86,13 +93,30 @@
 					outputs="HALO" maxFlowRates="0.0" >
 				</O2Producer>
 			</Injector>
-			<Injector moduleName="Nitrogen_Injector_HALO">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0"
-					maxFlowRates="0.0" >
+			<Injector moduleName="Nitrogen_Sink_IHab">
+				<nitrogenConsumer inputs="IHab" desiredFlowRates="0.025"
+					maxFlowRates="0.025" >
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.0"
-					outputs="HALO" maxFlowRates="0.0" >
+				<nitrogenProducer desiredFlowRates="0.025"
+					outputs="Nitrogen_Store" maxFlowRates="0.025" >
 				</nitrogenProducer>
+			</Injector>
+			<!-- Add a CO2 sink to maintain low CO2 -->	
+			<Injector moduleName="CO2_Sink_IHab">
+				<CO2Consumer inputs="IHab" desiredFlowRates="0.15"
+					maxFlowRates="0.15" >
+				</CO2Consumer>
+				<CO2Producer desiredFlowRates="0.15"
+					outputs="CO2_Store" maxFlowRates="0.15" >
+				</CO2Producer>
+			</Injector>
+			<Injector moduleName="CO2_Sink_HALO">
+				<CO2Consumer inputs="HALO" desiredFlowRates="0.15"
+					maxFlowRates="0.15" >
+				</CO2Consumer>
+				<CO2Producer desiredFlowRates="0.15"
+					outputs="CO2_Store" maxFlowRates="0.15" >
+				</CO2Producer>
 			</Injector>
 		</framework>
 		<water>
@@ -186,7 +210,7 @@
 			<GasPressureSensor input="IHab" moduleName="ppCO2_IHab" gasType="CO2">
 				<alarms>
 					<critical_low min="0" max="0" />
-					<warning_low min="0.026" max="0" />
+					<warning_low min="0" max="0.026" />
 					<warning_high min="0.15" max="0.164" />
 					<critical_high min="0.164" max="100" />
 				</alarms>
@@ -222,7 +246,7 @@
 			<GasPressureSensor input="HALO" moduleName="ppCO2_HALO" gasType="CO2">
 				<alarms>
 					<critical_low min="0" max="0" />
-					<warning_low min="0.026" max="0" />
+					<warning_low min="0" max="0.026" />
 					<warning_high min="0.15" max="0.164" />
 					<critical_high min="0.164" max="100" />
 				</alarms>

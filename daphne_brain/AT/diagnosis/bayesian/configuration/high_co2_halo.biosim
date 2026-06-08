@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <?xml-stylesheet type="text/xsl" href="../../style/table.xsl"?>
 <biosim xmlns="http://www.traclabs.com/biosim" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
-	<!-- Scenario: Excess CO2 in Cabin (HALO) -->
+	<!-- Scenario: Excess CO2 in Cabin (HALO) (trained with driverStutterLength = 50) -->
 	<Globals driverStutterLength="50" crewsToWatch="IHab_Group" runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
 	</Globals>
 	<SimBioModules>
@@ -143,7 +143,7 @@
 			<GasPressureSensor input="IHab" moduleName="ppCO2_IHab" gasType="CO2">
 				<alarms>
 					<critical_low min="0" max="0" />
-					<warning_low min="0.026" max="0" />
+					<warning_low min="0" max="0.026" />
 					<warning_high min="0.15" max="0.164" />
 					<critical_high min="0.164" max="100" />
 				</alarms>
@@ -179,7 +179,7 @@
 			<GasPressureSensor input="HALO" moduleName="ppCO2_HALO" gasType="CO2">
 				<alarms>
 					<critical_low min="0" max="0" />
-					<warning_low min="0.026" max="0" />
+					<warning_low min="0" max="0.026" />
 					<warning_high min="0.15" max="0.164" />
 					<critical_high min="0.164" max="100" />
 				</alarms>

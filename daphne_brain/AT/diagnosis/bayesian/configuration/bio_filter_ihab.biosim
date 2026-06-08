@@ -3,7 +3,8 @@
 <biosim xmlns="http://www.traclabs.com/biosim"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
-	<!-- Scenario: Biological Filter Saturation (IHab) -->
+	<!-- Scenario: Biological Filter Saturation (IHab) (trained with driverStutterLength = 50) -->
+	<!-- Unlike other anomalies, phase-in essentially started around tick 0 to prevent severe off-nominal pressure drift -->
 	<Globals driverStutterLength="50"
 		crewsToWatch="IHab_Group"
 		runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
@@ -11,7 +12,8 @@
 	<SimBioModules>
 		<environment>
 			<SimEnvironment moduleName="IHab" initialVolume="22900">
-				<percentageInitialization totalPressure="101.5" o2Percentage="0.2035" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27611" />
+				<!-- Initial pressure set to just above lower nominal threshold (higher than the 100.2 kPa set below) to maximize nominal pressure data -->
+				<percentageInitialization totalPressure="100.2" o2Percentage="0.2135" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.26611" />
 			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900" />
 			<Dehumidifier moduleName="Main_Dehumidifier">
@@ -41,6 +43,7 @@
 			<NitrogenStore capacity="10000"
 				moduleName="Nitrogen_Store" level="10000">
 			</NitrogenStore>
+			<!-- Phased in 100 ticks after OGS failure to align off-nominal parameters -->
 			<VCCR moduleName="Main_VCCR" logLevel="INFO">
 				<powerConsumer inputs="General_Power_Store"
 					desiredFlowRates="340" maxFlowRates="1000" ></powerConsumer>
@@ -50,8 +53,9 @@
 					outputs="IHab" maxFlowRates="10000" />
 				<CO2Producer desiredFlowRates="10000" outputs="CO2_Store"
 					maxFlowRates="10000"></CO2Producer>
-				<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="200"/>
+				<malfunction intensity="MEDIUM_MALF" length="PERMANENT_MALF" occursAtTick="100"/>
 			</VCCR>
+			<!-- Phased in at tick 0 (was previously tick 150) so that off-nominal effects occur closer to 100 (was previously 250) -->
 			<OGS moduleName="OGS">
 				<powerConsumer inputs="General_Power_Store"
 					desiredFlowRates="1000" maxFlowRates="1000" />
@@ -61,7 +65,7 @@
 					maxFlowRates="1000"></O2Producer>
 				<H2Producer desiredFlowRates="1000" outputs="H2_Store"
 					maxFlowRates="1000" />
-				<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="200"/>
+				<malfunction intensity="SEVERE_MALF" length="PERMANENT_MALF" occursAtTick="0"/>
 			</OGS>
 			<O2Store capacity="10" moduleName="O2_Store"
 				level="10">
@@ -77,7 +81,7 @@
 					maxFlowRates="2.0" >
 				</O2Consumer>
 				<O2Producer desiredFlowRates="0.2"
-					outputs="IHab" maxFlowRates="2.0" >
+					outputs="IHab" maxFlowRates= "2.0" >
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Oxygen_Injector_HALO">
@@ -88,13 +92,13 @@
 					outputs="HALO" maxFlowRates="0.0" >
 				</O2Producer>
 			</Injector>
-			<!-- Inject nitrogen into IHab to counteract drop in pressure -->
+			<!-- Nitrogen injector used to balance out pressure loss from O2 -->
 			<Injector moduleName="Nitrogen_Injector_IHab">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.075"
-					maxFlowRates="0.075" >
+				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.177"
+					maxFlowRates="0.177" >
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.075"
-					outputs="IHab" maxFlowRates="0.075" >
+				<nitrogenProducer desiredFlowRates="0.177"
+					outputs="IHab" maxFlowRates="0.177">
 				</nitrogenProducer>
 			</Injector>
 		</framework>
