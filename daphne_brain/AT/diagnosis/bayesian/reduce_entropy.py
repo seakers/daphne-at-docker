@@ -1,11 +1,13 @@
 # reduce_entropy.py
 # Author: Joshua Elston
-# Last Edited: 04/20/2026
+# Last Edited: 06/08/2026
 
 # Allows VA to intelligently select pieces of additional evidence to obtain to reduce the entropy in the current
 # probabilitiy distribution (to maximize information gain)
 # Changes on 10/29/2025 remove parameters from list of query variables (i.e., purely retaining them as evidence)
 # Changes on 04/20/2026 seek to introduce threading to compute inference more quickly
+# Minor updates on 06/08/2026 to correctly include Unknown Anomaly in the set of variables to query for inference
+# and to prevent a math domain error for log values of 0 (occurrs when Unknown Anomaly has near-100% probability)
 
 import time
 import math
@@ -43,9 +45,29 @@ def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, 
                 unique_anomalies.add(anomaly_name) # add anomalies
 
     anomalies_to_query = list(unique_anomalies)
-    # Add the No Anomalies Present node to the set of anomalies to be queried based on the telemetry feed evidence
-    # anomalies_to_query.append("No Anomalies Present")
+    # Add the Unknown Anomaly node to the set of anomalies to be queried based on the telemetry feed evidence
+    anomalies_to_query.append("Unknown Anomaly")
     # print('Anomalies to query:', anomalies_to_query)
+
+
+    # from AT.diagnosis.bayesian.reduced_anomaly_names import QUERYABLE_ANOMALY_NAMES as ANOMALY_NAMES
+
+    # # Only query anomaly/subsystem nodes that actually exist in the trained
+    # # model graph. This replaces deriving names from split_probability_dict's
+    # # nested keys (fragile — that JSON drifts out of sync with the model's
+    # # actual node names on every rename) with a direct check against the
+    # # graph itself, so a stale name is skipped with a warning instead of
+    # # raising a pgmpy 'node not in digraph' error.
+    # model_nodes = set(infer.model.nodes())
+    # anomalies_to_query = [a for a in ANOMALY_NAMES if a in model_nodes]
+
+    # missing = set(ANOMALY_NAMES) - model_nodes
+    # if missing:
+    #     print(f"Warning: anomaly names not found in model graph, skipping: {missing}")
+
+    # print("done querying till now")
+    # print('```query not using threading```')
+
 
     # Create a worker function that runs a single infer.query call for one anomaly
     # (i.e., piece of hidden evidence)
@@ -96,8 +118,15 @@ def calculate_entropy(probabilities):
     entropy_distribution = 0 # initialize the entropy of the probability distribution
     for prob in probabilities:
         # print(f'Probabilities: {prob}')
-        if prob == 0:
-            print(f"Probability equal to zero.")
+        if prob <= 0:
+            if prob < -1e-6:
+                print(f"Warning: substantially negative probability {prob}, check upsteam inference/normalization ")
+            # print(f"Probability equal to zero.")
+            # 0 * log(0) is defined as 0 by convention in information theory
+            continue
+        elif prob > 1:
+            print(f"Warning: probability {prob} exceeds 1, skipping.")
+            continue
         entropy_distribution += -1 * prob * math.log(prob)
         entropy_distribution = round(entropy_distribution, 8) # MAY DELETE ROUNDING LATER, MORE FOR READABILITY
 
@@ -116,23 +145,39 @@ def select_best_evidence(infer, measurement_ranges, split_probability_dict, hidd
     
     print(f"Top {top_n_anomalies} anomalies: {[f'{name} ({prob:.4f})' for name, prob in top_anomalies]}")
     
-    # Filter hidden components to only those related to top anomalies
-    relevant_hidden_components = []
-    for component, related_info in hidden_probabilities_dict.items():
-        # Skip if already in evidence
-        if component in current_evidence:
-            continue
-            
-        # Get the list of related anomalies for this hidden component
-        if isinstance(related_info, dict):
-            related_anomalies = set(related_info.keys())
-        else:
-            # If it's not a dict, assume it's a single anomaly or list
-            related_anomalies = {related_info} if isinstance(related_info, str) else set(related_info)
+
+    # NOTE: NEW CODE ON 09/16/2026
+    # Filter hidden components to those relevant to the present diagnosis
+    FAULT_ISOLATION_NODES = [
+        "[HIDDEN] Atmosphere Revitalization Fault Isolation",
+        "[HIDDEN] Atmosphere Control and Supply Fault Isolation",
+    ]
+
+    # If Unknown Anomaly is the most likely diagnosis, use the subsystem fault-isolation nodes as the candidate evidence
+    if top_anomalies and top_anomalies[0][0] == "Unknown Anomaly":
+        relevant_hidden_components = [node for node in FAULT_ISOLATION_NODES if node not in current_evidence]
+
+        print("Unknown Anomaly is the most likely diagnosis. Evaluating subsystem fault-isolation nodes.")
+
+    else:
+        # Filter hidden components to only those related to top anomalies
+        relevant_hidden_components = []
         
-        # Check if any of the related anomalies are in the top N
-        if related_anomalies.intersection(top_anomaly_names):
-            relevant_hidden_components.append(component)
+        for component, related_info in hidden_probabilities_dict.items():
+            # Skip if already in evidence
+            if component in current_evidence:
+                continue
+                
+            # Get the list of related anomalies for this hidden component
+            if isinstance(related_info, dict):
+                related_anomalies = set(related_info.keys())
+            else:
+                # If it's not a dict, assume it's a single anomaly or list
+                related_anomalies = {related_info} if isinstance(related_info, str) else set(related_info)
+            
+            # Check if any of the related anomalies are in the top N
+            if related_anomalies.intersection(top_anomaly_names):
+                relevant_hidden_components.append(component)
     
     print(f"Filtered to {len(relevant_hidden_components)} hidden components (from {len(hidden_probabilities_dict)} total)")
     print(f"Relevant components: {relevant_hidden_components}")

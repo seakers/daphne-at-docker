@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Run Analyzer</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2333;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #7d8590;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      --font-sans: 'Inter', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface);
+    }
+
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    header .sep { color: var(--border); }
+
+    .main {
+      padding: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 56px 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: var(--surface);
+      margin-bottom: 32px;
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: #1a2030;
+    }
+
+    .drop-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+
+    .drop-zone h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .drop-zone p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .btn:hover { border-color: var(--accent); background: #1c2744; }
+    .btn-primary { background: var(--accent); color: #0d1117; border-color: var(--accent); font-weight: 600; }
+    .btn-primary:hover { background: #79bbff; border-color: #79bbff; }
+
+    #file-input { display: none; }
+
+    /* Stats bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-family: var(--font-mono);
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Charts grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+    }
+
+    .chart-card.wide { grid-column: 1 / -1; }
+
+    .chart-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+      margin-bottom: 20px;
+    }
+
+    canvas { width: 100% !important; }
+
+    /* Table */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .table-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-header h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      font-family: var(--font-mono);
+    }
+
+    thead th {
+      padding: 12px 16px;
+      text-align: left;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #21262d;
+      transition: background 0.1s;
+    }
+
+    tbody tr:hover { background: var(--surface2); }
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody td {
+      padding: 11px 16px;
+      color: var(--text);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-green { background: #1a3a1f; color: var(--green); }
+    .badge-red { background: #3a1a1a; color: var(--red); }
+    .badge-yellow { background: #3a2e0a; color: var(--yellow); }
+
+    .hidden { display: none; }
+
+    #dashboard { display: none; }
+
+    .scenario-chip {
+      display: inline-block;
+      background: #1c2333;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: var(--accent);
+    }
+
+    .entropy-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .entropy-track {
+      flex: 1;
+      height: 6px;
+      background: #21262d;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .entropy-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--green), var(--yellow), var(--red));
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: var(--font-sans);
+      cursor: pointer;
+    }
+
+    select:focus { outline: none; border-color: var(--accent); }
+
+    .no-data {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">analyzer</span>
+  <span class="sep">|</span>
+  <h1>Test Run Results</h1>
+</header>
+
+<div class="main">
+
+  <!-- Drop Zone -->
+  <div class="drop-zone" id="drop-zone">
+    <div class="drop-icon">📂</div>
+    <h2>Drop your results.jsonl here</h2>
+    <p>Drag and drop your JSONL file, or click to browse</p>
+    <input type="file" id="file-input" accept=".jsonl,.json">
+    <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">Choose File</button>
+  </div>
+
+  <!-- Dashboard (hidden until file loaded) -->
+  <div id="dashboard">
+
+    <div class="toolbar">
+      <label>Filter by scenario:</label>
+      <select id="scenario-filter">
+        <option value="all">All scenarios</option>
+      </select>
+      <label style="margin-left:16px">Sort by:</label>
+      <select id="sort-by">
+        <option value="timestamp">Timestamp</option>
+        <option value="entropy">Entropy</option>
+        <option value="hits1">Hits@1</option>
+        <option value="hits3">Hits@3</option>
+      </select>
+      <button class="btn" onclick="exportCSV()" style="margin-left:auto">↓ Export CSV</button>
+    </div>
+
+    <!-- Summary stats -->
+    <div class="stats-bar" id="stats-bar"></div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card wide">
+        <div class="chart-title">Initial Entropy — per run</div>
+        <canvas id="chart-entropy" height="120"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Hits@1 &amp; Hits@3 rates</div>
+        <canvas id="chart-hits" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Entropy distribution</div>
+        <canvas id="chart-hist" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-header">
+        <h3>All records</h3>
+        <span id="record-count" style="font-size:13px;color:var(--muted)"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Timestamp</th>
+              <th>Scenario</th>
+              <th>True Anomaly</th>
+              <th>Entropy</th>
+              <th>Hits@1</th>
+              <th>Hits@3</th>
+              <th>Top Predicted</th>
+            </tr>
+          </thead>
+          <tbody id="records-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  let allRecords = [];
+  let charts = {};
+
+  // --- File loading ---
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+  document.getElementById('scenario-filter').addEventListener('change', renderDashboard);
+  document.getElementById('sort-by').addEventListener('change', renderDashboard);
+
+  function loadFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const lines = e.target.result.trim().split('\n').filter(l => l.trim());
+      allRecords = lines.map((l, i) => {
+        try { return JSON.parse(l); }
+        catch { console.warn('Bad line', i, l); return null; }
+      }).filter(Boolean);
+
+      if (!allRecords.length) { alert('No valid JSONL records found.'); return; }
+
+      populateScenarioFilter();
+      document.getElementById('drop-zone').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      renderDashboard();
+    };
+    reader.readAsText(file);
+  }
+
+  function populateScenarioFilter() {
+    const sel = document.getElementById('scenario-filter');
+    const scenarios = [...new Set(allRecords.map(r => r.scenario_id).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="all">All scenarios</option>';
+    scenarios.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s; opt.textContent = s;
+      sel.appendChild(opt);
+    });
+  }
+
+  function getFiltered() {
+    const scenarioVal = document.getElementById('scenario-filter').value;
+    const sortVal = document.getElementById('sort-by').value;
+    let records = scenarioVal === 'all' ? [...allRecords] : allRecords.filter(r => r.scenario_id === scenarioVal);
+    records.sort((a, b) => {
+      if (sortVal === 'timestamp') return (a.timestamp || '').localeCompare(b.timestamp || '');
+      if (sortVal === 'entropy') return (b.initial_entropy || 0) - (a.initial_entropy || 0);
+      if (sortVal === 'hits1') return (b['hits@1'] ? 1 : 0) - (a['hits@1'] ? 1 : 0);
+      if (sortVal === 'hits3') return (b['hits@3'] ? 1 : 0) - (a['hits@3'] ? 1 : 0);
+      return 0;
+    });
+    return records;
+  }
+
+  function renderDashboard() {
+    const records = getFiltered();
+    renderStats(records);
+    renderEntropyChart(records);
+    renderHitsChart(records);
+    renderHistogram(records);
+    renderTable(records);
+  }
+
+  // --- Stats ---
+  function renderStats(records) {
+    const n = records.length;
+    const entropies = records.map(r => r.initial_entropy).filter(v => v != null);
+    const avgEntropy = entropies.length ? (entropies.reduce((a,b) => a+b, 0) / entropies.length) : 0;
+    const hits1 = records.filter(r => r['hits@1']).length;
+    const hits3 = records.filter(r => r['hits@3']).length;
+
+    const bar = document.getElementById('stats-bar');
+    bar.innerHTML = `
+      <div class="stat-card">
+        <div class="stat-label">Total Runs</div>
+        <div class="stat-value" style="color:var(--accent)">${n}</div>
+        <div class="stat-sub">${[...new Set(records.map(r=>r.scenario_id).filter(Boolean))].length} unique scenarios</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Entropy</div>
+        <div class="stat-value" style="color:var(--yellow)">${avgEntropy.toFixed(3)}</div>
+        <div class="stat-sub">range ${Math.min(...entropies).toFixed(3)} – ${Math.max(...entropies).toFixed(3)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Hits@1 Rate</div>
+        <div class="stat-value" style="color:var(--green)">${n ? (hits1/n*100).toFixed(1) : 0}%</div>
+        <div class="stat-sub">${hits1} / ${n} runs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Hits@3 Rate</div>
+        <div class="stat-value" style="color:var(--purple)">${n ? (hits3/n*100).toFixed(1) : 0}%</div>
+        <div class="stat-sub">${hits3} / ${n} runs</div>
+      </div>
+    `;
+  }
+
+  // --- Entropy line chart ---
+  function renderEntropyChart(records) {
+    const ctx = document.getElementById('chart-entropy').getContext('2d');
+    if (charts.entropy) charts.entropy.destroy();
+
+    const labels = records.map((r, i) => r.scenario_id ? `${r.scenario_id}` : `#${i+1}`);
+    const data = records.map(r => r.initial_entropy ?? null);
+
+    charts.entropy = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Initial Entropy',
+          data,
+          borderColor: '#d29922',
+          backgroundColor: 'rgba(210,153,34,0.08)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: '#d29922',
+          tension: 0.3,
+          fill: true,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false }, tooltip: { mode: 'index' } },
+        scales: {
+          x: { ticks: { color: '#7d8590', font: { family: 'monospace', size: 10 }, maxRotation: 45 }, grid: { color: '#21262d' } },
+          y: { ticks: { color: '#7d8590', font: { family: 'monospace', size: 11 } }, grid: { color: '#21262d' } }
+        }
+      }
+    });
+  }
+
+  // --- Hits bar chart (grouped by scenario) ---
+  function renderHitsChart(records) {
+    const ctx = document.getElementById('chart-hits').getContext('2d');
+    if (charts.hits) charts.hits.destroy();
+
+    const scenarios = [...new Set(records.map(r => r.scenario_id || 'unknown'))];
+    const hits1Data = scenarios.map(s => {
+      const recs = records.filter(r => (r.scenario_id || 'unknown') === s);
+      return recs.length ? (recs.filter(r => r['hits@1']).length / recs.length * 100) : 0;
+    });
+    const hits3Data = scenarios.map(s => {
+      const recs = records.filter(r => (r.scenario_id || 'unknown') === s);
+      return recs.length ? (recs.filter(r => r['hits@3']).length / recs.length * 100) : 0;
+    });
+
+    charts.hits = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: scenarios,
+        datasets: [
+          { label: 'Hits@1 %', data: hits1Data, backgroundColor: 'rgba(63,185,80,0.7)', borderColor: '#3fb950', borderWidth: 1, borderRadius: 4 },
+          { label: 'Hits@3 %', data: hits3Data, backgroundColor: 'rgba(188,140,255,0.7)', borderColor: '#bc8cff', borderWidth: 1, borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#7d8590', font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { color: '#7d8590', font: { family: 'monospace', size: 10 } }, grid: { color: '#21262d' } },
+          y: { min: 0, max: 100, ticks: { color: '#7d8590', font: { size: 11 }, callback: v => v + '%' }, grid: { color: '#21262d' } }
+        }
+      }
+    });
+  }
+
+  // --- Entropy histogram ---
+  function renderHistogram(records) {
+    const ctx = document.getElementById('chart-hist').getContext('2d');
+    if (charts.hist) charts.hist.destroy();
+
+    const vals = records.map(r => r.initial_entropy).filter(v => v != null);
+    if (!vals.length) return;
+
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const bins = 10;
+    const step = (max - min) / bins || 1;
+    const counts = Array(bins).fill(0);
+    vals.forEach(v => {
+      const idx = Math.min(Math.floor((v - min) / step), bins - 1);
+      counts[idx]++;
+    });
+    const labels = counts.map((_, i) => (min + i * step).toFixed(2));
+
+    charts.hist = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Count',
+          data: counts,
+          backgroundColor: 'rgba(88,166,255,0.6)',
+          borderColor: '#58a6ff',
+          borderWidth: 1,
+          borderRadius: 3,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#7d8590', font: { size: 10 } }, grid: { color: '#21262d' }, title: { display: true, text: 'Entropy', color: '#7d8590', font: { size: 11 } } },
+          y: { ticks: { color: '#7d8590', font: { size: 11 } }, grid: { color: '#21262d' } }
+        }
+      }
+    });
+  }
+
+  // --- Table ---
+  function renderTable(records) {
+    const tbody = document.getElementById('records-tbody');
+    document.getElementById('record-count').textContent = `${records.length} records`;
+
+    const maxEntropy = Math.max(...records.map(r => r.initial_entropy || 0));
+
+    tbody.innerHTML = records.map((r, i) => {
+      const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : '—';
+      const entropy = r.initial_entropy != null ? r.initial_entropy.toFixed(4) : '—';
+      const entropyPct = maxEntropy ? ((r.initial_entropy || 0) / maxEntropy * 100) : 0;
+      const h1 = r['hits@1'];
+      const h3 = r['hits@3'];
+      const top = r.top_predicted_anomaly || '—';
+
+      return `<tr>
+        <td style="color:var(--muted)">${i+1}</td>
+        <td style="color:var(--muted);font-size:11px">${ts}</td>
+        <td><span class="scenario-chip">${r.scenario_id || '—'}</span></td>
+        <td>${r.true_anomaly || '—'}</td>
+        <td>
+          <div class="entropy-bar">
+            <div class="entropy-track"><div class="entropy-fill" style="width:${entropyPct}%"></div></div>
+            <span style="min-width:54px;text-align:right">${entropy}</span>
+          </div>
+        </td>
+        <td><span class="badge ${h1 ? 'badge-green' : 'badge-red'}">${h1 ? '✓ yes' : '✗ no'}</span></td>
+        <td><span class="badge ${h3 ? 'badge-green' : 'badge-red'}">${h3 ? '✓ yes' : '✗ no'}</span></td>
+        <td style="color:var(--muted);font-size:12px">${top}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // --- CSV Export ---
+  function exportCSV() {
+    const records = getFiltered();
+    const headers = ['timestamp','scenario_id','true_anomaly','initial_entropy','hits@1','hits@3','top_predicted_anomaly'];
+    const rows = records.map(r => headers.map(h => {
+      const v = r[h];
+      if (v == null) return '';
+      if (typeof v === 'string' && v.includes(',')) return `"${v}"`;
+      return v;
+    }).join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'results_export.csv'; a.click();
+  }
+</script>
+</body>
+</html>

@@ -34,7 +34,7 @@ def get_parameter_input(telemetry_values, measurement_ranges):
     
     return parameter, value
 
-def query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
+def query_parameters(infer, fan_status, telemetry_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
     # Collect parameter values from the user, and query the Bayesian network with the updated evidence
     # while True:
     #     parameter_values = {}
@@ -59,7 +59,7 @@ def query_parameters(infer, telemetry_values, measurement_ranges, split_probabil
         try:
             # Query the Bayesian network
             print("i am here")
-            normalized_probabilities, evidence, runtime = query_network(infer, parameter_values, measurement_ranges, split_probability_dict, additional_evidence,hidden_probabilities_dict)
+            normalized_probabilities, evidence, runtime = query_network(infer, fan_status, parameter_values, measurement_ranges, split_probability_dict, additional_evidence,hidden_probabilities_dict)
 
             # Sort anomalies based on the probability of their presence
             sorted_anomalies = sorted(normalized_probabilities.items(), key = lambda x: x[1], reverse = True)
@@ -168,6 +168,26 @@ def query_additional_evidence(infer, measurement_ranges, split_probability_dict,
             # Add the No Anomalies Present node to the set of anomalies to be queried based on the telemetry feed evidence
             # anomalies_to_query.append("No Anomalies Present")
             # print('Anomalies to query:', anomalies_to_query)
+
+
+            # from AT.diagnosis.bayesian.reduced_anomaly_names import QUERYABLE_ANOMALY_NAMES as ANOMALY_NAMES
+
+            # # Only query anomaly/subsystem nodes that actually exist in the trained
+            # # model graph. This replaces deriving names from split_probability_dict's
+            # # nested keys (fragile — that JSON drifts out of sync with the model's
+            # # actual node names on every rename) with a direct check against the
+            # # graph itself, so a stale name is skipped with a warning instead of
+            # # raising a pgmpy 'node not in digraph' error.
+            # model_nodes = set(infer.model.nodes())
+            # anomalies_to_query = [a for a in ANOMALY_NAMES if a in model_nodes]
+
+            # missing = set(ANOMALY_NAMES) - model_nodes
+            # if missing:
+            #     print(f"Warning: anomaly names not found in model graph, skipping: {missing}")
+
+            # print("done querying till now")
+            # print('```query not using threading```')
+
 
             # Initialize a dictionary to store the probability of each anomaly being present
             anomaly_probabilities = {}

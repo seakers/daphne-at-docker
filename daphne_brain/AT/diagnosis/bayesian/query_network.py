@@ -1,14 +1,15 @@
 # query_network.py
 # Author: Joshua Elston
-# Last Edited: 10/29/2025
+# Last Edited: 06/08/2026
 
 # Used to query the Bayesian network to compute posterior probabilities based on user inputs
 # for parameter values --> called in ECLSS_Bayesian_Network.py
 # Changes on 10/29/2025 remove parameters from list of query variables (i.e., purely retaining them as evidence)
+# Minor update on 06/08/2026 to correctly added Unknown Anomaly in the set of variables to query for inference
 
 import time
 
-def query_network(infer, parameter_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
+def query_network(infer, fan_status, parameter_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
     # Start timing the network query
     tic = time.time()
     
@@ -73,8 +74,8 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
     # Prepare evidence based on user input
     for parameter, value in parameter_values.items():
         if value is not None:
-            print("measurement_ranges keys:", measurement_ranges.keys())
-            print("parameter:", parameter)
+            # print("measurement_ranges keys:", measurement_ranges.keys())
+            # print("parameter:", parameter)
             threshold = discretize_values(parameter, value, measurement_ranges)
             mapped_parameter = PARAMETER_KEY_MAP.get(parameter, parameter)
             # Set the evidence based on the threshold returned from 'discrete_values'
@@ -94,6 +95,11 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
         if f'high {parameter}' not in evidence and f'low {parameter}' not in evidence:
             evidence[f'high {parameter}'] = high_state_mapping['Nominal']
             evidence[f'low {parameter}'] = low_state_mapping['Nominal']
+
+    # Fan Status is a binary parameter, currently defined manually in ECLSS_Bayesian_Netowrk_Learned.py.
+    # In future, this value should be converted and passed in with other telemetry values
+    if fan_status is not None:
+        evidence['Fan Status'] = int(fan_status)
 
     # Verify that evidence is correctly added when querying the network
     print('Evidence:', evidence)
@@ -119,9 +125,30 @@ def query_network(infer, parameter_values, measurement_ranges, split_probability
     anomalies_to_query = list(unique_anomalies)
     print("done querying till now")
     print('```query not using threading```')
-    # Add the No Anomalies Present node to the set of anomalies to be queried based on the telemetry feed evidence
-    # anomalies_to_query.append("No Anomalies Present")
+    # Add the Unknown Anomaly node to the set of anomalies to be queried based on the telemetry feed evidence
+    anomalies_to_query.append("Unknown Anomaly")
     # print('Anomalies to query:', anomalies_to_query)
+
+
+    # from AT.diagnosis.bayesian.reduced_anomaly_names import QUERYABLE_ANOMALY_NAMES as ANOMALY_NAMES
+
+    # # Only query anomaly/subsystem nodes that actually exist in the trained
+    # # model graph. This replaces deriving names from split_probability_dict's
+    # # nested keys (fragile — that JSON drifts out of sync with the model's
+    # # actual node names on every rename) with a direct check against the
+    # # graph itself, so a stale name is skipped with a warning instead of
+    # # raising a pgmpy 'node not in digraph' error.
+    # model_nodes = set(infer.model.nodes())
+    # anomalies_to_query = [a for a in ANOMALY_NAMES if a in model_nodes]
+    # print(f"[TEST HERE] {anomalies_to_query}")
+
+    # missing = set(ANOMALY_NAMES) - model_nodes
+    # if missing:
+    #     print(f"Warning: anomaly names not found in model graph, skipping: {missing}")
+
+    # print("done querying till now")
+    # print('```query not using threading```')
+
 
     # Initialize a dictionary to store the probability of each anomaly being present
     anomaly_probabilities = {}

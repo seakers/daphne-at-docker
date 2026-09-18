@@ -22,7 +22,7 @@ from AT.neo4j_queries.query_functions import retrieve_objective_from_procedure
 from AT.neo4j_queries.query_functions import retrieve_procedures_fTitle_from_anomaly
 from auth_API.helpers import get_or_create_user_information
 from daphne_context.models import UserInformation
-from AT.diagnosis.bayesian.ECLSS_Bayesian_Network_Learned import get_probabilities, update_probabilities_additional
+from AT.diagnosis.bayesian.Gateway.ECLSS_Bayesian_Network_Learned import get_probabilities, update_probabilities_additional
 from AT.diagnosis.physics.physics_diagnosis import create_physics_diagnosis_report
 from AT.diagnosis.physics.telemetry_storage import telemetry_storage
 from django.conf import settings
@@ -625,7 +625,8 @@ class RequestDiagnosis(APIView):
             probabilities, _, hidden_components = get_probabilities(
                 telemetry_values, 
                 additional_evidence=addtional_evidence,
-                calculate_best_evidence=False  # Skip best evidence for now
+                calculate_best_evidence=False,  # Skip best evidence for now
+                should_log=False # Don't add results to log results
             )
         
         top_5_probabilities = dict(sorted(probabilities.items(), 

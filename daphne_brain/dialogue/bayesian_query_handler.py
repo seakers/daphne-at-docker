@@ -1,6 +1,6 @@
 import json
 import os
-from AT.diagnosis.bayesian.ECLSS_Bayesian_Network_Learned import get_probabilities
+from AT.diagnosis.bayesian.Gateway.ECLSS_Bayesian_Network_Learned import get_probabilities
 from AT.diagnosis.bayesian.reduce_entropy import calculate_entropy, select_best_evidence
 import re
 
@@ -85,8 +85,8 @@ class BayesianQueryHandler:
         """
         Calculate how probabilities would change if we add evidence about components and measurements
         """
-        # Get current probabilities without the new evidence
-        current_probs, _, _ = get_probabilities(current_telemetry, current_evidence)
+        # Get current probabilities without the new evidence <-- don't log this initial calculation, as it duplicates with that run just after
+        current_probs, _, _ = get_probabilities(current_telemetry, current_evidence, should_log=False)
         
         # Create evidence dictionary with the new component evidence
         additional_evidence = current_evidence.copy()
@@ -95,7 +95,7 @@ class BayesianQueryHandler:
                 additional_evidence[component] = state
 
         # The llm is return low/high + measurement name, so to find that in measurement ranges, stripping it of low/high
-        from AT.diagnosis.bayesian.reduced_ranges import measurement_ranges
+        from AT.diagnosis.bayesian.Gateway.reduced_ranges import measurement_ranges
         
         updated_telemetry = current_telemetry.copy()
         print("hypothetical context", hypothetical_context)
@@ -204,7 +204,7 @@ class BayesianQueryHandler:
         """
         Determine which evidence would be most informative to collect next
         """
-        _, best_evidence, hidden_components = get_probabilities(current_telemetry, current_evidence)
+        _, best_evidence, hidden_components = get_probabilities(current_telemetry, current_evidence, should_log=False)
         
         if not best_evidence:
             return {
