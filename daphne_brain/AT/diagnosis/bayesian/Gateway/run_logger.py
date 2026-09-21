@@ -1,31 +1,34 @@
 # run_logger.py
 # Author: Joshua Elston
-# Last Edited: 06/07/2026
+# Last Edited: 09/19/2026
 
 # Script appends per-run scenario data in a single .json file to compute
 # the entropy and hits@1 (reflecting confidence and accuracy, respectively)
 # of the Bayesian Network
 
 import json
-import os
-import math
+from typing import Union
 from datetime import datetime, timezone
 from pathlib import Path
+
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _DEFAULT_RESULTS_DIR = _SCRIPT_DIR / 'results'
 
-def _hits_at_k(probabilities: dict[str, float], true_anomaly: str, k: int = 1) -> int:
+def _hits_at_k(probabilities: dict[str, float], true_anomaly: Union[str, list], k: int = 1) -> int:
     # Return 1 if the true anomaly is in the top-k ranked anomalies, else return 0
     if true_anomaly is None:
         return None
+    # Normalize to a list so check is always the same
+    candidates = [true_anomaly] if isinstance(true_anomaly, str) else true_anomaly
+
     ranked = sorted(probabilities.keys(), key=lambda k: probabilities[k], reverse=True)
-    return int(true_anomaly in ranked[:k])
+    return int(any(anomaly in ranked[:k] for anomaly in candidates))
 
 # Main API
 def log_run(
         probabilities: dict[str, float],
         scenario_id: str=None,
-        true_anomaly: str=None,
+        true_anomaly: Union[str, list]=None,
         initial_entropy: float=None,
         best_evidence: str=None,
         telemetry_snapshot: dict=None,
@@ -46,13 +49,21 @@ def log_run(
         'timestamp': datetime.now(timezone.utc).isoformat(),
         'scenario_id': scenario_id,
         'true_anomaly': true_anomaly,
+        'true_anomaly_or': isinstance(true_anomaly, list),
         'initial_entropy': initial_entropy,
         'hits@1': top1,
         'hits@3': top3,
         'top_predicted_anomaly': ranked_anomalies[0] if ranked_anomalies else None,
-        'probabilities': probabilities,
+        'probabilities': (
+            {k: round(v * 100, 2) for k, v in probabilities.items()}
+            if probabilities else None
+        ),
         'best_evidence': best_evidence,
-        'telemetry_snapshot': telemetry_snapshot
+        'telemetry_snapshot': (
+            {k: round(v, 2) if isinstance(v, float) else v
+             for k, v in telemetry_snapshot.items()}
+            if telemetry_snapshot else None
+        )
     }
 
     with open(filepath, 'a', encoding='utf-8') as f:

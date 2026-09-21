@@ -12,8 +12,12 @@
 # Updated on 03/06/2026 to remove parent probabilities between "Unknown Anomaly" and each network parameter
 # Updated on 08/27/2026 to reflect updated anomaly names for Gateway network. Note that this script may not be used to perform inference in future,
 # so may become phased out if using a standalone 'ANOMALY_NAMES' dictionary formed absent of related probabilities (as these will be learned from data)
+import sys
+from pathlib import Path
 
-from AT.diagnosis.bayesian.HERA.ranges import measurement_ranges
+sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+
+from AT.diagnosis.bayesian.Gateway.reduced_ranges import measurement_ranges
 import json
 import os
 

@@ -1,6 +1,6 @@
 # hidden_probabilities.py
 # Author: Joshua Elston
-# Last Edited: 11/05/2025
+# Last Edited: 09/18/2026
 
 # Stores probabilities of hidden nodes being in different qualititative states (translated to True or False),
 # conditioned on the presence (or absence) of their specific parent anomaly. The hidden nodes serve as
@@ -10,12 +10,13 @@
 # Changes on 11/05/2025 to reflect naming convention for Gateway (L1 -- > IHab, L2 --> HALO)
 # NOTE: For some reason, this script does not get automatically put into the bayesian folder, and is instead stored at
 # the highest level of the repository. Will have to drag in from the bottom of the scripts in the scroll down menu.
+# Updated on 09/18/2026 to revert back to L1/L2 naming convention for HERA
 
-import json
+import os, json
 
 hidden_probabilities_dict = {
     "[HIDDEN] BFS Component": {
-        "Biological Filter Saturation (IHab)": {
+        "Biological Filter Saturation (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.985,
@@ -27,7 +28,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "Biological Filter Saturation (HALO)": {
+        "Biological Filter Saturation (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.985,
@@ -41,7 +42,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] CDRA Failure Component": {
-        "CDRA Failure (IHab)": {
+        "CDRA Failure (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9988,
@@ -53,7 +54,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "CDRA Failure (HALO)": {
+        "CDRA Failure (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9988,
@@ -67,7 +68,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] CDRA LiOH Canister Saturation Component": {
-        "CDRA LiOH Canister Saturation (IHab)": {
+        "CDRA LiOH Canister Saturation (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9755,
@@ -79,7 +80,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "CDRA LiOH Canister Saturation (HALO)": {
+        "CDRA LiOH Canister Saturation (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9755,
@@ -93,7 +94,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Electrolysis System Failure Component": {
-        "Electrolysis System Failure (IHab)": {
+        "Electrolysis System Failure (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.982,
@@ -105,7 +106,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "Electrolysis System Failure (HALO)": {
+        "Electrolysis System Failure (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.982,
@@ -119,7 +120,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Emergency O2 System Maintenance Component": {
-        "Emergency O2 System Maintenance (IHab)": {
+        "Emergency O2 System Maintenance (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9762,
@@ -131,7 +132,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "Emergency O2 System Maintenance (HALO)": {
+        "Emergency O2 System Maintenance (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9762,
@@ -145,7 +146,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Excess CO2 in Cabin Component": {
-        "Excess CO2 in Cabin (IHab)": {
+        "Excess CO2 in Cabin (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.973,
@@ -157,7 +158,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "Excess CO2 in Cabin (HALO)": {
+        "Excess CO2 in Cabin (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.973,
@@ -171,7 +172,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Excess Gas Leak Component": {
-        "Excess Gas Leak (IHab)": {
+        "Excess Gas Leak (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9886,
@@ -183,7 +184,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "Excess Gas Leak (HALO)": {
+        "Excess Gas Leak (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9886,
@@ -197,7 +198,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Excess Water Vapor Pressure in Cabin Component": {
-        "Excess Water Vapor Pressure in Cabin (IHab)": {
+        "Excess Water Vapor Pressure in Cabin (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.986,
@@ -209,7 +210,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "Excess Water Vapor Pressure in Cabin (HALO)": {
+        "Excess Water Vapor Pressure in Cabin (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.986,
@@ -279,7 +280,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Loss of Pressure Component": {
-        "Loss of Pressure (IHab)": {
+        "Loss of Pressure (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.998,
@@ -291,7 +292,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "Loss of Pressure (HALO)": {
+        "Loss of Pressure (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.998,
@@ -305,7 +306,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] Main Cabin Fan Failure Component": {
-        "Main Cabin Fan Failure (IHab)": {
+        "Main Cabin Fan Failure (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.961,
@@ -317,7 +318,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "Main Cabin Fan Failure (HALO)": {
+        "Main Cabin Fan Failure (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.961,
@@ -373,7 +374,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] N2 Tank Burst Component": {
-        "N2 Tank Burst (IHab)": {
+        "N2 Tank Burst (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.986,
@@ -385,7 +386,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "N2 Tank Burst (HALO)": {
+        "N2 Tank Burst (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.986,
@@ -399,7 +400,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] PDU 4 Failure Component": {
-        "PDU 4 Failure (IHab)": {
+        "PDU 4 Failure (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9681,
@@ -411,7 +412,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "PDU 4 Failure (HALO)": {
+        "PDU 4 Failure (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.9681,
@@ -425,7 +426,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] PDU 5 Failure Component": {
-        "PDU 5 Failure (IHab)": {
+        "PDU 5 Failure (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.965,
@@ -437,7 +438,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "PDU 5 Failure (HALO)": {
+        "PDU 5 Failure (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.965,
@@ -465,7 +466,7 @@ hidden_probabilities_dict = {
         },
     },
     "[HIDDEN] RWGSR Malfunction Component": {
-        "RWGSR Malfunction (IHab)": {
+        "RWGSR Malfunction (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.973,
@@ -477,7 +478,7 @@ hidden_probabilities_dict = {
                 },
             },
         },
-        "RWGSR Malfunction (HALO)": {
+        "RWGSR Malfunction (L2)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'True': 0.973,
@@ -642,6 +643,9 @@ def check_probabilities_sum(probability_dict):
 # Check that the probabilities developed in the above dictionary correctly sum to one for each symptom under each anomaly
 check_probabilities_sum(hidden_probabilities_dict)
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+output_file_path = os.path.join(current_dir, "hidden_probabilities_dict.json")
+
 # Store hidden probabilities dictionary as a .json file
-with open("hidden_probabilities_dict.json", "w") as file:
+with open(output_file_path, "w") as file:
     json.dump(hidden_probabilities_dict, file)

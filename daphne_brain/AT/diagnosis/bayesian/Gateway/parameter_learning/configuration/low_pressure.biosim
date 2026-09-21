@@ -4,6 +4,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.traclabs.com/biosim ../../schema/BiosimInitSchema.xsd">
 	<!-- Scenario: Low Pressure (Unknown Anomaly) (trained with driverStutterLength = 200) -->
+	<!-- Added nitrogen sinks may decrease pressure faster than desired, but achieve desired telemetry direction -->
 	<Globals driverStutterLength="200"
 		crewsToWatch="IHab_Group"
 		runTillCrewDeath="false" runTillN="-1" startPaused="false" tickLength="0.1">
@@ -86,12 +87,20 @@
 					outputs="HALO" maxFlowRates="0.0" >
 				</O2Producer>
 			</Injector>
-			<Injector moduleName="Nitrogen_Injector_HALO">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.0"
-					maxFlowRates="0.0" >
+			<Injector moduleName="Nitrogen_Sink_IHab">
+				<nitrogenConsumer inputs="IHab" desiredFlowRates="0.2"
+					maxFlowRates="1.0" >
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.0"
-					outputs="HALO" maxFlowRates="0.0" >
+				<nitrogenProducer desiredFlowRates="0.2"
+					outputs="Nitrogen_Store" maxFlowRates="1.0" >
+				</nitrogenProducer>
+			</Injector>
+			<Injector moduleName="Nitrogen_Sink_HALO">
+				<nitrogenConsumer inputs="HALO" desiredFlowRates="0.2"
+					maxFlowRates="1.0" >
+				</nitrogenConsumer>
+				<nitrogenProducer desiredFlowRates="0.2"
+					outputs="Nitrogen_Store" maxFlowRates="1.0" >
 				</nitrogenProducer>
 			</Injector>
 		</framework>

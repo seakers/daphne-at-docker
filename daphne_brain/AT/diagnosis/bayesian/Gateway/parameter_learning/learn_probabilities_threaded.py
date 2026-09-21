@@ -54,12 +54,12 @@ CONFIG_DIR = os.path.abspath(os.path.join(current_dir, 'configuration'))
 from reduced_network_structure import reduced_network
 from reduced_known_probabilities import known_cpds
 
-reduced_split_probability_dict_path = os.path.join(gateway_dir, "reduced_split_probabilities_dict.json")
-reduced_hidden_probabilities_dict_path = os.path.join(gateway_dir, "reduced_hidden_probabilities_dict.json")
-with open(reduced_split_probability_dict_path, "r") as file:
-    reduced_split_probability_dict = json.load(file)
-with open(reduced_hidden_probabilities_dict_path, "r") as file:
-    reduced_hidden_probabilities_dict = json.load(file)
+# reduced_split_probability_dict_path = os.path.join(gateway_dir, "reduced_split_probabilities_dict.json")
+# reduced_hidden_probabilities_dict_path = os.path.join(gateway_dir, "reduced_hidden_probabilities_dict.json")
+# with open(reduced_split_probability_dict_path, "r") as file:
+#     reduced_split_probability_dict = json.load(file)
+# with open(reduced_hidden_probabilities_dict_path, "r") as file:
+#     reduced_hidden_probabilities_dict = json.load(file)
 
 # Create the Bayesian Network
 model = BayesianNetwork(reduced_network)
@@ -83,7 +83,8 @@ CONFIG_ANOMALY_MAP = {
     'o2_delivery.biosim':        {'anomaly': 'O2 Delivery System Malfunction (IHab)', 'second_anomaly': 'O2 Delivery System Malfunction (HALO)', 'tick': 100},
     'high_humidity.biosim': {'anomaly': 'Unknown Anomaly', 'tick': 200},
     'low_humidity.biosim':  {'anomaly': 'Unknown Anomaly', 'tick': 0},
-    'high_o2.biosim':       {'anomaly': 'Unknown Anomaly', 'tick': 150},
+    # 'high_o2.biosim':       {'anomaly': 'Unknown Anomaly', 'tick': 150},
+    'high_o2.biosim':       {'anomaly': 'O2 Tank Leak', 'tick': 150}, # NOTE: NEW
     'low_co2.biosim':       {'anomaly': 'Unknown Anomaly', 'tick': 0},
     'high_pressure.biosim': {'anomaly': 'Unknown Anomaly', 'tick': 125},
 }
@@ -117,30 +118,13 @@ ANOMALY_SUBSYSTEMS = {
         "O2 Delivery System Malfunction (HALO)",
         "VCCR Sorbent Bed Saturation",
         "OGA Failure",
+        "O2 Tank Leak" # NOTE: NEW
     ],
     "Atmosphere Control and Supply": [
         "Module Decompression (IHab)",
         "Module Decompression (HALO)",
     ]
 }
-
-# # NOTE: NEW ON 09/16/2026
-# # Hidden fault-isolation nodes: when Unknown Anomaly fires, these represent evidence pointing to which subsystem the unexplained symptom signature is consistent with.
-# # ppO2/ppCO2 appear in both families — an unknown signature touching those sensors is genuinely ambiguous between subsystems, and both can activate together.
-# FAULT_ISOLATION_HIDDEN_NODES = {
-#     "[HIDDEN] Atmosphere Revitalization Fault Isolation": ["high ppCO2_IHab (IHab)", "high ppCO2_HALO (HALO)",
-#                                                            "low ppCO2_IHab (IHab)", "low ppCO2_HALO (HALO)",
-#                                                            "high ppO2_IHab (IHab)", "high ppO2_HALO (HALO)",
-#                                                            "low ppO2_IHab (IHab)", "low ppO2_HALO (HALO)",
-#                                                            "high Humidity_IHab (IHab)", "high Humidity_HALO (HALO)",
-#                                                            "low Humidity_IHab (IHab)", "low Humidity_HALO (HALO)"],
-#     "[HIDDEN] Atmosphere Control and Supply Fault Isolation": ["high ppCO2_IHab (IHab)", "high ppCO2_HALO (HALO)",
-#                                                                "low ppCO2_IHab (IHab)", "low ppCO2_HALO (HALO)",
-#                                                                "high ppO2_IHab (IHab)", "high ppO2_HALO (HALO)",
-#                                                                "low ppO2_IHab (IHab)", "low ppO2_HALO (HALO)",
-#                                                                "high Total_Cabin_Pressure_IHab (IHab)", "high Total_Cabin_Pressure_HALO (HALO)",
-#                                                                "low Total_Cabin_Pressure_IHab (IHab)", "low Total_Cabin_Pressure_HALO (HALO)"]
-# }
 
 # Anomaly symptom definitions: which sensors must be off-nominal and at what threshold.
 # Threshold values: 1 = warning (caution) or above, 2 = critical only.
@@ -200,17 +184,22 @@ ANOMALY_SYMPTOMS = {
             ("low Total_Cabin_Pressure_HALO (HALO)", 1),
         ],
     },
+    # NOTE: NEW
+    "O2 Tank Leak": {
+        "component": "[HIDDEN] O2 Tank Valve Status",
+        "sensors": [
+            ("high ppO2_IHab (IHab)", 1),
+            ("high ppO2_HALO (HALO)", 1),
+        ],
+    },
 }
 
 # All anomaly names used in the Bayesian network
 anomalies = ["OGA Failure", "VCCR Particulate Filter Saturation", "VCCR Sorbent Bed Saturation",
              "O2 Delivery System Malfunction (IHab)","O2 Delivery System Malfunction (HALO)",
-             "Module Decompression (IHab)", "Module Decompression (HALO)",
+             "Module Decompression (IHab)", "Module Decompression (HALO)", 
+             "O2 Tank Leak", # NOTE: NEW
              "Unknown Anomaly", "Atmosphere Revitalization", "Atmosphere Control and Supply"]
-
-# for sig, info in ANOMALY_SYMPTOMS.items():
-#     output = info.get("output", sig)
-#     assert output in anomalies, f"'{sig}' maps to output '{output}', which isn't in the anomalies list"
 
 NOMINAL_DATA_TICKS = 1000
 
@@ -284,6 +273,7 @@ NOMINAL_SENSOR_TEMPLATE = {
     'OGA Failure': 0, 'VCCR Particulate Filter Saturation': 0, 'VCCR Sorbent Bed Saturation': 0,
     'O2 Delivery System Malfunction (IHab)': 0, 'O2 Delivery System Malfunction (HALO)': 0,
     'Module Decompression (IHab)': 0, 'Module Decompression (HALO)': 0,
+    'O2 Tank Leak': 0, # NOTE: NEW
     'Unknown Anomaly': 0, 'Atmosphere Revitalization': 0, 'Atmosphere Control and Supply': 0,
     # Hidden components — all inactive
     '[HIDDEN] VCCR Particulate Filter': 0,
@@ -293,6 +283,7 @@ NOMINAL_SENSOR_TEMPLATE = {
     '[HIDDEN] VCCR Sorbent Bed': 0,
     '[HIDDEN] Module Pressure Leak (IHab)': 0,
     '[HIDDEN] Module Pressure Leak (HALO)': 0,
+    '[HIDDEN] O2 Tank Valve Status': 0, # NOTE: NEW
     # Fault isolation hidden components — all inactive <-- NOTE: NEW CODE ADDED ON 09/16/2026
     '[HIDDEN] Atmosphere Revitalization Fault Isolation': 0,
     '[HIDDEN] Atmosphere Control and Supply Fault Isolation': 0
@@ -475,7 +466,15 @@ def resolve_anomalies_for_tick(sensor_row, fan_status, anomalies_list):
     # Unknown Anomaly: sensors are active but none are explained by any flagged known anomaly
     explained_sensors = set()
     for anom_name in final_anomalies:
-        explained_sensors |= required_sensors(anom_name)
+
+        # NOTE: New code on 09/20/2026 to try and ensure cross-module anomalies correctly mapped
+        if fan_status == 'off' and anom_name in CROSS_MODULE_ANOMALIES:
+            if all_symptoms_present(anom_name, module='IHab'):
+                explained_sensors |= required_sensors(anom_name, module='IHab')
+            if all_symptoms_present(anom_name, module='HALO'):
+                explained_sensors |= required_sensors(anom_name, module='HALO')
+        else:
+            explained_sensors |= required_sensors(anom_name)
 
     known_anomaly_nodes = {a for a in anomalies_list
                             if a not in ("Unknown Anomaly", "Atmosphere Revitalization", "Atmosphere Control and Supply")}

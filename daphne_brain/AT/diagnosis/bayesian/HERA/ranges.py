@@ -1,6 +1,6 @@
 # ranges.py
 # Author: Joshua Elston
-# Last Edited: 11/05/2025
+# Last Edited: 09/18/2026
 
 # Stores the measurement_ranges dictionary --> called in probabilities.py
 
@@ -17,10 +17,9 @@
 # previous time step parameters having the same ranges. This enables quick adaptability if additional parameters
 # are added or name changes are required
 
-# Example bound meanings are shown for ppO2_IHab (IHab) (lines 268-273)
+# Example bound meanings are shown for ppO2 (L1) (lines 225-231)
 
-# Changes on 11/05/2025 to reflect naming convention for Gateway (L1 -- > IHab, L2 --> HALO)
-# Update also reflects parameter naming as seen in Biosim (ex: ppCO2_IHab (IHab))
+# Updated on 09/18/2026 to revert back to L1/L2 naming convention for HERA
 
 # Create a dictionary to store the measurement ranges for each of the parameters being measured
 measurement_ranges = {
@@ -52,17 +51,17 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (1500, 3500, False, True),
         'Exceeds_LowerWarningLimit': (None, 1500, False, True)
     },
-    "Cabin Temperature (IHab)": {
+    "Cabin Temperature (L1)": {
         'Exceeds_UpperWarningLimit': (87.7, None, True, False),
         'Exceeds_UpperCautionLimit': (79, 87.7, True, False),
-        'Nominal': (68, 79, False, False), # Nominal: 72.3°F (IHab = HALO)
+        'Nominal': (68, 79, False, False), # Nominal: 72.3°F (L1 = L2)
         'Exceeds_LowerCautionLimit': (64, 68, False, True),
         'Exceeds_LowerWarningLimit': (None, 64, False, True)
     },
-    "Cabin Temperature (HALO)": {
+    "Cabin Temperature (L2)": {
         'Exceeds_UpperWarningLimit': (87.7, None, True, False),
         'Exceeds_UpperCautionLimit': (79, 87.7, True, False),
-        'Nominal': (68, 79, False, False), # Nominal: 72.3°F (IHab = HALO)
+        'Nominal': (68, 79, False, False), # Nominal: 72.3°F (L1 = L2)
         'Exceeds_LowerCautionLimit': (64, 68, False, True),
         'Exceeds_LowerWarningLimit': (None, 64, False, True)
     },
@@ -151,17 +150,17 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
-    "Humidity_IHab (IHab)": {
+    "Humidity (L1)": {
         'Exceeds_UpperWarningLimit': (70, None, True, False),
-        'Exceeds_UpperCautionLimit': (55, 70, True, False),
-        'Nominal': (50, 55, False, False), # Nominal: 52.01% (IHab = HALO)
+        'Exceeds_UpperCautionLimit': (61, 70, True, False),
+        'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
         'Exceeds_LowerCautionLimit': (40, 50, False, True),
         'Exceeds_LowerWarningLimit': (None, 40, False, True)
     },
-    "Humidity_HALO (HALO)": {
+    "Humidity (L2)": {
         'Exceeds_UpperWarningLimit': (70, None, True, False),
-        'Exceeds_UpperCautionLimit': (55, 70, True, False),
-        'Nominal': (50, 55, False, False), # Nominal: 52.01% (IHab = HALO)
+        'Exceeds_UpperCautionLimit': (61, 70, True, False),
+        'Nominal': (50, 61, False, False), # Nominal: 52.01% (L1 = L2)
         'Exceeds_LowerCautionLimit': (40, 50, False, True),
         'Exceeds_LowerWarningLimit': (None, 40, False, True)
     },
@@ -223,84 +222,70 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (2, 5, False, True),
         'Exceeds_LowerWarningLimit': (None, 2, False, True)
     },
-    "ppCO2_IHab (IHab)": {
-        'Exceeds_UpperWarningLimit': (1.88, None, True, False),
-        'Exceeds_UpperCautionLimit': (1.13, 1.88, True, False),
-        'Nominal': (0.2, 1.13, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
-        'Exceeds_LowerCautionLimit': (0, 0.2, False, True),
-        'Exceeds_LowerWarningLimit': (None, 0, False, True)
+    "ppCO2 (L1)": {
+        'Exceeds_UpperWarningLimit': (6, None, True, False),
+        'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
+        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHg (L1 = L2)
+        'Exceeds_LowerCautionLimit': (-2, -1, False, True),
+        'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
-    "ppCO2_HALO (HALO)": {
-        'Exceeds_UpperWarningLimit': (1.88, None, True, False),
-        'Exceeds_UpperCautionLimit': (1.13, 1.88, True, False),
-        'Nominal': (0.2, 1.13, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
-        'Exceeds_LowerCautionLimit': (0, 0.2, False, True),
-        'Exceeds_LowerWarningLimit': (None, 0, False, True)
+    "ppCO2 (L2)": {
+        'Exceeds_UpperWarningLimit': (6, None, True, False),
+        'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
+        'Nominal': (-1, 4.5, False, False), # Nominal: 2.59 mmHg (L1 = L2)
+        'Exceeds_LowerCautionLimit': (-2, -1, False, True),
+        'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
-    # "ppCO2_IHab (IHab)": {
-    #     'Exceeds_UpperWarningLimit': (3.1, None, True, False),
-    #     'Exceeds_UpperCautionLimit': (3.0, 3.1, True, False),
-    #     'Nominal': (0.2, 3.0, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
-    #     'Exceeds_LowerCautionLimit': (0, 0.2, False, True),
-    #     'Exceeds_LowerWarningLimit': (None, 0, False, True)
-    # },
-    # "ppCO2_HALO (HALO)": {
-    #     'Exceeds_UpperWarningLimit': (3.1, None, True, False),
-    #     'Exceeds_UpperCautionLimit': (3.0, 3.1, True, False),
-    #     'Nominal': (0.2, 3.0, False, False), # Nominal: 2.59 mmHg (IHab = HALO)
-    #     'Exceeds_LowerCautionLimit': (0, 0.2, False, True),
-    #     'Exceeds_LowerWarningLimit': (None, 0, False, True)
-    # },
-    "ppH2 (IHab)": {
+    "ppH2 (L1)": {
         'Exceeds_UpperWarningLimit': (0.1, None, True, False),
         'Exceeds_UpperCautionLimit': (0.07, 0.1, True, False),
-        'Nominal': (0.02, 0.07, False, False), # Nominal: 0.04 mmHg (IHab = HALO)
+        'Nominal': (0.02, 0.07, False, False), # Nominal: 0.04 mmHg (L1 = L2)
         'Exceeds_LowerCautionLimit': (0.01, 0.02, False, True),
         'Exceeds_LowerWarningLimit': (None, 0.01, False, True)
     },
-    "ppH2 (HALO)": {
+    "ppH2 (L2)": {
         'Exceeds_UpperWarningLimit': (0.1, None, True, False),
         'Exceeds_UpperCautionLimit': (0.07, 0.1, True, False),
-        'Nominal': (0.02, 0.07, False, False), # Nominal: 0.04 mmHg (IHab = HALO)
+        'Nominal': (0.02, 0.07, False, False), # Nominal: 0.04 mmHg (L1 = L2)
         'Exceeds_LowerCautionLimit': (0.01, 0.02, False, True),
         'Exceeds_LowerWarningLimit': (None, 0.01, False, True)
     },
-    "ppN2_IHab (IHab)": {
+    "ppN2 (L1)": {
         'Exceeds_UpperWarningLimit': (600, None, True, False),
         'Exceeds_UpperCautionLimit': (591, 600, True, False),
         'Nominal': (480, 591, False, False), # Nominal: 581.75 mmHg
         'Exceeds_LowerCautionLimit': (220.1, 480, False, True),
         'Exceeds_LowerWarningLimit': (None, 220.1, False, True)
     },
-    "ppN2_HALO (HALO)": {
+    "ppN2 (L2)": {
         'Exceeds_UpperWarningLimit': (600, None, True, False),
         'Exceeds_UpperCautionLimit': (591, 600, True, False),
         'Nominal': (480, 591, False, False), # Nominal: 581.84 mmHg
         'Exceeds_LowerCautionLimit': (220.1, 480, False, True),
         'Exceeds_LowerWarningLimit': (None, 220.1, False, True)
     },
-    "ppO2_IHab (IHab)": {
+    "ppO2 (L1)": {
         'Exceeds_UpperWarningLimit': (185, None, True, False), # ≥ 185
         'Exceeds_UpperCautionLimit': (175, 185, True, False), # 175 ≤ ppO2 < 185
         'Nominal': (155, 175, False, False), # 155 < ppO2 < 175 --> Nominal: 163.79 mmHg
         'Exceeds_LowerCautionLimit': (145, 155, False, True), # 145 < ppO2 ≤ 155
         'Exceeds_LowerWarningLimit': (None, 145, False, True) # ≤ 145
     },
-    "ppO2_HALO (HALO)": {
+    "ppO2 (L2)": {
         'Exceeds_UpperWarningLimit': (185, None, True, False),
         'Exceeds_UpperCautionLimit': (175, 185, True, False),
         'Nominal': (155, 175, False, False), # Nominal: 163.81 mmHg
         'Exceeds_LowerCautionLimit': (145, 155, False, True),
         'Exceeds_LowerWarningLimit': (None, 145, False, True)
     },
-    "Pressure (IHab)": {
+    "Pressure (L1)": {
         'Exceeds_UpperWarningLimit': (1.5, None, True, False),
         'Exceeds_UpperCautionLimit': (1.15, 1.5, True, False),
         'Nominal': (0.89, 1.15, False, False), # Nominal: 0.99 atm
         'Exceeds_LowerCautionLimit': (0.58, 0.89, False, True),
         'Exceeds_LowerWarningLimit': (None, 0.58, False, True)
     },
-    "Pressure (HALO)": {
+    "Pressure (L2)": {
         'Exceeds_UpperWarningLimit': (1.5, None, True, False),
         'Exceeds_UpperCautionLimit': (1.15, 1.5, True, False),
         'Nominal': (0.89, 1.15, False, False), # Nominal: 0.98 atm
@@ -314,17 +299,17 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (1292, 1333, False, True),
         'Exceeds_LowerWarningLimit': (None, 1292, False, True)
     },
-    "Total_Cabin_Pressure_IHab (IHab)": {
+    "Total Cabin Pressure (L1)": {
         'Exceeds_UpperWarningLimit': (15.2, None, True, False),
         'Exceeds_UpperCautionLimit': (14.9, 15.2, True, False),
-        'Nominal': (14.55, 14.9, False, False), # Nominal: 14.7 psi (IHab = HALO)
+        'Nominal': (14.55, 14.9, False, False), # Nominal: 14.7 psi (L1 = L2)
         'Exceeds_LowerCautionLimit': (12.7, 14.55, False, True),
         'Exceeds_LowerWarningLimit': (None, 12.7, False, True)
     },
-    "Total_Cabin_Pressure_HALO (HALO)": {
+    "Total Cabin Pressure (L2)": {
         'Exceeds_UpperWarningLimit': (15.2, None, True, False),
         'Exceeds_UpperCautionLimit': (14.9, 15.2, True, False),
-        'Nominal': (14.55, 14.9, False, False), # Nominal: 14.7 psi (IHab = HALO)
+        'Nominal': (14.55, 14.9, False, False), # Nominal: 14.7 psi (L1 = L2)
         'Exceeds_LowerCautionLimit': (12.7, 14.55, False, True),
         'Exceeds_LowerWarningLimit': (None, 12.7, False, True)
     },

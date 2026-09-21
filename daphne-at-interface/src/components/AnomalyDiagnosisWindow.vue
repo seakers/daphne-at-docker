@@ -241,7 +241,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                   <span style="font-size: 18px; font-weight: bold;">{{ simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'][0].anomaly }}</span>
                   <span style="background: #003f3f; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
-                    Probability: {{ (simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'][0].probability * 100 ).toFixed(4) }}%
+                    Probability: {{ (simpleTabs[activeSimpleTab].diagnosisData['diagnosis_list'][0].probability * 100 ).toFixed(2) }}%
                   </span>
                 </div>
                 <div style="text-align: center;">
@@ -280,7 +280,7 @@
                               height: '100%'
                             }"></div>
                             <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
-                              {{ (item.probability * 100).toFixed(4) }}%
+                              {{ (item.probability * 100).toFixed(2) }}%
                             </div>
                           </div>
                         </td>
@@ -569,7 +569,7 @@
                               height: '100%'
                             }"></div>
                             <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
-                              {{ (item.probability * 100).toFixed(4) }}%
+                              {{ (item.probability * 100).toFixed(2) }}%
                             </div>
                           </div>
                         </td>
@@ -637,7 +637,7 @@
                               height: '100%'
                             }"></div>
                             <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; text-shadow: 0 0 2px black;">
-                              {{ (item.probability * 100).toFixed(4) }}%
+                              {{ (item.probability * 100).toFixed(2) }}%
                             </div>
                           </div>
                         </td>
@@ -861,7 +861,8 @@ export default {
       durationUnit: 'hours', // The unit: 'seconds', 'minutes', or 'hours'
       useManualDuration: false, // Default to automatic duration based on simulation time
       hoveredPhysicsAnomaly: null, // Track which anomaly row is being hovered
-
+      CONFIDENCE_THRESHOLD: 0.90, // Threshold for terminating diagnosis due to sufficient confidence
+      evidenceRoundsCollected: 0, // Track how many diagnostic actions have previously been taken in the current session
     }
   },
 
@@ -2049,6 +2050,8 @@ export default {
       this.$store.dispatch('clearDiagnosisReport');
       this.explaining = false;
       this.checked = [];
+
+      this.evidenceRoundsCollected = 0; // reset for fresh diagnosis session
     },
 
     clearFullDiagnosisReport() {
@@ -2346,7 +2349,7 @@ export default {
       if (diagnosisReport.calculating_best_evidence) {
         this.monitorBestEvidence();
       } else {
-        this.promptBestEvidenceIfReady();
+        this.promptBestEvidenceIfReady(diagnosisReport);
       }
       
       // Get the most probable anomaly from the diagnosis report
@@ -2354,48 +2357,57 @@ export default {
         ? diagnosisReport.diagnosis_list[0] 
         : null;
       
-      // Special handling for "Loss of Pressure" anomaly
-      if (topAnomaly && topAnomaly.anomaly.includes("Loss of Pressure")) {
-        // For Loss of Pressure, ask about leak detection directly
-        this.$store.commit('addDialoguePiece', {
-          "voice_message": `${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. There is no additional sub-component to improve diagnosis confidence. Do you want me to check if there is any leak?`,
-          "visual_message_type": ["text"],
-          "visual_message": [`${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. There is no additional sub-component to improve diagnosis confidence. Do you want me to check if there is any leak?`],
-          "writer": "daphne",
-          "options": ["Yes", "No"],
-          "optionsCallbackEvent": "lossOfPressureResponse"
-        });
+      // COMMENTED OUT PHYSICS-BASED DIAGNOSIS FOR BAYESIAN EXAMPLES, UNCOMMENT FOR FUTURE USE
+      // // Updated to reflect change in anomaly names <-- kept everything downstream of anomaly name the same for consistency
+      // // Special handling for "Module Decompression" anomaly
+      // if (topAnomaly && topAnomaly.anomaly.includes("Module Decompression")) {
+      //   // For module decompression, ask about leak detection directly
+      //   this.$store.commit('addDialoguePiece', {
+      //     "voice_message": `${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. There is no additional sub-component to improve diagnosis confidence. Do you want me to check if there is any leak?`,
+      //     "visual_message_type": ["text"],
+      //     "visual_message": [`${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. There is no additional sub-component to improve diagnosis confidence. Do you want me to check if there is any leak?`],
+      //     "writer": "daphne",
+      //     "options": ["Yes", "No"],
+      //     "optionsCallbackEvent": "lossOfPressureResponse"
+      //   });
         
-        // Set up listener for loss of pressure response
-        this.setupLossOfPressureListener(topAnomaly);
-      } 
-      // For other anomalies with significant probability, suggest physics-based analysis
-      else if (topAnomaly && topAnomaly.probability > 0.4 && topAnomaly.anomaly !== "No Anomalies Present") {
-        // Set up listener for physics analysis response and get unique event name
-        const uniqueEventName = this.setupPhysicsAnalysisListener(topAnomaly);
+      //   // Set up listener for loss of pressure response
+      //   this.setupLossOfPressureListener(topAnomaly);
+      // } 
+
+      // // For other anomalies with significant probability, suggest physics-based analysis
+      // else if (topAnomaly && topAnomaly.probability > 0.4 && topAnomaly.anomaly !== "No Anomalies Present") {
+      //   // Set up listener for physics analysis response and get unique event name
+      //   const uniqueEventName = this.setupPhysicsAnalysisListener(topAnomaly);
         
-        this.$store.commit('addDialoguePiece', {
-          "voice_message": `${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. Do you want to run physics-based analysis to determine which subcomponent is likely to have failed?`,
-          "visual_message_type": ["text"],
-          "visual_message": [`${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. Do you want to run physics-based analysis to determine which subcomponent is likely to have failed?`],
-          "writer": "daphne",
-          "options": ["Yes", "No"],
-          "optionsCallbackEvent": uniqueEventName
-        });
-      } else {
-        // No significant anomaly detected or "No Anomalies Present"
-        this.$store.commit('addDialoguePiece', {
-          "voice_message": `The diagnosis is complete. No significant anomaly requiring further analysis was detected.`,
-          "visual_message_type": ["text"],
-          "visual_message": [`The diagnosis is complete. No significant anomaly requiring further analysis was detected.`],
-          "writer": "daphne",
-        });
-      }
+      //   this.$store.commit('addDialoguePiece', {
+      //     "voice_message": `${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. Do you want to run physics-based analysis to determine which subcomponent is likely to have failed?`,
+      //     "visual_message_type": ["text"],
+      //     "visual_message": [`${topAnomaly.anomaly} is the most probable scenario with ${(topAnomaly.probability * 100).toFixed(1)}% probability. Do you want to run physics-based analysis to determine which subcomponent is likely to have failed?`],
+      //     "writer": "daphne",
+      //     "options": ["Yes", "No"],
+      //     "optionsCallbackEvent": uniqueEventName
+      //   });
+      // } 
+      // else {
+      //   // No significant anomaly detected or "No Anomalies Present"
+      //   this.$store.commit('addDialoguePiece', {
+      //     "voice_message": `The diagnosis is complete. No significant anomaly requiring further analysis was detected.`,
+      //     "visual_message_type": ["text"],
+      //     "visual_message": [`The diagnosis is complete. No significant anomaly requiring further analysis was detected.`],
+      //     "writer": "daphne",
+      //   });
+      // }
     },
 
     monitorBestEvidence() {
+      // Only show the background calculation message if threshold has not already been reached
+      const report = this.$store.getters.getDiagnosisReport;
+      const thresholdAlreadyReached = this.evidenceRoundsCollected >= 1 &&
+          report && report.diagnosis_list && report.diagnosis_list.length > 0 &&
+          report.diagnosis_list[0].probability >= this.CONFIDENCE_THRESHOLD;
 
-      if (!this.bestEvidencePrompted) {
+      if (!this.bestEvidencePrompted && !thresholdAlreadyReached) {
         this.$store.commit('addDialoguePiece', {
           "voice_message": "I’m calculating the best evidence in the background and will update you when it’s ready.",
           "visual_message_type": ["text"],
@@ -2457,19 +2469,100 @@ export default {
       this.bestEvidenceWatcher = unwatch;
     },
 
-    promptBestEvidenceIfReady() {
+    promptBestEvidenceIfReady(diagnosisReport = null) {
       if (this.bestEvidencePrompted) {
         return;
       }
 
+      // Use passed report if available, falling back to store if needed
+      const report = diagnosisReport || this.$store.getters.getDiagnosisReport;
+
+      // Only apply confidence threshold after at least one piece of evidence has been collected
+      if (this.evidenceRoundsCollected >= 1 && report && report.diagnosis_list && report.diagnosis_list.length > 0) {
+        const topAnomaly = report.diagnosis_list[0];
+        console.log('[threshold check] topAnomaly:', topAnomaly);  // confirm key name
+        if (topAnomaly.probability >= this.CONFIDENCE_THRESHOLD) {
+            this.$store.commit('addDialoguePiece', {
+                "voice_message": `Diagnosis confidence threshold reached. ${topAnomaly.anomaly} has been identified as the most likely anomaly with ${(topAnomaly.probability * 100).toFixed(2)}% probability. No further diagnostic actions are required.`,
+                "visual_message_type": ["text"],
+                "visual_message": [`<span style="color: white;">Diagnosis confidence threshold reached. ${topAnomaly.anomaly} has been identified as the most likely anomaly with ${(topAnomaly.probability * 100).toFixed(2)}% probability. No further diagnostic actions are required.</span>`],
+                "writer": "daphne"
+            });
+            this.bestEvidencePrompted = true;
+            return;
+        }
+    }
+
       if (this.bestEvidence) {
+        // First, check if the best evidence suggests that a subsystem-level fault diagnosis is the best course of action (meaning an unknown anomaly is present)
+        if (this.bestEvidence.includes('Fault Isolation')) {
+          // If in hypothetical mode, route through hypothetical listener
+          if (this.isHypotheticalMode) {
+            this.hypotheticalBestEvidence = this.bestEvidence;
+            this.$store.commit('addDialoguePiece', {
+              "voice_message": `This hypothetical scenario does not match to a known anomaly scenario in my diagnostic model. I recommend performing ${this.bestEvidence.replace('[HIDDEN] ', '').replace('Fault Isolation', 'fault isolation')} to narrow down the root cause. Would you like to proceed?`,
+              "visual_message_type": ["text"],
+              "visual_message": [`This hypothetical scenario does not match to a known anomaly scenario in my diagnostic model. I recommend performing ${this.bestEvidence.replace('[HIDDEN] ', '').replace('Fault Isolation', 'fault isolation')} to narrow down the root cause. Would you like to proceed?`],
+              "writer": "daphne",
+              "options": ["Yes", "No"],
+              "optionsCallbackEvent": "hypotheticalBestEvidenceResponse"
+            });
+            this.setupHypotheticalBestEvidenceListener();
+            this.bestEvidencePrompted = true;
+            return;
+          }
+
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": `The present diagnosis does not match to a known anomaly scenario in my diagnostic model. I recommend performing ${this.bestEvidence.replace('[HIDDEN] ', '').replace('Fault Isolation', 'fault isolation')} to narrow down the root cause. Would you like to proceed?`,
+            "visual_message_type": ["text"],
+            "visual_message": [`The present diagnosis does not match to a known anomaly scenario in my diagnostic model. I recommend performing ${this.bestEvidence.replace('[HIDDEN] ', '').replace('Fault Isolation', 'fault isolation')} to narrow down the root cause. Would you like to proceed?`],
+            "writer": "daphne",
+            "options": ["Yes", "No"],
+            "optionsCallbackEvent": "bestEvidenceResponse"
+          });
+          this.setupBestEvidenceListener();
+          this.bestEvidencePrompted = true;
+          return;
+        }
+        // Next, check if there is a likely module decompression event (requiring a leak inspection)
+        else if (this.bestEvidence.includes('Leak')) {
+          // If in hypothetical mode, route through hypothetical listener
+          if (this.isHypotheticalMode) {
+            this.hypotheticalBestEvidence = this.bestEvidence;
+            this.$store.commit('addDialoguePiece', {
+              "voice_message": `I could improve this hypothetical diagnosis if you could assess whether there is a ${this.bestEvidence.replace('[HIDDEN] ', '')}. Would you like to provide this information?`,
+              "visual_message_type": ["text"],
+              "visual_message": [`For this hypothetical scenario, I could improve my diagnostic confidence if you could assess whether there is a ${this.bestEvidence.replace('[HIDDEN] ', '')}. Would you like to provide this information?`],
+              "writer": "daphne",
+              "options": ["Yes", "No"],
+              "optionsCallbackEvent": "hypotheticalBestEvidenceResponse"
+            });
+            this.setupHypotheticalBestEvidenceListener();
+            this.bestEvidencePrompted = true;
+            return;
+          }
+
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": `I could improve my diagnostic confidence if you could assess whether there is a ${this.bestEvidence.replace('[HIDDEN] ', '')}. Would you like to provide this information?`,
+            "visual_message_type": ["text"],
+            "visual_message": [`I could improve my diagnostic confidence if you could assess whether there is a ${this.bestEvidence.replace('[HIDDEN] ', '')}. Would you like to provide this information?`],
+            "writer": "daphne",
+            "options": ["Yes", "No"],
+            "optionsCallbackEvent": "bestEvidenceResponse"
+          });
+          this.setupBestEvidenceListener();
+          this.bestEvidencePrompted = true;
+          return;
+        }
+        // For all other known anomalies, provide the diagnostic action that would reduce the present uncertainty
+        else {
         // If in hypothetical mode, route through hypothetical listener
         if (this.isHypotheticalMode) {
           this.hypotheticalBestEvidence = this.bestEvidence;
           this.$store.commit('addDialoguePiece', {
-            "voice_message": `I could improve this hypothetical diagnosis if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
+            "voice_message": `I could improve this hypothetical diagnosis if you could assess the condition of the ${this.bestEvidence.replace('[HIDDEN] ', '')}. Would you like to provide this information?`,
             "visual_message_type": ["text"],
-            "visual_message": [`For this hypothetical scenario, the best evidence to collect is: ${this.bestEvidence}. Would you like to assess its condition?`],
+            "visual_message": [`For this hypothetical scenario, I could improve my diagnostic confidence if you could assess the condition of the ${this.bestEvidence.replace('[HIDDEN] ', '')}. Would you like to provide this information?`],
             "writer": "daphne",
             "options": ["Yes", "No"],
             "optionsCallbackEvent": "hypotheticalBestEvidenceResponse"
@@ -2480,9 +2573,9 @@ export default {
         }
 
         this.$store.commit('addDialoguePiece', {
-          "voice_message": `I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
+          "voice_message": `I could improve my diagnostic confidence if you could assess the condition of the ${this.bestEvidence.replace('[HIDDEN] ', '')}. Would you like to provide this information?`,
           "visual_message_type": ["text"],
-          "visual_message": [`I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
+          "visual_message": [`I could improve my diagnostic confidence if you could assess the condition of the ${this.bestEvidence.replace('[HIDDEN] ', '')}. Would you like to provide this information?`],
           "writer": "daphne",
           "options": ["Yes", "No"],
           "optionsCallbackEvent": "bestEvidenceResponse"
@@ -2491,6 +2584,7 @@ export default {
         this.bestEvidencePrompted = true;
         return;
       }
+    }
 
       this.$store.commit('addDialoguePiece', {
         "voice_message": "No additional evidence can improve my diagnostic confidence. Please proceed with the anomaly resolution.",
@@ -3129,8 +3223,19 @@ export default {
 
     handleBestEvidenceResponse(response) {
       if (response === "Yes") {
-        // Show damage assessment slider for best evidence
-        this.showDamageAssessmentSlider();
+        // If fault isolation node shown to user, indicates limit of Bayesian diagnostics
+        // Do not perform diagnostic actions in this case, but inform user of agent limitations
+        if (this.bestEvidence.includes('Fault Isolation')) {
+          this.$store.commit('addDialoguePiece', {
+          "voice_message": "No further actions can be taken by the Bayesian diagnostic agent. I recommend escalating to manual subsystem-level fault isolation procedures.",
+          "visual_message_type": ["text"],
+          "visual_message": ["No further actions can be taken by the Bayesian diagnostic agent. I recommend escalating to manual subsystem-level fault isolation procedures."],
+          "writer": "daphne"
+          });
+        } else {  
+          // Show damage assessment slider for best evidence
+          this.showDamageAssessmentSlider();
+        }
       } else {
         // User doesn't want to provide additional evidence
         this.$store.commit('addDialoguePiece', {
@@ -3147,10 +3252,26 @@ export default {
     },
 
     showDamageAssessmentSlider() {
+      const componentName = this.bestEvidence.replace('[HIDDEN]', '');
+      // Customize message based on diagnostic action requested of the user
+      let sliderMessage;
+      if (this.bestEvidence.includes('Leak')) {
+        sliderMessage = `On a scale of 1 to 5, how severe is the ${componentName}? (1 = minor seepage, 5 = rapid depressurization)`;
+      }
+      else if (this.bestEvidence.includes('Saturation')) {
+        sliderMessage = `On a scale of 1 to 5, what is the extent of ${componentName}? (1 = nominal, 5 = fully saturated)`;
+      }
+      else if (this.bestEvidence.includes('Malfunction')) {
+        sliderMessage = `On a scale of 1 to 5, what is the extent of the ${componentName}? (1 = minor performance degradation, 5 = complete failure)`;
+      }
+      else if (this.bestEvidence.includes('Indicator')) {
+        sliderMessage = `On a scale of 1 to 5, what is the status of the ${componentName}? (1 = nominal, 5 = failed/off)`;
+      }
+
       this.$store.commit('addDialoguePiece', {
-        "voice_message": `On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`,
+        "voice_message": sliderMessage,
         "visual_message_type": ["slider"],
-        "visual_message": [`On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`],
+        "visual_message": [sliderMessage],
         "writer": "daphne",
         "sliderOptions": {
           "min": 1,
@@ -3370,9 +3491,9 @@ export default {
 
     showHypotheticalDamageSlider() {
       this.$store.commit('addDialoguePiece', {
-        "voice_message": `On a scale of 1 to 5, how damaged is the ${this.hypotheticalBestEvidence}? (1 = minimal damage, 5 = severe damage)`,
+        "voice_message": `On a scale of 1 to 5, how damaged is the ${this.hypotheticalBestEvidence.replace('[HIDDEN] ', '')}? (1 = minimal damage, 5 = severe damage)`,
         "visual_message_type": ["slider"],
-        "visual_message": [`On a scale of 1 to 5, how damaged is the ${this.hypotheticalBestEvidence}? (1 = minimal damage, 5 = severe damage)`],
+        "visual_message": [`On a scale of 1 to 5, how damaged is the ${this.hypotheticalBestEvidence.replace('[HIDDEN] ', '')}? (1 = minimal damage, 5 = severe damage)`],
         "writer": "daphne",
         "sliderOptions": {
           "min": 1,
@@ -3520,6 +3641,9 @@ export default {
 
         // await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
         await this.$store.dispatch('requestDiagnosisWithEvidence', requestPayload);
+        
+        this.evidenceRoundsCollected += 1; // Increment after successfully submitting additional evidence
+
         const diagnosisReport = this.$store.getters.getDiagnosisReport;
         
         this.unconfirmedSymptoms = diagnosisReport.hidden_components;
@@ -3570,7 +3694,7 @@ export default {
       if (diagnosisReport.calculating_best_evidence) {
         this.monitorBestEvidence();
       } else {
-        this.promptBestEvidenceIfReady();
+        this.promptBestEvidenceIfReady(diagnosisReport);
       }
 
         // setTimeout(() => {

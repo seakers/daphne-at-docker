@@ -1,68 +1,69 @@
 # dictionaries.py
 # Author: Joshua Elston
-# Last Updated: 11/05/2025
+# Last Updated: 09/18/2026
 
 # Stores dictionaries with relationships between subgroups and their related anomalies. Additionally stores No Anomalies Present and its relationship to the different subgroups.
 # Called in add_cpds to compute the CPDs to be added to the Bayesian network.
 # Changes on 10/17/2025 to include combined failures across multiple levels
 # Changes on 11/05/2025 to reflect naming convention for Gateway (L1 -- > IHab, L2 --> HALO)
+# Updated on 09/18/2026 to revert back to L1/L2 naming convention for HERA (confirm satisfaction with current level-specific anomalies)
 
 combined_failure_dict = {
     "Biological Filter Saturation": [
-        "Biological Filter Saturation (IHab)",
-        "Biological Filter Saturation (HALO)"
+        "Biological Filter Saturation (L1)",
+        "Biological Filter Saturation (L2)"
     ],
     "CDRA Failure": [
-        "CDRA Failure (IHab)",
-        "CDRA Failure (HALO)"
+        "CDRA Failure (L1)",
+        "CDRA Failure (L2)"
     ],
     "CDRA LiOH Canister Saturation": [
-        "CDRA LiOH Canister Saturation (IHab)",
-        "CDRA LiOH Canister Saturation (HALO)"
+        "CDRA LiOH Canister Saturation (L1)",
+        "CDRA LiOH Canister Saturation (L2)"
     ],
     "Electrolysis System Failure": [
-        "Electrolysis System Failure (IHab)",
-        "Electrolysis System Failure (HALO)"
+        "Electrolysis System Failure (L1)",
+        "Electrolysis System Failure (L2)"
     ],
     "Emergency O2 System Maintenance": [
-        "Emergency O2 System Maintenance (IHab)",
-        "Emergency O2 System Maintenance (HALO)"
+        "Emergency O2 System Maintenance (L1)",
+        "Emergency O2 System Maintenance (L2)"
     ],
     "Excess CO2 in Cabin": [
-        "Excess CO2 in Cabin (IHab)",
-        "Excess CO2 in Cabin (HALO)"
+        "Excess CO2 in Cabin (L1)",
+        "Excess CO2 in Cabin (L2)"
     ],
     "Excess Gas Leak": [
-        "Excess Gas Leak (IHab)",
-        "Excess Gas Leak (HALO)"
+        "Excess Gas Leak (L1)",
+        "Excess Gas Leak (L2)"
     ],
     "Excess Water Vapor Pressure in Cabin": [
-        "Excess Water Vapor Pressure in Cabin (IHab)",
-        "Excess Water Vapor Pressure in Cabin (HALO)"
+        "Excess Water Vapor Pressure in Cabin (L1)",
+        "Excess Water Vapor Pressure in Cabin (L2)"
     ],
     "Loss of Pressure": [
-        "Loss of Pressure (IHab)",
-        "Loss of Pressure (HALO)"
+        "Loss of Pressure (L1)",
+        "Loss of Pressure (L2)"
     ],
     "Main Cabin Fan Failure": [
-        "Main Cabin Fan Failure (IHab)",
-        "Main Cabin Fan Failure (HALO)"
+        "Main Cabin Fan Failure (L1)",
+        "Main Cabin Fan Failure (L2)"
     ],
     "N2 Tank Burst": [
-        "N2 Tank Burst (IHab)",
-        "N2 Tank Burst (HALO)"
+        "N2 Tank Burst (L1)",
+        "N2 Tank Burst (L2)"
     ],
     "PDU 4 Failure": [
-        "PDU 4 Failure (IHab)",
-        "PDU 4 Failure (HALO)"
+        "PDU 4 Failure (L1)",
+        "PDU 4 Failure (L2)"
     ],
     "PDU 5 Failure": [
-        "PDU 5 Failure (IHab)",
-        "PDU 5 Failure (HALO)"
+        "PDU 5 Failure (L1)",
+        "PDU 5 Failure (L2)"
     ],
     "RWGSR Malfunction": [
-        "RWGSR Malfunction (IHab)",
-        "RWGSR Malfunction (HALO)"
+        "RWGSR Malfunction (L1)",
+        "RWGSR Malfunction (L2)"
     ]
 }
 

@@ -8,7 +8,7 @@
 		<environment>
 			<SimEnvironment moduleName="IHab" initialVolume="22900">
 				<!-- Decrease IHab initial pressure to 101.5kPa to remain within nominal bounds during simulation -->
-				<percentageInitialization totalPressure="101.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.53" otherPercentage="0.0" nitrogenPercentage="0.25961" />
+				<percentageInitialization totalPressure="101.5" o2Percentage="0.21" co2Percentage="0.00037" waterPercentage="0.53" otherPercentage="0.0" nitrogenPercentage="0.25963" />
 			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900">
 				<!-- Decrease HALO initial pressure to 101.5kPa to remain within nominal bounds during simulation -->

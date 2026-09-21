@@ -73,34 +73,34 @@
 		</air>
 		<framework>
 			<Injector moduleName="Oxygen_Injector_IHab">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.25"
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.175"
 					maxFlowRates="0.5" >
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.25"
+				<O2Producer desiredFlowRates="0.175"
 					outputs="IHab" maxFlowRates="0.5" >
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Oxygen_Injector_HALO">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.2"
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.125"
 					maxFlowRates="0.5" >
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.2"
+				<O2Producer desiredFlowRates="0.125"
 					outputs="HALO" maxFlowRates="0.5" >
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Nitrogen_Sink_IHab">
-				<nitrogenConsumer inputs="IHab" desiredFlowRates="0.07"
-					maxFlowRates="0.07" >
+				<nitrogenConsumer inputs="IHab" desiredFlowRates="0.06"
+					maxFlowRates="0.08" >
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.07"
-					outputs="Nitrogen_Store" maxFlowRates="0.07" >
+				<nitrogenProducer desiredFlowRates="0.06"
+					outputs="Nitrogen_Store" maxFlowRates="0.08" >
 				</nitrogenProducer>
 			</Injector>
 			<Injector moduleName="Nitrogen_Sink_HALO">
-				<nitrogenConsumer inputs="HALO" desiredFlowRates="0.2"
+				<nitrogenConsumer inputs="HALO" desiredFlowRates="0.125"
 					maxFlowRates="0.2" >
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.2"
+				<nitrogenProducer desiredFlowRates="0.125"
 					outputs="Nitrogen_Store" maxFlowRates="0.2" >
 				</nitrogenProducer>
 			</Injector>
@@ -173,8 +173,8 @@
 					<schedule>
 						<activity intensity="2" name="ruminating"
 							length="12" />
-						<activity intensity="0" name="sleep" length="8" />
-						<activity intensity="5" name="excercise"
+						<activity intensity="2" name="sleep" length="8" />
+						<activity intensity="2" name="excercise"
 							length="2" />
 					</schedule>
 				</crewPerson>
@@ -183,8 +183,8 @@
 					<schedule>
 						<activity intensity="2" name="ruminating"
 							length="12" />
-						<activity intensity="0" name="sleep" length="8" />
-						<activity intensity="5" name="excercise"
+						<activity intensity="2" name="sleep" length="8" />
+						<activity intensity="2" name="excercise"
 							length="2" />
 					</schedule>
 				</crewPerson>

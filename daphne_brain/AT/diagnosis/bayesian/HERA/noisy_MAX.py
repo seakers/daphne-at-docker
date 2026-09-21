@@ -12,6 +12,7 @@ from itertools import product
 # influence the child parameter with a certain probability.
 # Changes on 10/22/2025 to only include high/low X (t-1) probabilities for low/high X, respectively
 # Additional changes on 10/23/2025 to ensure correct parent probabilities were added prior to Noisy MAX calculations
+
 def noisy_MAX(split_probability_dict, parameter, anomalies):
     # Just as done within probabilities.py, define the high and low groups, structured to ensure 
     # that the 'Nominal' state is the minimum value of the ordinal variable

@@ -14,7 +14,7 @@
 				<percentageInitialization totalPressure="102.5" o2Percentage="0.2025" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
 			</SimEnvironment>
 			<Dehumidifier moduleName="Main_Dehumidifier">
-				<airConsumer inputs="IHab" desiredFlowRates="0.2965" maxFlowRates="0.2965" />
+				<airConsumer inputs="IHab" desiredFlowRates="0.4" maxFlowRates="0.4" />
 				<dirtyWaterProducer desiredFlowRates="10000" outputs="Dirty_Water_Store" maxFlowRates="10000" />
 			</Dehumidifier>
 			<Fan moduleName="IHab_to_HALO_Fan">
@@ -58,9 +58,9 @@
 		</air>
 		<framework>
 			<Injector moduleName="Oxygen_Injector_IHab">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.2" maxFlowRates="2.0">
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.15" maxFlowRates="0.15">
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.2" outputs="IHab" maxFlowRates="2.0">
+				<O2Producer desiredFlowRates="0.15" outputs="IHab" maxFlowRates="0.15">
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Oxygen_Injector_HALO">
@@ -71,9 +71,9 @@
 			</Injector>
 			<!-- Mirrored nitrogen sink from halo file -->
 			<Injector moduleName="Nitrogen_Sink_IHab">
-				<nitrogenConsumer inputs="IHab" desiredFlowRates="0.04" maxFlowRates="2.0">
+				<nitrogenConsumer inputs="IHab" desiredFlowRates="0.02" maxFlowRates="0.02">
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.04" outputs="Nitrogen_Store" maxFlowRates="2.0">
+				<nitrogenProducer desiredFlowRates="0.02" outputs="Nitrogen_Store" maxFlowRates="0.02">
 				</nitrogenProducer>
 			</Injector>
 		</framework>
@@ -123,15 +123,15 @@
 				<crewPerson age="35" name="Wilma Deering" sex="FEMALE" weight="55">
 					<schedule>
 						<activity intensity="2" name="ruminating" length="12" />
-						<activity intensity="0" name="sleep" length="8" />
-						<activity intensity="5" name="excercise" length="2" />
+						<activity intensity="2" name="sleep" length="8" />
+						<activity intensity="2" name="excercise" length="2" />
 					</schedule>
 				</crewPerson>
 				<crewPerson age="35" name="Tim O'Connor" sex="MALE" weight="72">
 					<schedule>
 						<activity intensity="2" name="ruminating" length="12" />
-						<activity intensity="0" name="sleep" length="8" />
-						<activity intensity="5" name="excercise" length="2" />
+						<activity intensity="2" name="sleep" length="8" />
+						<activity intensity="2" name="excercise" length="2" />
 					</schedule>
 				</crewPerson>
 			</CrewGroup>

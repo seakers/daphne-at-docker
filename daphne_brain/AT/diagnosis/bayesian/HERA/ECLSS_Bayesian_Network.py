@@ -1,9 +1,10 @@
 # ECLSS_Bayesian_Network.py
 # Author: Joshua Elston
-# Last Edited: 10/29/2025
+# Last Edited: 09/18/2026
 
 """
-This main script is used to generate a Bayesian network for an ECLSS environment containing anomalies (parent nodes) and parameters (child nodes).
+This main script is used to generate a Bayesian network for the ECLS system of the HERA space habitat analog. The model of the ECLSS environment
+contains anomalies (parent nodes), parameters (child nodes), diagnostic actions, ECLS subsystems, and the ability to recognize unknown anomalies.
 Parameters can take on one of five distinct states, determined by the current value of that parameter, while anomalies are either present (1) or
 absent (0). For terminology, any time that a parameter is found to not be in its 'Nominal' state (either above or below bounds), it is said to be 
 a symptom. Prior probabilities for the anomalies are paired with conditional probability distributions for the child parameters conditioned on all 
@@ -29,7 +30,7 @@ import json
 
 from pgmpy.models import BayesianNetwork
 from pgmpy.factors.discrete import TabularCPD
-# NOTE: using VariableElimination instead of BeliefPropagation (can update if found that this is needed)
+# NOTE: using VariableElimination (can update to another method, such as BeliefPropagation, if found that this is needed)
 from pgmpy.inference import VariableElimination
 
 # Import dictionaries from other files
@@ -37,16 +38,14 @@ from pgmpy.inference import VariableElimination
 from AT.diagnosis.bayesian.HERA.network_struture import network
 from AT.diagnosis.bayesian.HERA.prior_probabilities import prior_probabilities
 from AT.diagnosis.bayesian.HERA.ranges import measurement_ranges
-# from probabilities import split_probability_dict # NOTE: Imported as a .json --> make sure probabilities are updated
-# from hidden_probabilities import hidden_probabilities_dict # NOTE: Imported as a .json --> make sure probabilities are updated
 from AT.diagnosis.bayesian.HERA.add_cpds import add_cpds
-# from plot_bayesian_network import plot_bayesian_network # NOTE: This currently does not include hidden nodes
 from AT.diagnosis.bayesian.user_input import query_parameters, query_additional_evidence
 from AT.diagnosis.bayesian.reduce_entropy import calculate_entropy, select_best_evidence
 
 
 def get_probabilities(telemetry_values, additional_evidence=None, calculate_best_evidence=True):
     current_dir = os.path.dirname(os.path.abspath(__file__))
+    # NOTE: Make sure to run both files to ensure that probabilities are updated
     split_probability_dict = os.path.join(current_dir, "split_probability_dict.json")
     hidden_probabilities_dict = os.path.join(current_dir, "hidden_probabilities_dict.json")
 
@@ -77,13 +76,6 @@ def get_probabilities(telemetry_values, additional_evidence=None, calculate_best
     prior_cpds_dict = {}
 
     # From the prior probabilities, add CPDs for the anomalies
-    # for anomaly, prior_probability in prior_probabilities.items():
-    #     model.add_cpds(TabularCPD(
-    #                             variable = anomaly, 
-    #                             variable_card = anomaly_cardinality, 
-    #                             values = [[1 - prior_probability], [prior_probability]] # ordered as [False, True]
-    #                             ))
-    #     prior_cpds_dict[anomaly] = {'False': 1 - prior_probability, 'True': prior_probability}
     for anomaly, prior_probability in prior_probabilities.items():
         model.add_cpds(TabularCPD(
                                 variable = anomaly, 
@@ -231,7 +223,6 @@ print("Hidden Components:")
 for component in HIDDEN_COMPONENTS:
     print(f" - {component}")
 
-# test_model = BayesianNetwork(network)
 test_model = BayesianNetwork(network)
 print("Number of nodes:", test_model.number_of_nodes())
 print("Number of edges:", test_model.number_of_edges())

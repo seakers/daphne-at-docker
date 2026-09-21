@@ -72,7 +72,7 @@ def load_initial_model(fan_status, telemetry_values, additional_evidence):
 
     # NOTE: Fan Status is currently a manually-set piece of evidence; this should be updated to be read in from biosim in evidence
     # (with any non-zero values denotes as fan_status=1)
-    fan_status = False
+    fan_status = True
 
     # Add user-provided evidence to the Bayesian network and update the beliefs about the presence of anomalies
     # print(query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict))
@@ -102,8 +102,8 @@ def get_probabilities(telemetry_values, fan_status=None, additional_evidence=Non
     record = None
     if should_log:
         record = log_run(
-            scenario_id='oga_ihab.biosim',
-            true_anomaly='OGA Failure',
+            scenario_id='vccr_sbs_ihab.biosim',
+            true_anomaly='VCCR Sorbent Bed Saturation',
             probabilities=probabilities,
             initial_entropy=initial_entropy,
             best_evidence=best_evidence,

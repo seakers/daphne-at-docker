@@ -1,21 +1,20 @@
 # add_cpds.py
 # Author: Joshua Elston
-# Last Edited: 10/31/2025
+# Last Edited: 09/18/2026
 
 # Adds the CPTs computed in noisy_MAX.py as Tabular CPDs to the Bayesian network --> called in the ECLSS_Baysian_Network.py script
 # CPTs for hidden evidence nodes also added here, which are only related to a single anomaly
 # Changes on 10/17/2025 seeking to verify that seperate level CPDs are correctly generated
 # Changes on 10/23/2025 to ensure that only the probabilities relevant to the given parameter are added to the CPD
-# Ex: For high ppCO2 (HALO), the relevant probabilities would be high ppCO2 (HALO) (t-1) and high ppCO2 (IHab)
+# Ex: For high ppCO2 (L2), the relevant probabilities would be high ppCO2 (L2) (t-1) and high ppCO2 (L1)
 # Changes on 10/31/2025 updated the combined failure CPD generation, such that both level parameters are parents of the high-level anomaly
+# Updated on 09/18/2026 to incorporate minor stylistic changes
 
 from AT.diagnosis.bayesian.HERA.noisy_MAX import noisy_MAX
-# from noisy_MAX import noisy_MAX # COMMENT OUT TO RUN IN DOCKER
 from pgmpy.factors.discrete import TabularCPD
 from itertools import product
 from math import prod
 from AT.diagnosis.bayesian.HERA.dictionaries import combined_failure_dict, subgroup_dict, nap_dict
-# from dictionaries import combined_failure_dict, subgroup_dict, nap_dict # COMMENT OUT TO RUN IN DOCKER
 import time
 import numpy as np
 

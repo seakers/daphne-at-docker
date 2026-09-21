@@ -69,9 +69,9 @@ def query_parameters(infer, fan_status, telemetry_values, measurement_ranges, sp
             print("Anomalies ranked by probability of presence:")
             for anomaly, prob in sorted_anomalies[:5]:
                 if anomaly == 'Unknown Anomaly':
-                    print(f"P({anomaly}): {prob:.6f}")
+                    print(f"P({anomaly}): {prob:.4f}")
                 else:
-                    print(f"P({anomaly} = 1): {prob:.6f}")
+                    print(f"P({anomaly} = 1): {prob:.4f}")
             print()
             print(f"Query runtime: {runtime:.2f}s")
             print()

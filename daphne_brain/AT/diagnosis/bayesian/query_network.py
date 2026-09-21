@@ -1,13 +1,14 @@
 # query_network.py
 # Author: Joshua Elston
-# Last Edited: 06/08/2026
+# Last Edited: 09/19/2026
 
 # Used to query the Bayesian network to compute posterior probabilities based on user inputs
 # for parameter values --> called in ECLSS_Bayesian_Network.py
 # Changes on 10/29/2025 remove parameters from list of query variables (i.e., purely retaining them as evidence)
 # Minor update on 06/08/2026 to correctly added Unknown Anomaly in the set of variables to query for inference
+# Minor update on 09/19/2026 to correct flooring when rounding to 4 decimals
 
-import time
+import time, math
 
 def query_network(infer, fan_status, parameter_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
     # Start timing the network query
@@ -178,8 +179,25 @@ def query_network(infer, fan_status, parameter_values, measurement_ranges, split
     normalized_probabilities = {}
     # Normalize the anomaly probabilities by summing to one
     total_anomaly_probabilities = sum(anomaly_probabilities.values())
-    for anomaly, probability in anomaly_probabilities.items():
-        normalized_probabilities[anomaly] = probability / total_anomaly_probabilities
+
+    # Compute raw normalized values and floor to 4 decimal places
+    raw = {k: v / total_anomaly_probabilities for k, v in anomaly_probabilities.items()}
+    floored = {k: math.floor(v * 10000) / 10000 for k, v in raw.items()}
+
+    # Calculate how many units of 0.0001 need to be redistributed
+    deficit = round(1.0 - sum(floored.values()), 4)
+    n_to_adjust = round(deficit / 0.0001)
+
+    # Distribute deficit to keys with the largest remainders
+    remainders = {k: raw[k] * 10000 % 1 for k in raw}
+    sorted_by_remainder = sorted(remainders, key=lambda k: remainders[k], reverse=True)
+
+    normalized_probabilities = dict(floored)
+    for k in sorted_by_remainder[:n_to_adjust]:
+        normalized_probabilities[k] = round(normalized_probabilities[k] + 0.0001, 4)
+
+    # for anomaly, probability in anomaly_probabilities.items():
+    #     normalized_probabilities[anomaly] = round(probability / total_anomaly_probabilities, 4)
 
     toc = time.time()
     runtime = toc - tic

@@ -12,7 +12,7 @@
 			</SimEnvironment>
 			<SimEnvironment moduleName="HALO" initialVolume="22900">
 				<!-- Decrease HALO initial pressure to 100.5kPa to remain within nominal bounds during simulation -->
-				<percentageInitialization totalPressure="100.5" o2Percentage="0.21" co2Percentage="0.00039" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27711" />
+				<percentageInitialization totalPressure="100.5" o2Percentage="0.21" co2Percentage="0.00037" waterPercentage="0.52" otherPercentage="0.0" nitrogenPercentage="0.27713" />
 			</SimEnvironment>
 			<Dehumidifier moduleName="Main_Dehumidifier">
 				<airConsumer inputs="HALO" desiredFlowRates="0.2965" maxFlowRates="0.2965" />
@@ -69,16 +69,16 @@
 				</O2Producer>
 			</Injector>
 			<Injector moduleName="Oxygen_Injector_HALO">
-				<O2Consumer inputs="O2_Store" desiredFlowRates="0.0" maxFlowRates="0.0">
+				<O2Consumer inputs="O2_Store" desiredFlowRates="0.005" maxFlowRates="0.005">
 				</O2Consumer>
-				<O2Producer desiredFlowRates="0.0" outputs="HALO" maxFlowRates="0.0">
+				<O2Producer desiredFlowRates="0.005" outputs="HALO" maxFlowRates="0.005">
 				</O2Producer>
 			</Injector>
 			<!-- Inject nitrogen into the HALO module to counter decrease in pressure -->
 			<Injector moduleName="Nitrogen_Injector_HALO">
-				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.15" maxFlowRates="2.0">
+				<nitrogenConsumer inputs="Nitrogen_Store" desiredFlowRates="0.1" maxFlowRates="0.1">
 				</nitrogenConsumer>
-				<nitrogenProducer desiredFlowRates="0.15" outputs="HALO" maxFlowRates="2.0">
+				<nitrogenProducer desiredFlowRates="0.1" outputs="HALO" maxFlowRates="0.1">
 				</nitrogenProducer>
 			</Injector>
 		</framework>
