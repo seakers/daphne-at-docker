@@ -73,13 +73,13 @@ def query_parameters(infer, telemetry_values, measurement_ranges, split_probabil
                 else:
                     print(f"P({anomaly} = 1): {prob:.6f}")
             print()
-            print(f"Query runtime: {runtime:.2f}s")
+            print(f"Query runtime: {runtime}s")
             print()
         
             formatted_probabilities = {key: float(value) for key, value in normalized_probabilities.items()}
             # print("Formatted probabilities: ", formatted_probabilities)
             # Return the formatted probabilities to calculate the entropy of the probability distribution
-            return formatted_probabilities, evidence
+            return formatted_probabilities, evidence, runtime
 
         except RuntimeError as e:
             print(f"Error during querying: {e}")

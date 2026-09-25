@@ -159,40 +159,57 @@ class AstrobeeStatus(APIView):
 class GetCurrentInstruction(APIView):
     def post(self, request, format=None):
 
-        url = "https://pride-dev:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
-        payload = {}
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
-        }       
-        response = requests.request("GET", url, headers=headers, data=payload, verify=False)
-        # print("get pride shared variables response procedure id", global_procedure_runtime_ID)
-        if response.status_code == 200:
-            try:
-                instruction_data = response.json()
-                # Extract the important information from the response
-                # current_instruction = {
-                #     'text': instruction_data.get('text', ''),
-                #     'instructionType': instruction_data.get('instructionType', ''),
-                #     'instructionNumber': instruction_data.get('instructionNumber', ''),
-                #     'userResponseType': instruction_data.get('userResponseType', []),
-                #     'status': instruction_data.get('status', '')
-                # }
-                # print("current instruction", instruction_data, response)
-            
-                return Response({
-                    "instruction_data": instruction_data
-                })
-            except json.JSONDecodeError:
-                # print("Error decoding JSON response")
-                return Response({"error": "Invalid response format"}, status=500)
-            
-        else:
-            # print(f"Error fetching current instruction: {response.status_code}")
-            return Response({"error": f"API request failed with status code: {response.status_code}"}, 
-                           status=response.status_code)
+        # ADDED BLOCK TO TRY AND RESOLVE RUN ERRORS
+        global global_procedure_runtime_ID
+        if global_procedure_runtime_ID == "":
+            global_procedure_runtime_ID = "dummy_procedure_runtime_id"
+        dummy_intruction = {
+            "text": "", #"This is a dummy instruction for testing.",
+            "instructionType": "test",
+            "instructionNumber": 1,
+            "userResponseType": ["real"],
+            "status": "active",
+        "instructionIdentifier": "dummy-001"
+        }
+       
+        return Response({
+            "instruction_data": dummy_intruction
+            })
 
-    
+
+        # url = "https://pride-dev:8000/api/procedures/" + global_procedure_runtime_ID + "/currentInstruction"
+        # payload = {}
+        # headers = {
+        #     'Content-Type': 'application/json',
+        #     'Authorization': 'Bearer a57a391b-5e00-4872-844e-66d975e73c0a'
+        # }       
+        # response = requests.request("GET", url, headers=headers, data=payload, verify=False)
+        # # print("get pride shared variables response procedure id", global_procedure_runtime_ID)
+        # if response.status_code == 200:
+        #     try:
+        #         instruction_data = response.json()
+        #         # Extract the important information from the response
+        #         # current_instruction = {
+        #         #     'text': instruction_data.get('text', ''),
+        #         #     'instructionType': instruction_data.get('instructionType', ''),
+        #         #     'instructionNumber': instruction_data.get('instructionNumber', ''),
+        #         #     'userResponseType': instruction_data.get('userResponseType', []),
+        #         #     'status': instruction_data.get('status', '')
+        #         # }
+        #         # print("current instruction", instruction_data, response)
+            
+        #         return Response({
+        #             "instruction_data": instruction_data
+        #         })
+        #     except json.JSONDecodeError:
+        #         # print("Error decoding JSON response")
+        #         return Response({"error": "Invalid response format"}, status=500)
+            
+        # else:
+        #     # print(f"Error fetching current instruction: {response.status_code}")
+        #     return Response({"error": f"API request failed with status code: {response.status_code}"}, 
+        #                    status=response.status_code)
+        
 
 class GetPrideSharedVariables(APIView):
     def post(self, request, format=None):
@@ -278,6 +295,12 @@ class HeraFeed(APIView):
         # print("in hera feed")
         # habitatStatus
         try:
+            print(f"hera_thread exists: {global_obj.hera_thread is not None}")
+            if global_obj.hera_thread is not None:
+                print(f"hera_thread alive: {global_obj.hera_thread.is_alive()}")
+                print(f"hera_thread name: {global_obj.hera_thread.name}")
+
+
             content_type = request.headers.get('Content-Type', '')
             # print("content type", request.data)
             if '_content_type' in request.data:
@@ -312,12 +335,22 @@ class HeraFeed(APIView):
                         "error": "No habitat status data found"
                     }, status=400)
 
-            if global_obj.hera_thread is not None \
-                    and global_obj.hera_thread.is_alive() \
-                    and global_obj.hera_thread.name == "Hera Telemetry Thread":
+            # if global_obj.hera_thread is not None \
+            #         and global_obj.hera_thread.is_alive() \
+            #         and global_obj.hera_thread.name == "Hera Telemetry Thread":
+            #     global_obj.server_to_hera_queue.put(
+            #         {'type': 'sensor_data', 'content': parsed_sensor_data['Parameters']})
+            # return Response(parsed_sensor_data)
+
+            if not global_obj.server_to_hera_queue.full():
                 global_obj.server_to_hera_queue.put(
                     {'type': 'sensor_data', 'content': parsed_sensor_data['Parameters']})
+                print("Data added to hera queue successfully")
+            else:
+                print("Hera queue is full")
+                
             return Response(parsed_sensor_data)
+
         # else:
         #     print(request.data)
         #     print(request.headers)
@@ -428,7 +461,7 @@ class UpdateDiagnosisWithEvidence(APIView):
         print("symptoms list",additional_evidence)
         print("new telemetry values",telemetry_values)
 
-        diagnosis_list = []
+        # diagnosis_list = []
         # probabilities, best_evidence, hidden_components = get_probabilities(telemetry_values)
         # top_5_probabilities = dict(sorted(probabilities.items(), 
         #                              key=lambda item: item[1], 

@@ -45,17 +45,17 @@ COPY . .
 
 # Set environment variables
 ENV DJANGO_SETTINGS_MODULE=daphne_brain.settings \
-    PYTHONUNBUFFERED=1 \
-    POSTGRES_DB=daphne \
-    POSTGRES_USER=daphne \
-    POSTGRES_PASSWORD=daphnetest \
-    POSTGRES_HOST=db \
-    POSTGRES_PORT=5432\
-    REDIS_HOST=redis \
-    REDIS_PORT=6379 
+    PYTHONUNBUFFERED=1
+    # POSTGRES_DB=daphne \
+    # POSTGRES_USER=daphne \
+    # POSTGRES_PASSWORD=daphnetest \
+    # POSTGRES_HOST=db \
+    # POSTGRES_PORT=5432\
+    # REDIS_HOST=redis \
+    # REDIS_PORT=6379 
 
-RUN python3 manage.py collectstatic --clear --noinput
+# RUN python3 manage.py collectstatic --clear --noinput
 
 EXPOSE 8002
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8002"]
+# CMD ["python", "manage.py", "runserver", "0.0.0.0:8002"]

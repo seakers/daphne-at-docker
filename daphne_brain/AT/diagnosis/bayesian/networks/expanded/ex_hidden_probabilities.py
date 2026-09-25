@@ -1,17 +1,20 @@
-# hidden_probabilities.py
+# ex_hidden_probabilities.py
 # Author: Joshua Elston
-# Last Edited: 10/17/2025
+# Last Edited: 01/04/2026
 
 # Stores probabilities of hidden nodes being in different qualititative states (translated to True or False),
 # conditioned on the presence (or absence) of their specific parent anomaly. The hidden nodes serve as
 # additional evidence to reduce the uncertainty in an initial diagnosis.
 # Mathematically, these probabilities are: Pr(AE=ae|A)
 # Updated on 10/17/2025 to include probabilities for level-specific failures
+# Updated on 01/04/2026 to reflect hidden parameter names in IEEE example and correct filepath
+# when writing hidden probability dictionary contents
 
 import json
+import os
 
 hidden_probabilities_dict = {
-    "[HIDDEN] BFS Component": {
+    "[HIDDEN] Biomass Health": { # UPDATED ON 01/04/2026 FOR IEEE EXAMPLE
         "Biological Filter Saturation (L1)": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -638,7 +641,10 @@ def check_probabilities_sum(probability_dict):
 
 # Check that the probabilities developed in the above dictionary correctly sum to one for each symptom under each anomaly
 check_probabilities_sum(hidden_probabilities_dict)
+# Correctly store hidden probabilities dictionary in current filepath
+current_dir = os.path.dirname(os.path.abspath(__file__))
+output_file_path = os.path.join(current_dir, "ex_hidden_probabilities_dict.json")
 
 # Store hidden probabilities dictionary as a .json file
-with open("hidden_probabilities_dict.json", "w") as file:
+with open(output_file_path, "w") as file:
     json.dump(hidden_probabilities_dict, file)

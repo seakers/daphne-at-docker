@@ -1,10 +1,13 @@
 # reduce_entropy.py
 # Author: Joshua Elston
-# Last Edited: 10/29/2025
+# Last Edited: 03/04/2026
 
 # Allows VA to intelligently select pieces of additional evidence to obtain to reduce the entropy in the current
 # probabilitiy distribution (to maximize information gain)
+
+# UPDATES:
 # Changes on 10/29/2025 remove parameters from list of query variables (i.e., purely retaining them as evidence)
+# Updated on 03/04/2026 to switch logic for 'No Anomalies Present' to represent 'Unknown Anomaly'
 
 import time
 import math
@@ -47,8 +50,9 @@ def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, 
                 unique_anomalies.add(anomaly_name) # add anomalies
 
     anomalies_to_query = list(unique_anomalies)
-    # Add the No Anomalies Present node to the set of anomalies to be queried based on the telemetry feed evidence
-    anomalies_to_query.append("No Anomalies Present")
+    # NOTE: As done in query_network.py, updated on 03/04/2026 to change from 'No Anomalies Present' to 'Unknown Anomaly'
+    # Add the Unknown Anomaly node to the set of anomalies to be queried based on the telemetry feed evidence
+    anomalies_to_query.append("Unknown Anomaly")
     # print('Anomalies to query:', anomalies_to_query)
 
     # Initialize a dictionary to store the probability of each anomaly being present
@@ -57,10 +61,8 @@ def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, 
     # Perform the inference one anomaly at a time
     try:
         for anomaly in anomalies_to_query:
-            result = infer.query(variables = [anomaly], evidence = evidence)
-            # print(f"Result: {result}")
-            probability_of_anomaly_present = result.values[1] # [0] --> anomaly absent
-            anomaly_probabilities[anomaly] = probability_of_anomaly_present
+            result = infer.query(variables = [anomaly], evidence = evidence) #, elimination_order = 'MinFill', show_progress = False)
+            anomaly_probabilities[anomaly] = result.values[1] # [0] --> anomaly absent     
 
     except Exception as e:
         raise RuntimeError(f"Error during inference: {e}")
@@ -96,8 +98,8 @@ def calculate_entropy(probabilities):
         # print(f'Probabilities: {prob}')
         if prob == 0:
             print(f"Probability equal to zero.")
-        entropy_distribution += -1 * prob * math.log(prob)
-        entropy_distribution = round(entropy_distribution, 8) # MAY DELETE ROUNDING LATER, MORE FOR READABILITY
+        entropy_distribution += -1 * prob * math.log2(prob)
+        entropy_distribution = round(entropy_distribution, 4)
 
     return entropy_distribution
 
@@ -106,10 +108,10 @@ def select_best_evidence(infer, measurement_ranges, split_probability_dict, hidd
     best_entropy_reduction = float('-inf')
     best_evidence = None
 
-    tic = time.time()
+    tic = time.perf_counter()
 
     # Iterate over all hidden nodes
-    for potential_evidence, associated_anomaly in hidden_probabilities_dict.items():
+    for potential_evidence in hidden_probabilities_dict.items():
         # print(f'Potential Evidence: {potential_evidence}')
         if potential_evidence in current_evidence:
             continue
@@ -123,16 +125,19 @@ def select_best_evidence(infer, measurement_ranges, split_probability_dict, hidd
         for outcome in ['False', 'True']:
             new_probabilities = hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, potential_evidence, outcome)
             entropy = calculate_entropy(new_probabilities.values())
-            entropy = round(entropy, 8) # MAY DELETE ROUNDING LATER, MORE FOR READABILITY
+            entropy = round(entropy, 4)
             entropies.append(entropy)
 
         average_entropy = ((1 - hp_equals_1) * entropies[0]) + (hp_equals_1 * entropies[1])
-        average_entropy = round(average_entropy, 8) # MAY DELETE ROUNDING LATER, MORE FOR READABILITY
+        average_entropy = round(average_entropy, 4)
         delta_h = initial_entropy - average_entropy
-        delta_h = round(delta_h, 8) # MAY DELETE ROUNDING LATER, MORE FOR READABILITY
+        delta_h = round(delta_h, 4)
 
         if delta_h > best_entropy_reduction:
             best_entropy_reduction = delta_h
             best_evidence = potential_evidence
 
-    return best_evidence
+    toc = time.perf_counter()
+    best_evidence_runtime = round(toc - tic, 3)
+
+    return best_evidence, best_evidence_runtime

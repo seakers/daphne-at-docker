@@ -1,6 +1,6 @@
-# add_cpds.py
+# re_add_cpds.py
 # Author: Joshua Elston
-# Last Edited: 10/31/2025
+# Last Edited: 01/02/2026
 
 # Adds the CPTs computed in noisy_MAX.py as Tabular CPDs to the Bayesian network --> called in the ECLSS_Baysian_Network.py script
 # CPTs for hidden evidence nodes also added here, which are only related to a single anomaly
@@ -8,14 +8,14 @@
 # Changes on 10/23/2025 to ensure that only the probabilities relevant to the given parameter are added to the CPD
 # Ex: For high ppCO2 (L2), the relevant probabilities would be high ppCO2 (L2) (t-1) and high ppCO2 (L1)
 # Changes on 10/31/2025 updated the combined failure CPD generation, such that both level parameters are parents of the high-level anomaly
+# Changes on 01/02/2026 updated the way that hidden probability CPDs are calculated, ensuring that the defined probabilities from 
+# hidden_probabilities.py are correctly utilized
 
 from AT.diagnosis.bayesian.noisy_MAX import noisy_MAX
-# from noisy_MAX import noisy_MAX
 from pgmpy.factors.discrete import TabularCPD
 from itertools import product
 from math import prod
-from AT.diagnosis.bayesian.dictionaries import combined_failure_dict, subgroup_dict, nap_dict
-# from dictionaries import subgroup_dict, nap_dict
+from AT.diagnosis.bayesian.networks.reduced.re_dictionaries import subgroup_dict, unknown_anomaly_dict
 import time
 import numpy as np
 
@@ -40,7 +40,7 @@ def safe_make_cpd(parameter, states, values, evidence, evidence_card):
 
 def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_cardinality):
     print('Creating parameter CPDs...')
-    
+
     for parameter, anomalies in split_probability_dict.items():
         # Generate a list of parent anomalies for the current parameter
         anomaly_list = list(anomalies.keys())
@@ -55,7 +55,6 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
                 
                 # Similar to in noisy_MAX, create an iterator to check all states of the current parent node
                 iter_key = next(iter(parent_dict), None)
-                
                 # First, check if the parent is binary
                 if iter_key in ['False', 'True']:
                     parent_cards.append(len(parent_dict))
@@ -94,7 +93,7 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
             high_values, # values
             high_parents, # evidence
             high_cards) # evidence_card
-       
+        
         low_cpd = safe_make_cpd(
             f'low {parameter}', # variable
             len(low_states), # variable_card
@@ -110,19 +109,27 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
         parent_anomalies = list(anomalies.keys())
         num_parents = len(parent_anomalies)
 
-        c_values = [anomalies[a]['probabilities']['true']['True'] for a in parent_anomalies]
+        true_probs = [anomalies[a]['probabilities']['true']['True'] for a in parent_anomalies]
+        false_probs = [anomalies[a]['probabilities']['false']['True'] for a in parent_anomalies]
         
         parent_combos = list(product([False, True], repeat = num_parents))
 
+        # UPDATED ON 01/02/2026
         # For each combination, compute the probability that the hidden parameter is True
         cpt_true = []
+        leak_prob = 0.0001 # add a small leak probability in the event that no parents are active
         for combo in parent_combos:
-            # If all parents are False, set the probability of an active hidden parameter extremely low
-            if not any(combo):
-                p_true = 0.0001
+            # If the hidden parameter has only one parent, use the true probability extracted above
+            if num_parents == 1:
+                p_true = true_probs[0] if combo[0] else false_probs[0]
             else:
-                # Use noisy-OR combination logic
-                p_true = 1 - np.prod([1 - c for c, active in zip(c_values, combo) if active])
+                # If all parents are False, use the leak probability to make an active hidden parameter extremely unlikely
+                if not any(combo):
+                    p_true = leak_prob
+                else:
+                    # Use noisy OR combination logic to compute the probability of the hidden parameter being True
+                    p_true = 1 - np.prod([1 - c for c, active in zip(true_probs, combo) if active])
+
             cpt_true.append(p_true)
 
         # Compute complementary probabilities for the hidden parameter being absent
@@ -139,66 +146,9 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
             evidence = parent_anomalies,
             evidence_card = [2] * num_parents
         )
-        # TEST PRINT (11/3/2025)
-        print(hidden_cpd)
+        # # TEST PRINT (11/3/2025)
+        # print(hidden_cpd)
         model.add_cpds(hidden_cpd)
-
-        # for anomaly, data in anomalies.items():
-        #     # Extract activation probabilities for each hidden node conditioned
-        #     # on the associated parent anomaly
-        #     c_i = data['probabilities']['true']['True']
-        #     q_i = round(1 - c_i, 3)
-
-        #     # NOTE: These can either be defined within the hidden_probabilities_dict or automatically
-        #     # for all hidden nodes as done here; this just removes the need for the 'False' subdictionary
-        #     # Defined as such to prevent deterministic behavior observed when setting the A = 0 probabilities
-        #     # to 1 and 0 for AE = 'False' or 'True', respectively (which follows the Noisy OR format)
-        #     hidden_probs = [[0.9999, q_i],
-        #                     [0.0001, c_i]]
-
-        #     # Create CPTs for each individual parent child relationship
-        #     hidden_cpd = TabularCPD(
-        #         variable = hidden_parameter,
-        #         variable_card = len(hidden_probs),
-        #         values = hidden_probs,
-        #         evidence = [anomaly],
-        #         evidence_card = [anomaly_cardinality]
-        #     )
-
-        #     model.add_cpds(hidden_cpd)
-
-    print("Creating combined failure CPDs...")
-    # NEW CODE ON 10/31/2025
-    for child, parents in combined_failure_dict.items():
-        num_parents = len(parents)
-        evidence_card = [2] * num_parents # binary parents
-
-        combinations = list(product([0, 1], repeat = num_parents))
-
-        child_failure_probs = []
-        for combo in combinations:
-            num_failures = sum(combo)
-            if num_failures == 0:
-                p_failure = 0.01
-            elif num_failures == len(parents):
-                p_failure = 0.99
-            else:
-                p_failure = 0.95
-            child_failure_probs.append(p_failure)
-
-        values = [
-            [round(1 - p, 2) for p in child_failure_probs],
-            [p for p in child_failure_probs]
-        ]
-
-        cpd = TabularCPD(
-            variable = child,
-            variable_card = 2,
-            values = values,
-            evidence = parents,
-            evidence_card = evidence_card
-        )
-        model.add_cpds(cpd)
 
     print('Creating subgroup CPDs...')
     # Add CPDs for subgroups conditioned on the status of their related anomalies
@@ -232,9 +182,9 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
 
         model.add_cpds(subgroup_cpd)
 
-    print('Creating NAP CPD...')
-    # Add CPD for the No Anomalies Present node conditoned on the state of each of the subgroups
-    for nap, subgroups in nap_dict.items():
+    print('Creating Unknown Anomaly CPD...')
+    # Add CPD for the Unknown Anomaly node conditoned on the state of each of the subgroups
+    for ua, subgroups in unknown_anomaly_dict.items():
         num_groups = len(subgroups)
 
         # Create all possible True/False combinations of the subgroup states
@@ -243,31 +193,31 @@ def add_cpds(model, split_probability_dict, hidden_probabilities_dict, anomaly_c
         # Create an empty list to store the CPT for each combination of group states
         cpt_values = []
         for state_combo in group_states:
-            # If any of the subgroups is True, set the probability of NAP being False to ~1
+            # If any of the subgroups is True, set the probability of an Unknown Anomaly being False to ~1
             if any(state_combo):
                 cpt_values.append([0.9999, 0.0001])
-            # If none of the subgroups are True, set the probability of NAP being True to ~1
+            # If none of the subgroups are True, set the probability of an Unknown Anomaly being True to ~1
             else:
                 cpt_values.append([0.0001, 0.9999])
 
         # Reshape the CPT values to align with TabularCPD formatting
         cpt_values = list(zip(*cpt_values))
 
-        # Create the CPD for No Anomalies Present conditioned on the states of the subgroups
-        nap_cpd = TabularCPD(
-            variable = nap,
+        # Create the CPD for Unknown Anomaly conditioned on the states of the subgroups
+        ua_cpd = TabularCPD(
+            variable = ua,
             variable_card = 2,
             values = cpt_values,
             evidence = subgroups,
             evidence_card = [2] * num_groups
         )
 
-        model.add_cpds(nap_cpd)
+        model.add_cpds(ua_cpd)
 
     # Verify expected parents
-    testparam = 'CDRA Failure'
-    print(f"Expected parents for {testparam}: {model.get_parents(testparam)}")
-    print(model.get_cpds(testparam))
+    # testparam = 'Unknown Anomaly'
+    # print(f"Expected parents for {testparam}: {model.get_parents(testparam)}")
+    # print(model.get_cpds(testparam))
 
     # Verify that the model is valid after adding the CPDs
     #   - Checks if sum of probabilities for each state is equal to 1 (tol = 0.01)

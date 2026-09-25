@@ -33,7 +33,7 @@ def get_param_values(sensor_data):
         hwt = item['UpperCautionLimit']
         hct = item['UpperWarningLimit']
         stat=[key for key, value in item['Status'].items() if value]
-        display_name = name + ' (' + group + ')'
+        display_name = name
         kg_name = name
 
         tf_info_dict[display_name] = [display_name, kg_name, group, units, lct, lwt, nominal, hwt, hct]
@@ -68,7 +68,7 @@ def get_hss_param_values(sensor_data):
         hwt = item['UpperCautionLimit']
         hct = item['UpperWarningLimit']
         stat = [key for key, value in item['Status'].items() if value]
-        display_name = name + ' (' + group + ')'
+        display_name = name
         kg_name = name
 
         tf_info_dict[display_name] = [display_name, kg_name, group, units, lct, lwt, nominal, hwt, hct]

@@ -3,6 +3,7 @@ from channels.generic.websocket import JsonWebsocketConsumer
 import schedule
 from auth_API.helpers import get_user_information, get_or_create_user_information
 
+from asgiref.sync import async_to_sync
 
 class DaphneConsumer(JsonWebsocketConsumer):
     scheduler = schedule.Scheduler()
@@ -27,7 +28,8 @@ class DaphneConsumer(JsonWebsocketConsumer):
         key = self.scope['path'].lstrip('api/')
         hash_key = hashlib.sha256(key.encode('utf-8')).hexdigest()
         # Add to the group
-        self.channel_layer.group_add(hash_key, self.channel_name)
+        # self.channel_layer.group_add(hash_key, self.channel_name)
+        async_to_sync(self.channel_layer.group_add)(hash_key, self.channel_name)
 
     def receive_json(self, content, **kwargs):
         """
@@ -50,7 +52,8 @@ class DaphneConsumer(JsonWebsocketConsumer):
         elif content.get('msg_type') == 'text_msg':
             textMessage = content.get('text', None)
             # Broadcast
-            self.channel_layer.group_send(hash_key, { "text": textMessage })
+            # self.channel_layer.group_send(hash_key, { "text": textMessage })
+            async_to_sync(self.channel_layer.group_send)(hash_key, {"text": textMessage})
         elif content.get('msg_type') == 'ping':
             print("Ping received")
             self.send_json({
@@ -65,4 +68,5 @@ class DaphneConsumer(JsonWebsocketConsumer):
         key = self.scope['path'].lstrip('api/')
         hash_key = hashlib.sha256(key.encode('utf-8')).hexdigest()
         # Remove from the group on clean disconnect
-        self.channel_layer.group_discard(hash_key, self.channel_name)
+        # self.channel_layer.group_discard(hash_key, self.channel_name)
+        async_to_sync(self.channel_layer.group_discard)(hash_key, self.channel_name)

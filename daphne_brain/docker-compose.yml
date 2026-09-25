@@ -2,7 +2,7 @@ version: '3.8'
 services:
   db:
     container_name: daphne-maars-db
-    image: postgres
+    image: postgres:18
     restart: unless-stopped
     shm_size: 128mb
     environment:

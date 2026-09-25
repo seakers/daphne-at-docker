@@ -422,6 +422,10 @@ export default {
       diagnosticHistory: [],
       activeDiagnosticTab: 0,
       bestEvidenceListener: null,
+      bestEvidencePrompted: false,
+      bestEvidenceWatcher: null,
+      evidenceRoundsCollected: 0, 
+      CONFIDENCE_THRESHOLD: 0.90, // threshold for terminating iterative diagnosis due to sufficient confidence
     }
   },
 
@@ -694,6 +698,8 @@ export default {
       this.$store.dispatch('clearDiagnosisReport');
       this.explaining = false;
       this.checked = [];
+      this.evidenceRoundsCollected = 0;
+      this.bestEvidencePrompted = false;
     },
     clearFullDiagnosisReport() {
       this.$store.dispatch('clearDiagnosisReport');
@@ -705,36 +711,33 @@ export default {
       this.isLoading = true;
       this.explaining = false;
       this.checked = [];
+
+      // Push current (about to be replaced) diagnosis to history first
+      const existingReport = this.$store.getters.getDiagnosisReport;
+      if (existingReport && existingReport.diagnosis_list && existingReport.diagnosis_list.length > 0) {
+        this.diagnosticHistory.push(JSON.parse(JSON.stringify(existingReport)));
+      }
+      // Fetch new diagnosis
       await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
       const diagnosisReport = this.$store.getters.getDiagnosisReport;
       this.unconfirmedSymptoms = diagnosisReport.hidden_components;
       this.bestEvidence = diagnosisReport.best_evidence;     
       this.currentTelemetryValues = diagnosisReport.current_telemetry_values
       this.activeDiagnosticTab = this.diagnosticHistory.length;
-      this.diagnosticHistory.push(JSON.parse(JSON.stringify(diagnosisReport)));
-      console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
-      // console.log("current diagnostic history 1111111", this.diagnosticHistory);
-      // console.log("current diagnostic history 2222222", this.diagnosticHistory[this.activeDiagnosticTab]);
-      // After getting diagnosis report, ask if user has additional evidence
-      setTimeout(() => {
-      if (this.bestEvidence) {
-        this.$store.commit('addDialoguePiece', {
-          "voice_message": `I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
-          "visual_message_type": ["text"],
-          "visual_message": [`I could improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
-          "writer": "daphne",
-          "options": ["Yes", "No"],
-          "optionsCallbackEvent": "bestEvidenceResponse"
-        });
-        
-        // Set up listener for response
-        this.setupBestEvidenceListener();
-      }
-    }, 1000);
+      // this.diagnosticHistory.push(JSON.parse(JSON.stringify(diagnosisReport)));
 
-      // Display Astrobee procedures in chat after diagnosis
-      console.log("diagnosos report",diagnosisReport, diagnosisReport.astrobee_procedure_list);
-      if (diagnosisReport && diagnosisReport.astrobee_procedure_list && diagnosisReport.astrobee_procedure_list.length > 0) {
+      this.isLoading = false;
+      this.bestEvidencePrompted = false;
+
+      if (diagnosisReport.calculating_best_evidence) {
+        this.monitorBestEvidence();
+      } else {
+        this.promptBestEvidenceIfReady(diagnosisReport);
+      }
+      
+    // Display Astrobee procedures in chat after diagnosis
+    console.log("diagnosos report",diagnosisReport, diagnosisReport.astrobee_procedure_list);
+    if (diagnosisReport && diagnosisReport.astrobee_procedure_list && diagnosisReport.astrobee_procedure_list.length > 0) {
         console.log("Adding procedure message to dialogue", diagnosisReport.astrobee_procedure_list);
         const procedureList = diagnosisReport.astrobee_procedure_list.map(proc => 
           `<li>${proc.title}</li>`
@@ -765,6 +768,90 @@ export default {
     this.showSymptomDialog = true;
   },
 
+    monitorBestEvidence() {
+      const report = this.$store.getters.getDiagnosisReport;
+      const thresholdAlreadyReached = this.evidenceRoundsCollected >= 1 &&
+        report && report.diagnosis_list && report.diagnosis_list.length > 0 &&
+        report.diagnosis_list[0].probability >= this.CONFIDENCE_THRESHOLD;
+
+      if (!this.bestEvidencePrompted && !thresholdAlreadyReached) {
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": "I'm calculating the best evidence in the background and will update you when it's ready.",
+          "visual_message_type": ["text"],
+          "visual_message": ["I'm calculating the best evidence in the background and will update you when it's ready."],
+          "writer": "daphne"
+        });
+      }
+
+      if (this.bestEvidenceWatcher) {
+        this.bestEvidenceWatcher();
+        this.bestEvidenceWatcher = null;
+      }
+
+      const unwatch = this.$store.watch(
+        (state) => state.daphneat.diagnosisReport,
+        (newDiagnosisReport) => {
+          if (!newDiagnosisReport) return;
+
+          const bestEvidenceArrived = !newDiagnosisReport.calculating_best_evidence &&
+                                      newDiagnosisReport.best_evidence;
+          if (bestEvidenceArrived) {
+            this.bestEvidence = newDiagnosisReport.best_evidence;
+            this.unconfirmedSymptoms = newDiagnosisReport.hidden_components || [];
+            this.promptBestEvidenceIfReady();
+            unwatch();
+            this.bestEvidenceWatcher = null;
+          }
+        },
+        { deep: true }
+      );
+      this.bestEvidenceWatcher = unwatch;
+    },
+
+    promptBestEvidenceIfReady(diagnosisReport = null) {
+      if (this.bestEvidencePrompted) return;
+
+      const report = diagnosisReport || this.$store.getters.getDiagnosisReport;
+
+      // Only check threshold after at least one evidence round
+      if (this.evidenceRoundsCollected >= 1 &&
+          report && report.diagnosis_list && report.diagnosis_list.length > 0) {
+        const topAnomaly = report.diagnosis_list[0];
+        if (topAnomaly.probability >= this.CONFIDENCE_THRESHOLD) {
+          this.$store.commit('addDialoguePiece', {
+            "voice_message": `Diagnosis confidence threshold reached. ${topAnomaly.anomaly} has been identified as the most likely anomaly with ${(topAnomaly.probability * 100).toFixed(2)}% probability. No further diagnostic actions are required.`,
+            "visual_message_type": ["text"],
+            "visual_message": [`<span style="color: white;">Diagnosis confidence threshold reached. ${topAnomaly.anomaly} has been identified as the most likely anomaly with ${(topAnomaly.probability * 100).toFixed(2)}% probability. No further diagnostic actions are required.</span>`],
+            "writer": "daphne"
+          });
+          this.bestEvidencePrompted = true;
+          return;
+        }
+      }
+
+      if (this.bestEvidence) {
+        this.$store.commit('addDialoguePiece', {
+          "voice_message": `I could improve my diagnostic confidence if you could assess the condition of the ${this.bestEvidence.replace('[HIDDEN] ', '')}. Would you like to provide this information?`,
+          "visual_message_type": ["text"],
+          "visual_message": [`I could improve my diagnostic confidence if you could assess the condition of the ${this.bestEvidence.replace('[HIDDEN] ', '')}. Would you like to provide this information?`],
+          "writer": "daphne",
+          "options": ["Yes", "No"],
+          "optionsCallbackEvent": "bestEvidenceResponse"
+        });
+        this.setupBestEvidenceListener();
+        this.bestEvidencePrompted = true;
+        return;
+      }
+
+      this.$store.commit('addDialoguePiece', {
+        "voice_message": "No additional evidence can improve my diagnostic confidence. Please proceed with the anomaly resolution.",
+        "visual_message_type": ["text"],
+        "visual_message": ["No additional evidence can improve my diagnostic confidence. Please proceed with the anomaly resolution."],
+        "writer": "daphne"
+      });
+      this.bestEvidencePrompted = true;
+    },
+
   setupBestEvidenceListener() {
     // Add event listener for options response
     if (!this.bestEvidenceListener) {
@@ -794,9 +881,9 @@ export default {
 
   showDamageAssessmentSlider() {
     this.$store.commit('addDialoguePiece', {
-      "voice_message": `On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`,
+      "voice_message": `On a scale of 1 to 5, how damaged is the ${this.bestEvidence.replace('[HIDDEN] ', '')}? (1 = minimal damage, 5 = severe damage)`,
       "visual_message_type": ["slider"],
-      "visual_message": [`On a scale of 1 to 5, how damaged is the ${this.bestEvidence}? (1 = minimal damage, 5 = severe damage)`],
+      "visual_message": [`On a scale of 1 to 5, how damaged is the ${this.bestEvidence.replace('[HIDDEN] ', '')}? (1 = minimal damage, 5 = severe damage)`],
       "writer": "daphne",
       "sliderOptions": {
         "min": 1,
@@ -817,9 +904,9 @@ export default {
     
     // Thank the user and submit the evidence
     this.$store.commit('addDialoguePiece', {
-      "voice_message": `Thank you for your assessment of ${this.bestEvidence}.`,
+      "voice_message": `Thank you for your assessment of the ${this.bestEvidence.replace('[HIDDEN] ', '')}.`,
       "visual_message_type": ["text"],
-      "visual_message": [`Thank you for your assessment of ${this.bestEvidence}.`],
+      "visual_message": [`Thank you for your assessment of the ${this.bestEvidence.replace('[HIDDEN] ', '')}.`],
       "writer": "daphne"
     });
     
@@ -931,6 +1018,12 @@ handleSymptomEvidenceResponse(response) {
 
       console.log("Submitting additional evidence:", this.additionalEvidence);
 
+      // Capture old report before dispatching new one
+      const existingReport = this.$store.getters.getDiagnosisReport;
+      if (existingReport && existingReport.diagnosis_list && existingReport.diagnosis_list.length > 0) {
+        this.diagnosticHistory.push(JSON.parse(JSON.stringify(existingReport)));
+      }
+
       const requestPayload = {
       symptoms: this.selectedSymptomsList,
       additional_evidence: this.additionalEvidence,
@@ -939,8 +1032,11 @@ handleSymptomEvidenceResponse(response) {
       
       // Make API call
 
-      await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
+      // await this.$store.dispatch('requestDiagnosis', this.selectedSymptomsList);
       await this.$store.dispatch('requestDiagnosisWithEvidence', requestPayload);
+      
+      this.evidenceRoundsCollected += 1;
+      
       const diagnosisReport = this.$store.getters.getDiagnosisReport;
       this.unconfirmedSymptoms = diagnosisReport.hidden_components;
       this.bestEvidence = diagnosisReport.best_evidence;     
@@ -954,25 +1050,17 @@ handleSymptomEvidenceResponse(response) {
       });
 
       this.activeDiagnosticTab = this.diagnosticHistory.length;
-      this.diagnosticHistory.push(JSON.parse(JSON.stringify(this.diagnosisReport)));
+      // this.diagnosticHistory.push(JSON.parse(JSON.stringify(this.diagnosisReport)));
       console.log("Set active diagnostic tab to:", this.activeDiagnosticTab);
       console.log("current diagnostic history", this.diagnosticHistory);
 
-      setTimeout(() => {
-        if (this.bestEvidence) {
-          this.$store.commit('addDialoguePiece', {
-            "voice_message": `I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`,
-            "visual_message_type": ["text"],
-            "visual_message": [`I could further improve my diagnosis confidence if you could assess the condition of ${this.bestEvidence}. Would you like to provide this information?`],
-            "writer": "daphne",
-            "options": ["Yes", "No"],
-            "optionsCallbackEvent": "bestEvidenceResponse"
-          });
-          
-          // Set up listener for response
-          this.setupBestEvidenceListener();
-        }
-      }, 1000);
+      this.bestEvidencePrompted = false;
+
+      if (diagnosisReport.calculating_best_evidence) {
+        this.monitorBestEvidence();
+      } else {
+        this.promptBestEvidenceIfReady(diagnosisReport);
+      }
 
     } catch (error) {
       console.error('Error updating diagnosis with additional evidence:', error);
@@ -1091,6 +1179,10 @@ handleAdditionalEvidenceResponse(response) {
     }
     if (this.userResponseListener) {
     this.userResponseListener(); // Unsubscribe from store
+    }
+    if (this.bestEvidenceWatcher) {
+      this.bestEvidenceWatcher();
+      this.bestEvidenceWatcher = null;
     }
 
   if (this.additionalEvidenceListener) {

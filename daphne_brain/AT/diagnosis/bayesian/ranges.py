@@ -70,62 +70,62 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
-    "Fuel Cell #1 Current": {
-        'Exceeds_UpperWarningLimit': (75, None, True, False),
-        'Exceeds_UpperCautionLimit': (68, 75, True, False),
-        'Nominal': (55, 68, False, False), # Nominal: 60.2 amps
-        'Exceeds_LowerCautionLimit': (48, 55, False, True),
-        'Exceeds_LowerWarningLimit': (None, 48, False, True)        
-    },
-    "Fuel Cell #1 PQM": {
-        'Exceeds_UpperWarningLimit': (120, None, True, False),
-        'Exceeds_UpperCautionLimit': (110, 120, True, False),
-        'Nominal': (85, 110, False, False), # Nominal: 100%
-        'Exceeds_LowerCautionLimit': (70, 85, False, True),
-        'Exceeds_LowerWarningLimit': (None, 70, False, True)
-    },
-    "Fuel Cell #1 Stack Out Temp": {
-        'Exceeds_UpperWarningLimit': (1350, None, True, False),
-        'Exceeds_UpperCautionLimit': (1250, 1350, True, False),
-        'Nominal': (1050, 1250, False, False), # Nominal: 1125°F
-        'Exceeds_LowerCautionLimit': (950, 1050, False, True),
-        'Exceeds_LowerWarningLimit': (None, 950, False, True)
-    },
-    "Fuel Cell #1 Voltage": {
-        'Exceeds_UpperWarningLimit': (30.2, None, True, False),
-        'Exceeds_UpperCautionLimit': (29, 30.2, True, False),
-        'Nominal': (27.6, 29, False, False), # Nominal: 28.6 Vdc
-        'Exceeds_LowerCautionLimit': (25.2, 27.6, False, True),
-        'Exceeds_LowerWarningLimit': (None, 25.2, False, True)
-    },
-    "Fuel Cell #2 Current": {
-        'Exceeds_UpperWarningLimit': (75, None, True, False),
-        'Exceeds_UpperCautionLimit': (68, 75, True, False),
-        'Nominal': (55, 68, False, False), # Nominal: 60.2 amps
-        'Exceeds_LowerCautionLimit': (48, 55, False, True),
-        'Exceeds_LowerWarningLimit': (None, 48, False, True)
-    },
-    "Fuel Cell #2 PQM": {
-        'Exceeds_UpperWarningLimit': (120, None, True, False),
-        'Exceeds_UpperCautionLimit': (110, 120, True, False),
-        'Nominal': (85, 110, False, False), # Nominal: 99.99%
-        'Exceeds_LowerCautionLimit': (70, 85, False, True),
-        'Exceeds_LowerWarningLimit': (None, 70, False, True)
-    },
-    "Fuel Cell #2 Stack Out Temp": {
-        'Exceeds_UpperWarningLimit': (1350, None, True, False),
-        'Exceeds_UpperCautionLimit': (1250, 1350, True, False),
-        'Nominal': (1050, 1250, False, False), # Nominal: 1125°F
-        'Exceeds_LowerCautionLimit': (950, 1050, False, True),
-        'Exceeds_LowerWarningLimit': (None, 950, False, True)
-    },
-    "Fuel Cell #2 Voltage": {
-        'Exceeds_UpperWarningLimit': (30.2, None, True, False),
-        'Exceeds_UpperCautionLimit': (29, 30.2, True, False),
-        'Nominal': (27.6, 29, False, False), # Nominal: 28.6 Vdc
-        'Exceeds_LowerCautionLimit': (25.2, 27.6, False, True),
-        'Exceeds_LowerWarningLimit': (None, 25.2, False, True)
-    },
+    # "Fuel Cell #1 Current": {
+    #     'Exceeds_UpperWarningLimit': (75, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (68, 75, True, False),
+    #     'Nominal': (55, 68, False, False), # Nominal: 60.2 amps
+    #     'Exceeds_LowerCautionLimit': (48, 55, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 48, False, True)        
+    # },
+    # "Fuel Cell #1 PQM": {
+    #     'Exceeds_UpperWarningLimit': (120, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (110, 120, True, False),
+    #     'Nominal': (85, 110, False, False), # Nominal: 100%
+    #     'Exceeds_LowerCautionLimit': (70, 85, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 70, False, True)
+    # },
+    # "Fuel Cell #1 Stack Out Temp": {
+    #     'Exceeds_UpperWarningLimit': (1350, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (1250, 1350, True, False),
+    #     'Nominal': (1050, 1250, False, False), # Nominal: 1125°F
+    #     'Exceeds_LowerCautionLimit': (950, 1050, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 950, False, True)
+    # },
+    # "Fuel Cell #1 Voltage": {
+    #     'Exceeds_UpperWarningLimit': (30.2, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (29, 30.2, True, False),
+    #     'Nominal': (27.6, 29, False, False), # Nominal: 28.6 Vdc
+    #     'Exceeds_LowerCautionLimit': (25.2, 27.6, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 25.2, False, True)
+    # },
+    # "Fuel Cell #2 Current": {
+    #     'Exceeds_UpperWarningLimit': (75, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (68, 75, True, False),
+    #     'Nominal': (55, 68, False, False), # Nominal: 60.2 amps
+    #     'Exceeds_LowerCautionLimit': (48, 55, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 48, False, True)
+    # },
+    # "Fuel Cell #2 PQM": {
+    #     'Exceeds_UpperWarningLimit': (120, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (110, 120, True, False),
+    #     'Nominal': (85, 110, False, False), # Nominal: 99.99%
+    #     'Exceeds_LowerCautionLimit': (70, 85, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 70, False, True)
+    # },
+    # "Fuel Cell #2 Stack Out Temp": {
+    #     'Exceeds_UpperWarningLimit': (1350, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (1250, 1350, True, False),
+    #     'Nominal': (1050, 1250, False, False), # Nominal: 1125°F
+    #     'Exceeds_LowerCautionLimit': (950, 1050, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 950, False, True)
+    # },
+    # "Fuel Cell #2 Voltage": {
+    #     'Exceeds_UpperWarningLimit': (30.2, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (29, 30.2, True, False),
+    #     'Nominal': (27.6, 29, False, False), # Nominal: 28.6 Vdc
+    #     'Exceeds_LowerCautionLimit': (25.2, 27.6, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 25.2, False, True)
+    # },
     "H2O (Crew)": {
         'Exceeds_UpperWarningLimit': (5, None, True, False),
         'Exceeds_UpperCautionLimit': (4.5, 5, True, False),
@@ -184,21 +184,21 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (1900, 3700, False, True),
         'Exceeds_LowerWarningLimit': (None, 1900, False, True)
     },
-    "MOXIE Compressor Temp": {
-        'Exceeds_UpperWarningLimit': (180, None, True, False),
-        'Exceeds_UpperCautionLimit': (170, 180, True, False),
-        'Nominal': (140, 170, False, False), # Nominal: 160°F
-        'Exceeds_LowerCautionLimit': (120, 140, False, True),
-        'Exceeds_LowerWarningLimit': (None, 120, False, True)
-    },
-    # NOTE: MOXIE Telemetry Quality appears in Neo4j in relation to the MOXIE Antenna Failure, but is not mentioned on the HSS machine
-    "MOXIE Telemetry Quality": {
-        'Exceeds_UpperWarningLimit': (105, None, True, False),
-        'Exceeds_UpperCautionLimit': (102, 105, True, False),
-        'Nominal': (75, 102, False, False), # Nominal: 99.9%
-        'Exceeds_LowerCautionLimit': (20, 75, False, True),
-        'Exceeds_LowerWarningLimit': (None, 20, False, True)
-    },
+    # "MOXIE Compressor Temp": {
+    #     'Exceeds_UpperWarningLimit': (180, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (170, 180, True, False),
+    #     'Nominal': (140, 170, False, False), # Nominal: 160°F
+    #     'Exceeds_LowerCautionLimit': (120, 140, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 120, False, True)
+    # },
+    # # NOTE: MOXIE Telemetry Quality appears in Neo4j in relation to the MOXIE Antenna Failure, but is not mentioned on the HSS machine
+    # "MOXIE Telemetry Quality": {
+    #     'Exceeds_UpperWarningLimit': (105, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (102, 105, True, False),
+    #     'Nominal': (75, 102, False, False), # Nominal: 99.9%
+    #     'Exceeds_LowerCautionLimit': (20, 75, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 20, False, True)
+    # },
     "n_Butanol": {
         'Exceeds_UpperWarningLimit': (0.1, None, True, False),
         'Exceeds_UpperCautionLimit': (0.07, 0.1, True, False),
@@ -206,20 +206,20 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (-2, -1, False, True),
         'Exceeds_LowerWarningLimit': (None, -2, False, True)
     },
-    "PDU 4 Bank 1": { # NOTE: In spreadsheet, listed as "PDU 4 Bank1" <-- check if this is the same in Neo4j
-        'Exceeds_UpperWarningLimit': (30, None, True, False),
-        'Exceeds_UpperCautionLimit': (25, 30, True, False),
-        'Nominal': (5, 25, False, False), # Nominal: 20.1 amps
-        'Exceeds_LowerCautionLimit': (2, 5, False, True),
-        'Exceeds_LowerWarningLimit': (None, 2, False, True)
-    },
-    "PDU 5 Bank 1": {
-        'Exceeds_UpperWarningLimit': (30, None, True, False),
-        'Exceeds_UpperCautionLimit': (25, 30, True, False),
-        'Nominal': (5, 25, False, False), # Nominal: 20 amps
-        'Exceeds_LowerCautionLimit': (2, 5, False, True),
-        'Exceeds_LowerWarningLimit': (None, 2, False, True)
-    },
+    # "PDU 4 Bank 1": { # NOTE: In spreadsheet, listed as "PDU 4 Bank1" <-- check if this is the same in Neo4j
+    #     'Exceeds_UpperWarningLimit': (30, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (25, 30, True, False),
+    #     'Nominal': (5, 25, False, False), # Nominal: 20.1 amps
+    #     'Exceeds_LowerCautionLimit': (2, 5, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 2, False, True)
+    # },
+    # "PDU 5 Bank 1": {
+    #     'Exceeds_UpperWarningLimit': (30, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (25, 30, True, False),
+    #     'Nominal': (5, 25, False, False), # Nominal: 20 amps
+    #     'Exceeds_LowerCautionLimit': (2, 5, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 2, False, True)
+    # },
     "ppCO2 (L1)": {
         'Exceeds_UpperWarningLimit': (6, None, True, False),
         'Exceeds_UpperCautionLimit': (4.5, 6, True, False),
@@ -290,13 +290,13 @@ measurement_ranges = {
         'Exceeds_LowerCautionLimit': (0.58, 0.89, False, True),
         'Exceeds_LowerWarningLimit': (None, 0.58, False, True)
     },
-    "SOXIE Stack Temp": {
-        'Exceeds_UpperWarningLimit': (1670, None, True, False),
-        'Exceeds_UpperCautionLimit': (1629, 1670, True, False),
-        'Nominal': (1333, 1629, False, False), # Nominal: 1481°F
-        'Exceeds_LowerCautionLimit': (1292, 1333, False, True),
-        'Exceeds_LowerWarningLimit': (None, 1292, False, True)
-    },
+    # "SOXIE Stack Temp": {
+    #     'Exceeds_UpperWarningLimit': (1670, None, True, False),
+    #     'Exceeds_UpperCautionLimit': (1629, 1670, True, False),
+    #     'Nominal': (1333, 1629, False, False), # Nominal: 1481°F
+    #     'Exceeds_LowerCautionLimit': (1292, 1333, False, True),
+    #     'Exceeds_LowerWarningLimit': (None, 1292, False, True)
+    # },
     "Total Cabin Pressure (L1)": {
         'Exceeds_UpperWarningLimit': (15.2, None, True, False),
         'Exceeds_UpperCautionLimit': (14.9, 15.2, True, False),

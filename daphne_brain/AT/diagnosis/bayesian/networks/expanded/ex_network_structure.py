@@ -1,6 +1,6 @@
-# network_struture.py
+# ex_network_struture.py
 # Author: Joshua Elston
-# Last Updated: 11/01/2025
+# Last Updated: 03/04/2026
 
 # Define Bayesian network structure --> called in ECLSS_Bayesian_Network.py
 
@@ -12,11 +12,14 @@
 # 31 hidden nodes, each uniquely related to a specific anomaly, are added with connections to all network anomalies to accurately reflect
 # changes in entropy when querying the network with additional evidence. The addition of these hidden node connections is achieved using
 # the for loop at the bottom of the script
+
+# UPDATES:
 # Changes on 10/17/2025 split failures into different levels if they have symptoms measured seperately
 # on L1 and L2 in order for the probabilities to accurately reflect the presence of a failure
 # This is the case for 14 anomalies, who have seperate L1 and L2 failures while also being combined into
 # a single anomaly at the end
 # Changes on 11/01/2025 updated the temporal and spatial parameters to be high X and low X to maintain consistency with network nodes
+# Updated on 03/04/2026 to capture unknown anomalies as parents of all parameters and as a standalone input into "No Anomalies Present"
 
 from collections import defaultdict
 
@@ -26,14 +29,14 @@ network = [
     ("Biological Filter Saturation (L1)", "high ppO2 (L1)"), ("Biological Filter Saturation (L1)", "high ppO2 (L1) (t-1)"),
     ("Biological Filter Saturation (L1)", "low ppCO2 (L1)"), ("Biological Filter Saturation (L1)", "low ppCO2 (L1) (t-1)"),
     ("Biological Filter Saturation (L1)", "low ppO2 (L1)"), ("Biological Filter Saturation (L1)", "low ppO2 (L1) (t-1)"),
-    ("Biological Filter Saturation (L1)", "[HIDDEN] BFS Component"),
+    ("Biological Filter Saturation (L1)", "[HIDDEN] Biomass Health"), # UPDATED ON 01/04/2026 FOR IEEE EXAMPLE
 
     # Biological Filter Saturation (L2)
     ("Biological Filter Saturation (L2)", "high ppCO2 (L2)"), ("Biological Filter Saturation (L2)", "high ppCO2 (L2) (t-1)"),
     ("Biological Filter Saturation (L2)", "high ppO2 (L2)"), ("Biological Filter Saturation (L2)", "high ppO2 (L2) (t-1)"),
     ("Biological Filter Saturation (L2)", "low ppCO2 (L2)"), ("Biological Filter Saturation (L2)", "low ppCO2 (L2) (t-1)"),
     ("Biological Filter Saturation (L2)", "low ppO2 (L2)"), ("Biological Filter Saturation (L2)", "low ppO2 (L2) (t-1)"),
-    ("Biological Filter Saturation (L2)", "[HIDDEN] BFS Component"),
+    ("Biological Filter Saturation (L2)", "[HIDDEN] Biomass Health"), # UPDATED ON 01/04/2026 FOR IEEE EXAMPLE
 
     # CDRA Failure (L1)
     ("CDRA Failure (L1)", "high Humidity (L1)"), ("CDRA Failure (L1)", "high Humidity (L1) (t-1)"), 
@@ -665,17 +668,17 @@ group_nodes = [
 for group in group_nodes:
     network.append(group)
 
-# Add nodes for subgroups related to NAP node
-# Flipped such that the NAP node is a child of the groups, as its state is deterministic based on the status of the subgroups
-no_anomalies_nodes = [
-    ("Group 1", "No Anomalies Present"),
-    ("Group 2", "No Anomalies Present"),
-    ("Group 3", "No Anomalies Present"),
-    ("Group 4", "No Anomalies Present"),
-    ("Group 5", "No Anomalies Present"),
-    ("Group 6", "No Anomalies Present"),
-    ("Group 7", "No Anomalies Present")
+# Add nodes for subgroups related to unknown anomaly node
+# Flipped such that the unknown anomaly node is a child of the groups, as its state is deterministic based on the status of the subgroups
+unknown_anomaly_nodes = [
+    ("Group 1", "Unknown Anomaly"),
+    ("Group 2", "Unknown Anomaly"),
+    ("Group 3", "Unknown Anomaly"),
+    ("Group 4", "Unknown Anomaly"),
+    ("Group 5", "Unknown Anomaly"),
+    ("Group 6", "Unknown Anomaly"),
+    ("Group 7", "Unknown Anomaly")
 ]
 
-for nap in no_anomalies_nodes:
-    network.append(nap)
+for ua in unknown_anomaly_nodes:
+    network.append(ua)

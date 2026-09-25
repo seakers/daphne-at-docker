@@ -1,11 +1,17 @@
-# probabilities.py
+# re_probabilities.py
 # Author: Joshua Elston
-# Last Edited: 10/23/2025
+# Last Edited: 03/04/2026
 
 # Stores the probabilities dictionary --> called in the ECLSS_Baysian_Network.py script
 # Updated to include parameters that are measured separately on L1 and L2
 
-from ranges import measurement_ranges
+import sys
+from pathlib import Path
+
+project_root = Path(__file__).resolve().parents[5]
+sys.path.insert(0, str(project_root))
+
+from AT.diagnosis.bayesian.ranges import measurement_ranges
 import json
 import os
 
@@ -70,120 +76,6 @@ probability_dict = {
             'value_ranges': measurement_ranges["2-butanone"]
         },
         # Anomaly probabilities
-        "Fuel Cell #1 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.16,
-                    'Exceeds_UpperCautionLimit': 0.82,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["2-butanone"]
-        },
-        "Fuel Cell #2 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.14,
-                    'Exceeds_UpperCautionLimit': 0.84,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["2-butanone"]
-        },
-        "PDU 4 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.19,
-                    'Exceeds_UpperCautionLimit': 0.79,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["2-butanone"]
-        },
-        "PDU 4 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.19,
-                    'Exceeds_UpperCautionLimit': 0.79,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["2-butanone"]
-        },
-        "PDU 5 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.17,
-                    'Exceeds_UpperCautionLimit': 0.81,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["2-butanone"]
-        },
-        "PDU 5 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.17,
-                    'Exceeds_UpperCautionLimit': 0.81,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["2-butanone"]
-        },
         "Reduced Main Cabin Fan #1 Capacity": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -323,120 +215,6 @@ probability_dict = {
             'value_ranges': measurement_ranges["Acetaldehyde"]
         },
         # Anomaly probabilities
-        "Fuel Cell #1 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.14,
-                    'Exceeds_UpperCautionLimit': 0.84,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Acetaldehyde"]
-        },
-        "Fuel Cell #2 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.16,
-                    'Exceeds_UpperCautionLimit': 0.81,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Acetaldehyde"]
-        },
-        "PDU 4 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.17,
-                    'Exceeds_UpperCautionLimit': 0.81,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Acetaldehyde"]
-        },
-        "PDU 4 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.17,
-                    'Exceeds_UpperCautionLimit': 0.81,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Acetaldehyde"]
-        },
-        "PDU 5 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.18,
-                    'Exceeds_UpperCautionLimit': 0.79,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Acetaldehyde"]
-        },
-        "PDU 5 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.18,
-                    'Exceeds_UpperCautionLimit': 0.79,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Acetaldehyde"]
-        },
         "TCCS Auxiliary Fan #1 Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -557,25 +335,6 @@ probability_dict = {
             'value_ranges': measurement_ranges["Aux Cabin Fan #1"]
         },
         # Anomaly probabilities
-        "Fuel Cell #2 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.22,
-                    'Exceeds_LowerWarningLimit': 0.76
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Aux Cabin Fan #1"]
-        },
         "TCCS Auxiliary Fan #1 Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -639,101 +398,6 @@ probability_dict = {
             'value_ranges': measurement_ranges["Aux Cabin Fan #2"]
         },
         # Anomaly probabilities
-        "Fuel Cell #1 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.23,
-                    'Exceeds_LowerWarningLimit': 0.75
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Aux Cabin Fan #2"]
-        },
-        "PDU 4 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.24,
-                    'Exceeds_LowerWarningLimit': 0.73
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Aux Cabin Fan #2"]
-        },
-        "PDU 4 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.24,
-                    'Exceeds_LowerWarningLimit': 0.73
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Aux Cabin Fan #2"]
-        },
-        "PDU 5 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.22,
-                    'Exceeds_LowerWarningLimit': 0.76
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Aux Cabin Fan #2"]
-        },
-        "PDU 5 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.22,
-                    'Exceeds_LowerWarningLimit': 0.76
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Aux Cabin Fan #2"]
-        },
         "TCCS Auxiliary Fan #2 Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -816,7 +480,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["Cabin Temperature (L1)"]
         },
         # Anomaly probabilities
-        "Excess Water Vapor Pressure in Cabin (L1)": {
+        "Excess Water Vapor Pressure in Cabin": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.20,
@@ -835,50 +499,12 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Cabin Temperature (L1)"]
         },
-        "Main Cabin Fan Failure (L1)": {
+        "Main Cabin Fan Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.21,
                     'Exceeds_UpperCautionLimit': 0.76,
                     'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Cabin Temperature (L1)"]
-        }, 
-        "PDU 4 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.81,
-                    'Exceeds_UpperCautionLimit': 0.16,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Cabin Temperature (L1)"]
-        },
-        "PDU 5 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.79,
-                    'Exceeds_UpperCautionLimit': 0.19,
-                    'Nominal': 0.01989,
                     'Exceeds_LowerCautionLimit': 0.0001,
                     'Exceeds_LowerWarningLimit': 0.00001
                 },
@@ -977,7 +603,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["Cabin Temperature (L2)"]
         },
         # Anomaly probabilities
-        "Excess Water Vapor Pressure in Cabin (L2)": {
+        "Excess Water Vapor Pressure in Cabin": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.20,
@@ -996,7 +622,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Cabin Temperature (L2)"]
         },
-        "Main Cabin Fan Failure (L2)": {
+        "Main Cabin Fan Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.21,
@@ -1015,44 +641,6 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Cabin Temperature (L2)"]
         }, 
-        "PDU 4 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.81,
-                    'Exceeds_UpperCautionLimit': 0.16,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Cabin Temperature (L2)"]
-        },
-        "PDU 5 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.79,
-                    'Exceeds_UpperCautionLimit': 0.19,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Cabin Temperature (L2)"]
-        },
     },
     "Dichloromethane": {
         # Temporal probabilities
@@ -1136,662 +724,6 @@ probability_dict = {
             'value_ranges': measurement_ranges["Dichloromethane"]
         },
     },
-    "Fuel Cell #1 Current": {
-        # Temporal probabilities
-        "Fuel Cell #1 Current (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.86,
-                    'Exceeds_UpperCautionLimit': 0.12,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.12,
-                    'Exceeds_UpperCautionLimit': 0.85,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.85,
-                    'Exceeds_LowerWarningLimit': 0.12
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.12,
-                    'Exceeds_LowerWarningLimit': 0.86
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #1 Current"]
-        },
-        # Anomaly probabilities
-        "Fuel Cell #1 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.16,
-                    'Exceeds_LowerWarningLimit': 0.82
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #1 Current"]
-        },
-    },
-    "Fuel Cell #1 PQM": {
-        # Temporal probabilities
-        "Fuel Cell #1 PQM (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.87,
-                    'Exceeds_UpperCautionLimit': 0.11,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.11,
-                    'Exceeds_UpperCautionLimit': 0.86,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.86,
-                    'Exceeds_LowerWarningLimit': 0.11
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.11,
-                    'Exceeds_LowerWarningLimit': 0.87
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #1 PQM"]
-        },
-        # Anomaly probabilities
-        "Fuel Cell #1 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.75,
-                    'Exceeds_LowerWarningLimit': 0.12
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #1 PQM"]
-        },
-    },
-    "Fuel Cell #1 Stack Out Temp": {
-        # Temporal probabilities
-        "Fuel Cell #1 Stack Out Temp (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.86,
-                    'Exceeds_UpperCautionLimit': 0.12,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.12,
-                    'Exceeds_UpperCautionLimit': 0.85,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.85,
-                    'Exceeds_LowerWarningLimit': 0.12
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.12,
-                    'Exceeds_LowerWarningLimit': 0.86
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #1 Stack Out Temp"]
-        },
-        # Anomaly probabilities
-        "Fuel Cell #1 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.81,
-                    'Exceeds_UpperCautionLimit': 0.17,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #1 Stack Out Temp"]
-        },
-    },
-    "Fuel Cell #1 Voltage": {
-        # Temporal probabilities
-        "Fuel Cell #1 Voltage (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.85,
-                    'Exceeds_UpperCautionLimit': 0.13,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.13,
-                    'Exceeds_UpperCautionLimit': 0.84,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.84,
-                    'Exceeds_LowerWarningLimit': 0.13
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.13,
-                    'Exceeds_LowerWarningLimit': 0.85
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #1 Voltage"]
-        },
-        # Anomaly probabilities
-        "Fuel Cell #1 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.19,
-                    'Exceeds_LowerWarningLimit': 0.78
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #1 Voltage"]
-        },
-    },
-    "Fuel Cell #2 Current": {
-        # Temporal probabilities
-        "Fuel Cell #2 Current (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.87,
-                    'Exceeds_UpperCautionLimit': 0.11,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.11,
-                    'Exceeds_UpperCautionLimit': 0.86,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.86,
-                    'Exceeds_LowerWarningLimit': 0.11
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.11,
-                    'Exceeds_LowerWarningLimit': 0.87
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Current"]
-        },
-        # Anomaly probabilities
-        "Fuel Cell #2 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.17,
-                    'Exceeds_LowerWarningLimit': 0.81
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Current"]
-        },
-        "Fuel Cell Degrade": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.20,
-                    'Exceeds_LowerWarningLimit': 0.77
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Current"]
-        },
-        "Fuel Cell Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.78,
-                    'Exceeds_LowerWarningLimit': 0.19
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Current"]
-        },
-    },
-    "Fuel Cell #2 PQM": {
-        # Temporal probabilities
-        "Fuel Cell #2 PQM (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.86,
-                    'Exceeds_UpperCautionLimit': 0.12,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.12,
-                    'Exceeds_UpperCautionLimit': 0.85,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.85,
-                    'Exceeds_LowerWarningLimit': 0.12
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.12,
-                    'Exceeds_LowerWarningLimit': 0.86
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 PQM"]
-        },
-        # Anomaly probabilities
-        "Fuel Cell #2 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.74,
-                    'Exceeds_LowerWarningLimit': 0.14
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 PQM"]
-        },
-        "Fuel Cell Degrade": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.22,
-                    'Exceeds_LowerWarningLimit': 0.76
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 PQM"]
-        },
-        "Fuel Cell Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.79,
-                    'Exceeds_LowerWarningLimit': 0.18
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 PQM"]
-        },
-    },
-    "Fuel Cell #2 Stack Out Temp": {
-        # Temporal probabilities
-        "Fuel Cell #2 Stack Out Temp (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.85,
-                    'Exceeds_UpperCautionLimit': 0.13,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.13,
-                    'Exceeds_UpperCautionLimit': 0.84,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.84,
-                    'Exceeds_LowerWarningLimit': 0.13
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.13,
-                    'Exceeds_LowerWarningLimit': 0.85
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Stack Out Temp"]
-        },
-        # Anomaly probabilities
-        "Fuel Cell #2 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.81,
-                    'Exceeds_UpperCautionLimit': 0.17,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Stack Out Temp"]
-        },
-        "Fuel Cell Degrade": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.75,
-                    'Exceeds_LowerWarningLimit': 0.22
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Stack Out Temp"]
-        },
-        "Fuel Cell Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.21,
-                    'Exceeds_UpperCautionLimit': 0.76,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Stack Out Temp"]
-        },
-    },
-    "Fuel Cell #2 Voltage": {
-        # Temporal probabilities
-        "Fuel Cell #2 Voltage (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.86,
-                    'Exceeds_UpperCautionLimit': 0.12,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.12,
-                    'Exceeds_UpperCautionLimit': 0.85,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.85,
-                    'Exceeds_LowerWarningLimit': 0.12
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.12,
-                    'Exceeds_LowerWarningLimit': 0.86
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Voltage"]
-        },
-        # Anomaly probabilities
-        "Fuel Cell #2 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.15,
-                    'Exceeds_LowerWarningLimit': 0.83
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Voltage"]
-        },
-        "Fuel Cell Degrade": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.21,
-                    'Exceeds_LowerWarningLimit': 0.76
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Voltage"]
-        },
-        "Fuel Cell Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.19,
-                    'Exceeds_LowerWarningLimit': 0.79
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Fuel Cell #2 Voltage"]
-        },
-    },
     "H2O (Crew)": {
         # Temporal probabilities
         "H2O (Crew) (t-1)": {
@@ -1835,7 +767,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["H2O (Crew)"]
         },
         # Anomaly probabilities
-        "Electrolysis System Failure (L1)": {
+        "Electrolysis System Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -1854,45 +786,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["H2O (Crew)"]
         },
-        "Electrolysis System Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.74,
-                    'Exceeds_LowerWarningLimit': 0.23
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["H2O (Crew)"]
-        },
-        "RWGSR Malfunction (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.77,
-                    'Exceeds_LowerWarningLimit': 0.20
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["H2O (Crew)"]
-        },
-        "RWGSR Malfunction (L2)": {
+        "RWGSR Malfunction": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -2138,11 +1032,11 @@ probability_dict = {
             'value_ranges': measurement_ranges["Humidity (L1)"]
         },
         # Anomaly probabilities
-        "CDRA Failure (L1)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.20,
-                    'Exceeds_UpperCautionLimit': 0.78,
+                    'Exceeds_UpperWarningLimit': 0.21,
+                    'Exceeds_UpperCautionLimit': 0.77,
                     'Nominal': 0.01989,
                     'Exceeds_LowerCautionLimit': 0.0001,
                     'Exceeds_LowerWarningLimit': 0.00001
@@ -2157,7 +1051,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Humidity (L1)"]
         },
-        "Excess Water Vapor Pressure in Cabin (L1)": {
+        "Excess Water Vapor Pressure in Cabin": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.17,
@@ -2176,50 +1070,12 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Humidity (L1)"]
         },
-        "Main Cabin Fan Failure (L1)": {
+        "Main Cabin Fan Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.22,
                     'Exceeds_UpperCautionLimit': 0.75,
                     'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Humidity (L1)"]
-        },
-        "PDU 4 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.19,
-                    'Exceeds_UpperCautionLimit': 0.78,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Humidity (L1)"]
-        },
-        "PDU 5 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.21,
-                    'Exceeds_UpperCautionLimit': 0.77,
-                    'Nominal': 0.01989,
                     'Exceeds_LowerCautionLimit': 0.0001,
                     'Exceeds_LowerWarningLimit': 0.00001
                 },
@@ -2318,7 +1174,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["Humidity (L2)"]
         },
         # Anomaly probabilities
-        "CDRA Failure (L2)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.20,
@@ -2337,7 +1193,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Humidity (L2)"]
         },
-        "Excess Water Vapor Pressure in Cabin (L2)": {
+        "Excess Water Vapor Pressure in Cabin": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.17,
@@ -2356,50 +1212,12 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Humidity (L2)"]
         },
-        "Main Cabin Fan Failure (L2)": {
+        "Main Cabin Fan Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.22,
                     'Exceeds_UpperCautionLimit': 0.75,
                     'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Humidity (L2)"]
-        },
-        "PDU 4 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.19,
-                    'Exceeds_UpperCautionLimit': 0.78,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Humidity (L2)"]
-        },
-        "PDU 5 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.21,
-                    'Exceeds_UpperCautionLimit': 0.77,
-                    'Nominal': 0.01989,
                     'Exceeds_LowerCautionLimit': 0.0001,
                     'Exceeds_LowerWarningLimit': 0.00001
                 },
@@ -2457,26 +1275,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["LiOH CO2 Saturation"]
         },
         # Anomaly probabilities
-        "CDRA LiOH Canister Saturation (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.83,
-                    'Exceeds_UpperCautionLimit': 0.15,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["LiOH CO2 Saturation"]
-        },
-        "CDRA LiOH Canister Saturation (L2)": {
+        "CDRA LiOH Canister Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.83,
@@ -2539,25 +1338,6 @@ probability_dict = {
             'value_ranges': measurement_ranges["Main Cabin Fan #1"]
         },
         # Anomaly probabilities
-        "Fuel Cell #2 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.17,
-                    'Exceeds_LowerWarningLimit': 0.81
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Main Cabin Fan #1"]
-        },
         "Reduced Main Cabin Fan #1 Capacity": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
@@ -2621,26 +1401,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["Main Cabin Fan #2"]
         },
         # Anomaly probabilities
-        "Fuel Cell #1 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.18,
-                    'Exceeds_LowerWarningLimit': 0.80
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Main Cabin Fan #2"]
-        },
-        "Main Cabin Fan Failure (L1)": {
+        "Main Cabin Fan Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -2659,246 +1420,6 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Main Cabin Fan #2"]
         },
-        "Main Cabin Fan Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.19,
-                    'Exceeds_LowerWarningLimit': 0.78
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Main Cabin Fan #2"]
-        },
-        "PDU 4 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.20,
-                    'Exceeds_LowerWarningLimit': 0.78
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Main Cabin Fan #2"]
-        },
-        "PDU 4 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.20,
-                    'Exceeds_LowerWarningLimit': 0.78
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Main Cabin Fan #2"]
-        },
-        "PDU 5 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.17,
-                    'Exceeds_LowerWarningLimit': 0.81
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Main Cabin Fan #2"]
-        },
-        "PDU 5 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.17,
-                    'Exceeds_LowerWarningLimit': 0.81
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["Main Cabin Fan #2"]
-        },
-    },
-    "MOXIE Compressor Temp": {
-        # Temporal probabilities
-        "MOXIE Compressor Temp (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.85,
-                    'Exceeds_UpperCautionLimit': 0.13,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.13,
-                    'Exceeds_UpperCautionLimit': 0.84,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.84,
-                    'Exceeds_LowerWarningLimit': 0.13
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.13,
-                    'Exceeds_LowerWarningLimit': 0.85
-                },
-            },
-            'value_ranges': measurement_ranges["MOXIE Compressor Temp"]
-        },
-        # Anomaly probabilities
-        "MOXIE Antenna Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.23,
-                    'Exceeds_LowerWarningLimit': 0.75
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["MOXIE Compressor Temp"]
-        },
-        "MOXIE Fan Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.11,
-                    'Exceeds_UpperCautionLimit': 0.76,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["MOXIE Compressor Temp"]
-        },            
-    },
-    "MOXIE Telemetry Quality": {
-        # Temporal probabilities
-        "MOXIE Telemetry Quality (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.86,
-                    'Exceeds_UpperCautionLimit': 0.12,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.12,
-                    'Exceeds_UpperCautionLimit': 0.85,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.85,
-                    'Exceeds_LowerWarningLimit': 0.12
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.12,
-                    'Exceeds_LowerWarningLimit': 0.86
-                },
-            },
-            'value_ranges': measurement_ranges["MOXIE Telemetry Quality"]
-        },
-        # Anomaly probabilities
-        "MOXIE Antenna Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.21,
-                    'Exceeds_LowerWarningLimit': 0.76
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["MOXIE Telemetry Quality"]
-        }, 
     },
     "n_Butanol": {
         # Temporal probabilities
@@ -2982,208 +1503,6 @@ probability_dict = {
             'value_ranges': measurement_ranges["n_Butanol"]
         },
     },
-    "PDU 4 Bank 1": {
-        # Temporal probabilities
-        "PDU 4 Bank 1 (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.87,
-                    'Exceeds_UpperCautionLimit': 0.11,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.11,
-                    'Exceeds_UpperCautionLimit': 0.86,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.86,
-                    'Exceeds_LowerWarningLimit': 0.11
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.11,
-                    'Exceeds_LowerWarningLimit': 0.87
-                },
-            },
-            'value_ranges': measurement_ranges["PDU 4 Bank 1"]
-        },
-        # Anomaly probabilities
-        "Fuel Cell #1 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.18,
-                    'Exceeds_LowerWarningLimit': 0.80
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["PDU 4 Bank 1"]
-        },
-        "PDU 4 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.21,
-                    'Exceeds_LowerWarningLimit': 0.77
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["PDU 4 Bank 1"]
-        },
-        "PDU 4 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.21,
-                    'Exceeds_LowerWarningLimit': 0.77
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["PDU 4 Bank 1"]
-        },
-    },
-    "PDU 5 Bank 1": {
-        # Temporal probabilities
-        "PDU 5 Bank 1 (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.88,
-                    'Exceeds_UpperCautionLimit': 0.1,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.1,
-                    'Exceeds_UpperCautionLimit': 0.87,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.87,
-                    'Exceeds_LowerWarningLimit': 0.1
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.1,
-                    'Exceeds_LowerWarningLimit': 0.88
-                },
-            },
-            'value_ranges': measurement_ranges["PDU 5 Bank 1"]
-        },
-        # Anomaly probabilities
-        "Fuel Cell #2 and PDU Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.17,
-                    'Exceeds_LowerWarningLimit': 0.81
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["PDU 5 Bank 1"]
-        },
-        "PDU 5 Failure (L1)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.22,
-                    'Exceeds_LowerWarningLimit': 0.76
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["PDU 5 Bank 1"]
-        },
-        "PDU 5 Failure (L2)": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.22,
-                    'Exceeds_LowerWarningLimit': 0.76
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["PDU 5 Bank 1"]
-        },
-    },
     "ppCO2 (L1)": {
         # Temporal probabilities
         "ppCO2 (L1) (t-1)": {
@@ -3226,8 +1545,8 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2 (L1)"]
         },
-        # Anomaly probabilities <-- updated to reflect level-specific failures
-        "Biological Filter Saturation (L1)": {
+        # Anomaly probabilities
+        "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.18,
@@ -3246,7 +1565,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2 (L1)"]
         },
-        "CDRA Failure (L1)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.75,
@@ -3265,7 +1584,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2 (L1)"]
         },
-        "CDRA LiOH Canister Saturation (L1)": {
+        "CDRA LiOH Canister Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.20,
@@ -3284,7 +1603,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2 (L1)"]
         },
-        "Excess CO2 in Cabin (L1)": {
+        "Excess CO2 in Cabin": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.81,
@@ -3303,7 +1622,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2 (L1)"]
         },
-        "RWGSR Malfunction (L1)": {
+        "RWGSR Malfunction": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.19,
@@ -3406,8 +1725,8 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2 (L2)"]
         },
-        # Anomaly probabilities <-- updated to reflect level-specific failures
-        "Biological Filter Saturation (L2)": {
+        # Anomaly probabilities
+        "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.18,
@@ -3426,7 +1745,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2 (L2)"]
         },
-        "CDRA Failure (L2)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.75,
@@ -3445,7 +1764,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2 (L2)"]
         },
-        "CDRA LiOH Canister Saturation (L2)": {
+        "CDRA LiOH Canister Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.20,
@@ -3464,7 +1783,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2 (L2)"]
         },
-        "Excess CO2 in Cabin (L2)": {
+        "Excess CO2 in Cabin": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.81,
@@ -3483,7 +1802,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppCO2 (L2)"]
         },
-        "RWGSR Malfunction (L2)": {
+        "RWGSR Malfunction": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.19,
@@ -3546,7 +1865,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppH2 (L1)"]
         },
         # Anomaly probabilities
-        "Excess Gas Leak (L1)": {
+        "Excess Gas Leak": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.15,
@@ -3650,7 +1969,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppH2 (L2)"]
         },
         # Anomaly probabilities
-        "Excess Gas Leak (L2)": {
+        "Excess Gas Leak": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.15,
@@ -3713,7 +2032,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppN2 (L1)"]
         },
         # Anomaly probabilities
-        "Loss of Pressure (L1)": {
+        "Loss of Pressure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -3732,7 +2051,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppN2 (L1)"]
         },
-        "N2 Tank Burst (L1)": {
+        "N2 Tank Burst": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.19,
@@ -3836,7 +2155,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["ppN2 (L2)"]
         },
         # Anomaly probabilities
-        "Loss of Pressure (L2)": {
+        "Loss of Pressure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -3855,7 +2174,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppN2 (L2)"]
         },
-        "N2 Tank Burst (L2)": {
+        "N2 Tank Burst": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.19,
@@ -3917,8 +2236,8 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L1)"]
         },
-        # Anomaly probabilities <-- updated to reflect level-specific failures
-        "Biological Filter Saturation (L1)": {
+        # Anomaly probabilities
+        "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -3937,7 +2256,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L1)"]
         },
-        "CDRA Failure (L1)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -3956,7 +2275,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L1)"]
         },
-        "CDRA LiOH Canister Saturation (L1)": {
+        "CDRA LiOH Canister Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -3975,7 +2294,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L1)"]
         },
-        "Electrolysis System Failure (L1)": {
+        "Electrolysis System Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -3994,7 +2313,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L1)"]
         },
-        "Emergency O2 System Maintenance (L1)": {
+        "Emergency O2 System Maintenance": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4013,7 +2332,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L1)"]
         },
-        "Loss of Pressure (L1)": {
+        "Loss of Pressure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4032,7 +2351,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L1)"]
         },
-        "RWGSR Malfunction (L1)": {
+        "RWGSR Malfunction": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4135,8 +2454,8 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L2)"]
         },
-        # Anomaly probabilities <-- updated to reflect level-specific failures
-        "Biological Filter Saturation (L2)": {
+        # Anomaly probabilities
+        "Biological Filter Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4155,7 +2474,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L2)"]
         },
-        "CDRA Failure (L2)": {
+        "CDRA Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4174,7 +2493,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L2)"]
         },
-        "CDRA LiOH Canister Saturation (L2)": {
+        "CDRA LiOH Canister Saturation": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4193,7 +2512,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L2)"]
         },
-        "Electrolysis System Failure (L2)": {
+        "Electrolysis System Failure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4212,7 +2531,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L2)"]
         },
-        "Emergency O2 System Maintenance (L2)": {
+        "Emergency O2 System Maintenance": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4231,7 +2550,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L2)"]
         },
-        "Loss of Pressure (L2)": {
+        "Loss of Pressure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4250,7 +2569,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["ppO2 (L2)"]
         },
-        "RWGSR Malfunction (L2)": {
+        "RWGSR Malfunction": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4313,7 +2632,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["Pressure (L1)"]
         },
         # Anomaly probabilities
-        "Loss of Pressure (L1)": {
+        "Loss of Pressure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4332,7 +2651,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Pressure (L1)"]
         },
-        "N2 Tank Burst (L1)": {
+        "N2 Tank Burst": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.22,
@@ -4436,7 +2755,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["Pressure (L2)"]
         },
         # Anomaly probabilities
-        "Loss of Pressure (L2)": {
+        "Loss of Pressure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4455,7 +2774,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Pressure (L2)"]
         },
-        "N2 Tank Burst (L2)": {
+        "N2 Tank Burst": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.22,
@@ -4473,88 +2792,6 @@ probability_dict = {
                 },
             },
             'value_ranges': measurement_ranges["Pressure (L2)"]
-        },
-    },
-    "SOXIE Stack Temp": {
-        # Temporal probabilities
-        "SOXIE Stack Temp (t-1)": {
-            'probabilities': {
-                'Exceeds_UpperWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.85,
-                    'Exceeds_UpperCautionLimit': 0.13,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_UpperCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.13,
-                    'Exceeds_UpperCautionLimit': 0.84,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Nominal': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.02,
-                    'Nominal': 0.9598,
-                    'Exceeds_LowerCautionLimit': 0.02,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-                'Exceeds_LowerCautionLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0289,
-                    'Exceeds_LowerCautionLimit': 0.84,
-                    'Exceeds_LowerWarningLimit': 0.13
-                },
-                'Exceeds_LowerWarningLimit': {
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.0189,
-                    'Exceeds_LowerCautionLimit': 0.13,
-                    'Exceeds_LowerWarningLimit': 0.85
-                },
-            },
-            'value_ranges': measurement_ranges["SOXIE Stack Temp"]
-        },
-        # Anomaly probabilities
-        "MOXIE Antenna Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.00001,
-                    'Exceeds_UpperCautionLimit': 0.0001,
-                    'Nominal': 0.01989,
-                    'Exceeds_LowerCautionLimit': 0.25,
-                    'Exceeds_LowerWarningLimit': 0.73
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["SOXIE Stack Temp"]
-        },
-        "MOXIE ECM Failure": {
-            'probabilities': {
-                True: { # probabilities when the anomaly is present
-                    'Exceeds_UpperWarningLimit': 0.20,
-                    'Exceeds_UpperCautionLimit': 0.77,
-                    'Nominal': 0.02989,
-                    'Exceeds_LowerCautionLimit': 0.0001,
-                    'Exceeds_LowerWarningLimit': 0.00001
-                },
-                False: { # probabilities when the anomaly is absent
-                    'Exceeds_UpperWarningLimit': 0.0001,
-                    'Exceeds_UpperCautionLimit': 0.001,
-                    'Nominal': 0.9978,
-                    'Exceeds_LowerCautionLimit': 0.001,
-                    'Exceeds_LowerWarningLimit': 0.0001
-                },
-            },
-            'value_ranges': measurement_ranges["SOXIE Stack Temp"]
         },
     },
     "Total Cabin Pressure (L1)": {
@@ -4600,7 +2837,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["Total Cabin Pressure (L1)"]
         },
         # Anomaly probabilities
-        "Loss of Pressure (L1)": {
+        "Loss of Pressure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4619,7 +2856,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Total Cabin Pressure (L1)"]
         },
-        "N2 Tank Burst (L1)": {
+        "N2 Tank Burst": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.19,
@@ -4723,7 +2960,7 @@ probability_dict = {
             'value_ranges': measurement_ranges["Total Cabin Pressure (L2)"]
         },
         # Anomaly probabilities
-        "Loss of Pressure (L2)": {
+        "Loss of Pressure": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.00001,
@@ -4742,7 +2979,7 @@ probability_dict = {
             },
             'value_ranges': measurement_ranges["Total Cabin Pressure (L2)"]
         },
-        "N2 Tank Burst (L2)": {
+        "N2 Tank Burst": {
             'probabilities': {
                 True: { # probabilities when the anomaly is present
                     'Exceeds_UpperWarningLimit': 0.19,
@@ -5177,7 +3414,7 @@ def process_probability_dict(probability_dict):
 # Split the original probability dictionary into high and low dictionaries for each parameter
 split_probability_dict = process_probability_dict(probability_dict)
 current_dir = os.path.dirname(os.path.abspath(__file__))
-output_file_path = os.path.join(current_dir, "split_probability_dict.json")
+output_file_path = os.path.join(current_dir, "re_split_probability_dict.json")
 
 # Store probability dictionary as a .json file
 with open(output_file_path, "w") as file:

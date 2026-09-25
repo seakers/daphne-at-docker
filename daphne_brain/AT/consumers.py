@@ -26,10 +26,13 @@ class ATConsumer(DaphneConsumer):
     ##### WebSocket event handlers
 
     def __init__(self, *args, **kwargs):
+        print("ATConsumer initialized")
         super().__init__(*args, **kwargs)
         self.queue = Queue()
 
     def connect(self):
+        print("WebSocket connection attempt received")
+
         # First call function from base class, and then add the new behavior
         super(ATConsumer, self).connect()
 
@@ -41,6 +44,7 @@ class ATConsumer(DaphneConsumer):
             socket_timeout=5,
             decode_responses=True
         )
+        print(f"Redis connection established: {r.ping()}")
         r.sadd("all-users", self.channel_name)
         if r.sismember("all-users", self.channel_name) == 1:
             # print(f"{self.channel_name} was successfully added to the all users group. The all users group contains "
