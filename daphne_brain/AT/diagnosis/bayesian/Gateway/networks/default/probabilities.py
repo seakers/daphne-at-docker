@@ -1,4 +1,4 @@
-# reduced_probabilities.py
+# probabilities.py
 # Author: Joshua Elston
 # Last Edited: 08/27/2026
 
@@ -15,9 +15,9 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[6]))
 
-from AT.diagnosis.bayesian.Gateway.reduced_ranges import measurement_ranges
+from AT.diagnosis.bayesian.Gateway.ranges import measurement_ranges
 import json
 import os
 
@@ -1195,7 +1195,7 @@ def process_probability_dict(probability_dict):
 # Split the original probability dictionary into high and low dictionaries for each parameter
 reduced_split_probability_dict = process_probability_dict(reduced_probability_dict)
 current_dir = os.path.dirname(os.path.abspath(__file__))
-output_file_path = os.path.join(current_dir, "reduced_split_probabilities_dict.json")
+output_file_path = os.path.join(current_dir, "split_probabilities_dict.json")
 
 # Store probability dictionary as a .json file
 with open(output_file_path, "w") as file:

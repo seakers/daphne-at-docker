@@ -1,6 +1,6 @@
 # run_logger.py
 # Author: Joshua Elston
-# Last Edited: 09/19/2026
+# Last Edited: 09/25/2026
 
 # Script appends per-run scenario data in a single .json file to compute
 # the entropy and hits@1 (reflecting confidence and accuracy, respectively)
@@ -28,10 +28,23 @@ def _hits_at_k(probabilities: dict[str, float], true_anomaly: Union[str, list], 
 def log_run(
         probabilities: dict[str, float],
         scenario_id: str=None,
-        true_anomaly: Union[str, list]=None,
+        true_anomaly: str=None,
         initial_entropy: float=None,
-        best_evidence: str=None,
+        updated_entropy: float=None,
+        initial_top_anomaly: str=None,
+        updated_top_anomaly: str=None,
+        initial_best_evidence: str=None,
+        updated_best_evidence: str=None,
+        initial_best_evidence_runtime: float=None,
+        updated_best_evidence_runtime: float=None,
+        initial_hits1: int=None,
+        updated_hits1: int=None,
+        initial_hits3: int=None,
+        updated_hits3: int=None,
+        initial_inference_runtime: float=None,
+        updated_inference_runtime: float=None,
         telemetry_snapshot: dict=None,
+        is_followup: bool =False,
         results_dir: Path=_DEFAULT_RESULTS_DIR,
         filename: str='run_results.jsonl',
 ) -> dict:
@@ -40,25 +53,32 @@ def log_run(
     results_path.mkdir(parents=True, exist_ok=True)
     filepath = results_path / filename
 
-    # Derived accuracy metrics
-    top1 = _hits_at_k(probabilities, true_anomaly, k=1)
-    top3 = _hits_at_k(probabilities, true_anomaly, k=3)
-    ranked_anomalies = sorted(probabilities.keys(), key=lambda k: probabilities[k], reverse=True)
-
     record = {
         'timestamp': datetime.now(timezone.utc).isoformat(),
         'scenario_id': scenario_id,
         'true_anomaly': true_anomaly,
-        'true_anomaly_or': isinstance(true_anomaly, list),
+        'inference_type': 'follow_up' if is_followup else 'initial',
         'initial_entropy': initial_entropy,
-        'hits@1': top1,
-        'hits@3': top3,
-        'top_predicted_anomaly': ranked_anomalies[0] if ranked_anomalies else None,
+        'updated_entropy': updated_entropy,
+        'delta_entropy': (round(initial_entropy-updated_entropy, 4)
+                         if initial_entropy is not None and updated_entropy is not None
+                         else None),
+        'initial_top_anomaly': initial_top_anomaly,
+        'updated_top_anomaly': updated_top_anomaly,
+        'initial_hits@1': initial_hits1,
+        'initial_hits@3': initial_hits3,
+        'updated_hits@1': updated_hits1,
+        'updated_hits@3': updated_hits3,
+        'initial_best_evidence': initial_best_evidence,
+        'updated_best_evidence': updated_best_evidence,
+        'initial_best_evidence_runtime': initial_best_evidence_runtime,
+        'updated_best_evidence_runtime': updated_best_evidence_runtime,
+        'initial_inference_runtime': initial_inference_runtime,
+        'updated_inference_runtime': updated_inference_runtime,
         'probabilities': (
             {k: round(v * 100, 2) for k, v in probabilities.items()}
             if probabilities else None
         ),
-        'best_evidence': best_evidence,
         'telemetry_snapshot': (
             {k: round(v, 2) if isinstance(v, float) else v
              for k, v in telemetry_snapshot.items()}

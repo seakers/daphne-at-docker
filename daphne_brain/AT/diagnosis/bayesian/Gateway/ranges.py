@@ -1,4 +1,4 @@
-# reduced_ranges.py
+# ranges.py
 # Author: Joshua Elston
 # Last Edited: 04/20/2026
 

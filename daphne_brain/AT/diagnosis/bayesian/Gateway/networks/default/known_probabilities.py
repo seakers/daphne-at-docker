@@ -1,4 +1,4 @@
-# reduced_known_probabilities.py
+# known_probabilities.py
 # Author: Joshua Elston
 # Last Edited: 08/31/2026
 

@@ -1,58 +1,15 @@
 # user_input.py
 # Author: Joshua Elston
-# Last Edited: 10/29/2025
+# Last Edited: 09/26/2026
 
-# Used to process user inputs and display updated Bayesian network beliefs based on provided evidence --> called in ECLSS_Bayesian_Network.py
-# Changes on 10/29/2025 remove parameters from list of query variables (i.e., purely retaining them as evidence)
+# Used to process telemetry signatures and display updated Bayesian network
+# beliefs based on provided evidence --> called in ECLSS_Bayesian_Network.py
+# Consolidated to only include relevant function
 
-import time
 from AT.diagnosis.bayesian.query_network import query_network
 
-def get_parameter_input(telemetry_values, measurement_ranges):
-    # Prompt the user to enter a parameter and its value
-    parameter = input("Enter a parameter to update its value (or 'exit' to quit): ")
-    # Check the exit criteria
-    if parameter.lower() == 'exit':
-        return None, None
-    elif parameter not in measurement_ranges:
-        print("Invalid parameter. Please try again.")
-        return get_parameter_input(measurement_ranges) # recursively prompt user until 'exit' entered
-    
-    value_input = input(f"Enter a value for {parameter} (leave empty to set to 'Nominal'): ")
-    if not value_input:
-        # Retrieve a value within the 'Nominal' range if no input is provided
-        nominal_range = measurement_ranges[parameter]['Nominal']
-        # Set unentered parameters equal to the midpoint of the nominal range
-        nominal_value = (nominal_range[0] + nominal_range[1]) / 2
-        return parameter, nominal_value # set the parameter value to 'Nominal' if no value entered
-    
-    try:
-        value = float(value_input)
-    except ValueError:
-        print("Invalid input. Please enter a number.")
-        return get_parameter_input(measurement_ranges) # recursively prompt user if an incorrect input is detected
-    
-    return parameter, value
-
 def query_parameters(infer, fan_status, telemetry_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
-    # Collect parameter values from the user, and query the Bayesian network with the updated evidence
-    # while True:
-    #     parameter_values = {}
-
-    #     # Gather parameter values from the user
-    #     while True:
-    #         parameter, value = get_parameter_input(telemetry_values, measurement_ranges)
-    #         if parameter is None:
-    #             return {}, {} # exit if the user types 'exit'
-
-    #         # Store parameter-value pairs in a dictionary (to be passed to the 'query_network' function)
-    #         parameter_values[parameter] = value
-    #         print(f"Collected: {parameter} with value {value}")
-    #         print()
-
-    #         # Ask the user if they want to enter additional parameter values
-    #         if input("Add another parameter? (yes/no): ").strip().lower() != 'yes':
-    #             break
+    # Collect parameter values from telemetry, and query the Bayesian network with the updated evidence
     parameter_values = telemetry_values
     print("Parameter values: ", parameter_values)
     if parameter_values: # proceed if parameters detected
@@ -77,65 +34,16 @@ def query_parameters(infer, fan_status, telemetry_values, measurement_ranges, sp
             print()
         
             formatted_probabilities = {key: float(value) for key, value in normalized_probabilities.items()}
-            # print("Formatted probabilities: ", formatted_probabilities)
             # Return the formatted probabilities to calculate the entropy of the probability distribution
-            return formatted_probabilities, evidence
+            return formatted_probabilities, evidence, runtime
 
         except RuntimeError as e:
             print(f"Error during querying: {e}")
 
-#################### User inputs for additional evidence ####################
-# NOTE: Confirm with Mahima whether or not this function is still useful given the UI scale implemented for the hidden parameters
-def get_evidence_info(hidden_probabilities_dict):
-    # Extract the names of the additional evidence variables (used to verify if variables entered correctly)
-    additional_evidence_variables = []
-
-    for evidence_names, _ in hidden_probabilities_dict.items():
-        additional_evidence_variables.append(evidence_names)
-
-    # Collect additional evidence from the crew
-    hidden_parameter = input(f"Enter the additional evidence being collected: ").strip()
-    # Verify that the variable name entered by the crew matches one of the hidden variables defined in the Bayesian network
-    if hidden_parameter not in additional_evidence_variables:
-        print("Invalid additional evidence. Please try again.")
-        return get_evidence_info(hidden_probabilities_dict) # recursively prompt user to correctly enter additional evidence
-
-    # Collect the state (True/False) of the additional evidence being entered by the crew
-    hidden_state = input("Enter the state (True/False): ").strip()
-    if hidden_state not in ['False', 'True']:
-        print(f"Invalid state for additional evidence variable {hidden_parameter}. Please enter either 'True' or 'False'")
-        return get_evidence_info(hidden_probabilities_dict) # recursively prompt user to correctly enter additional evidence
-
-    return hidden_parameter, hidden_state
 
 def query_additional_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, evidence, best_evidence, additional_evidence):
     # Function takes elements from query_network without the need to remap evidence that should have previous been set and stored there
-
     while True:
-        # NOTE: Commented block used for manually providing additional evidence; may no longer be necessary with Daphne integration
-        # Create a dictionary to store additional evidence added by the crew
-        # additional_evidence = {}
-
-        # Gather additional evidence from the crew
-        # # while True:
-        # #     # hidden_parameter, hidden_state = get_evidence_info(hidden_probabilities_dict)
-
-        #     # Create state mappings for the additional evidence
-        #     additional_evidence_mapping = {
-        #         'False': 0,
-        #         'True': 1
-        #     }
-
-        #     additional_evidence[hidden_parameter] = additional_evidence_mapping[hidden_state]
-        #     print(f"Collected: {hidden_parameter} with state {hidden_state}")
-        #     print()
-
-            # if hidden_parameter != best_evidence:
-            #     if input(f"The additional evidence collected does not provide the most information about the present anomaly. Would you like to add evidence for {best_evidence}? (yes/no): ") != 'yes':
-            #         break
-            # else:
-            #         break
-
         if additional_evidence: # proceed if additional evidence provided
             mapped_additional = {}
             for key, val in additional_evidence.items():
@@ -165,29 +73,6 @@ def query_additional_evidence(infer, measurement_ranges, split_probability_dict,
                         unique_anomalies.add(anomaly_name) # add anomalies
 
             anomalies_to_query = list(unique_anomalies)
-            # Add the No Anomalies Present node to the set of anomalies to be queried based on the telemetry feed evidence
-            # anomalies_to_query.append("No Anomalies Present")
-            # print('Anomalies to query:', anomalies_to_query)
-
-
-            # from AT.diagnosis.bayesian.reduced_anomaly_names import QUERYABLE_ANOMALY_NAMES as ANOMALY_NAMES
-
-            # # Only query anomaly/subsystem nodes that actually exist in the trained
-            # # model graph. This replaces deriving names from split_probability_dict's
-            # # nested keys (fragile — that JSON drifts out of sync with the model's
-            # # actual node names on every rename) with a direct check against the
-            # # graph itself, so a stale name is skipped with a warning instead of
-            # # raising a pgmpy 'node not in digraph' error.
-            # model_nodes = set(infer.model.nodes())
-            # anomalies_to_query = [a for a in ANOMALY_NAMES if a in model_nodes]
-
-            # missing = set(ANOMALY_NAMES) - model_nodes
-            # if missing:
-            #     print(f"Warning: anomaly names not found in model graph, skipping: {missing}")
-
-            # print("done querying till now")
-            # print('```query not using threading```')
-
 
             # Initialize a dictionary to store the probability of each anomaly being present
             anomaly_probabilities = {}
@@ -214,16 +99,6 @@ def query_additional_evidence(infer, measurement_ranges, split_probability_dict,
 
             # Sort normalized anomalies based on the probability of their presence
             sorted_anomalies = sorted(normalized_probabilities.items(), key = lambda x: x[1], reverse = True)
-
-            # Print the sorted anomalies with their probabilities of being present
-            # print()
-            # print("Anomalies ranked by probability of presence (following inclusion of additional evidence):")
-            # for anomaly, prob in sorted_anomalies[:5]:
-            #     if anomaly == 'No Anomalies Present':
-            #         print(f"P({anomaly}): {prob:.6f}")
-            #     else:
-            #         print(f"P({anomaly} = 1): {prob:.6f}")
-            # print()
 
             formatted_probabilities = {key: float(value) for key, value in normalized_probabilities.items()}
             # print(f'Formatted probabilities: {formatted_probabilities}')

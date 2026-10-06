@@ -1,4 +1,4 @@
-# reduced_network_struture.py
+# network_struture.py
 # Author: Joshua Elston
 # Last Edited: 08/27/2026
 

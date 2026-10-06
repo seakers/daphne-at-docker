@@ -1,18 +1,17 @@
 # query_network.py
 # Author: Joshua Elston
-# Last Edited: 09/19/2026
+# Last Edited: 09/26/2026
 
 # Used to query the Bayesian network to compute posterior probabilities based on user inputs
 # for parameter values --> called in ECLSS_Bayesian_Network.py
 # Changes on 10/29/2025 remove parameters from list of query variables (i.e., purely retaining them as evidence)
 # Minor update on 06/08/2026 to correctly added Unknown Anomaly in the set of variables to query for inference
 # Minor update on 09/19/2026 to correct flooring when rounding to 4 decimals
+# Updated on 09/26/2026 to correctly extract runtime and consolidate unused functions
 
 import time, math
 
 def query_network(infer, fan_status, parameter_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict):
-    # Start timing the network query
-    tic = time.time()
     
     # Create state mappings for the high and low parameter variables
     high_state_mapping = {
@@ -124,32 +123,9 @@ def query_network(infer, fan_status, parameter_values, measurement_ranges, split
                 unique_anomalies.add(anomaly_name) # add anomalies
 
     anomalies_to_query = list(unique_anomalies)
-    print("done querying till now")
-    print('```query not using threading```')
     # Add the Unknown Anomaly node to the set of anomalies to be queried based on the telemetry feed evidence
     anomalies_to_query.append("Unknown Anomaly")
     # print('Anomalies to query:', anomalies_to_query)
-
-
-    # from AT.diagnosis.bayesian.reduced_anomaly_names import QUERYABLE_ANOMALY_NAMES as ANOMALY_NAMES
-
-    # # Only query anomaly/subsystem nodes that actually exist in the trained
-    # # model graph. This replaces deriving names from split_probability_dict's
-    # # nested keys (fragile — that JSON drifts out of sync with the model's
-    # # actual node names on every rename) with a direct check against the
-    # # graph itself, so a stale name is skipped with a warning instead of
-    # # raising a pgmpy 'node not in digraph' error.
-    # model_nodes = set(infer.model.nodes())
-    # anomalies_to_query = [a for a in ANOMALY_NAMES if a in model_nodes]
-    # print(f"[TEST HERE] {anomalies_to_query}")
-
-    # missing = set(ANOMALY_NAMES) - model_nodes
-    # if missing:
-    #     print(f"Warning: anomaly names not found in model graph, skipping: {missing}")
-
-    # print("done querying till now")
-    # print('```query not using threading```')
-
 
     # Initialize a dictionary to store the probability of each anomaly being present
     anomaly_probabilities = {}
@@ -166,14 +142,20 @@ def query_network(infer, fan_status, parameter_values, measurement_ranges, split
                 additional_evidence_dict[i] = 1
         # Add the additional evidence to the existing evidence dictionary
         evidence.update(additional_evidence_dict)
+
+    # Start timing the inference speed
+    tic = time.perf_counter()
+
     try:
         for anomaly in anomalies_to_query:
             result = infer.query(variables = [anomaly], evidence = evidence)
-            probability_of_anomaly_present = result.values[1] # [0] --> anomaly absent
-            anomaly_probabilities[anomaly] = probability_of_anomaly_present
+            anomaly_probabilities[anomaly] = result.values[1] # [0] --> anomaly absent
 
     except Exception as e:
         raise RuntimeError(f"Error during inference: {e}")
+
+    toc = time.perf_counter()
+    runtime = round(toc - tic, 3)
 
     # Create a dictionary to store the normalized probabilities of each anomaly
     normalized_probabilities = {}
@@ -199,31 +181,5 @@ def query_network(infer, fan_status, parameter_values, measurement_ranges, split
     # for anomaly, probability in anomaly_probabilities.items():
     #     normalized_probabilities[anomaly] = round(probability / total_anomaly_probabilities, 4)
 
-    toc = time.time()
-    runtime = toc - tic
-
     # Return results and evidence
     return normalized_probabilities, evidence, runtime
-
-def get_evidence_info(hidden_probabilities_dict):
-    # Extract the names of the additional evidence variables (used to verify if variables entered correctly)
-    additional_evidence_variables = []
-
-    for evidence_names, _ in hidden_probabilities_dict.items():
-        additional_evidence_variables.append(evidence_names)
-
-    # Collect additional evidence from the crew
-    hidden_parameter = input(f"Enter the additional evidence being collected: ").strip()
-    # Verify that the variable name entered by the crew matches one of the hidden variables
-    # defined in the Bayesian network
-    if hidden_parameter not in additional_evidence_variables:
-        print("Invalid additional evidence. Please try again.")
-        return get_evidence_info(hidden_probabilities_dict) # recursively prompt user to correctly enter additional evidence
-
-    # Collect the state (True/False) of the additional evidence being entered by the crew
-    hidden_state = input("Enter the state (True/False): ").strip()
-    if hidden_state not in ['False', 'True']:
-        print(f"Invalid state for additional evidence variable {hidden_parameter}. Please enter either 'True' or 'False'")
-        return get_evidence_info(hidden_probabilities_dict) # recursively prompt user to correctly enter additional evidence
-
-    return hidden_parameter, hidden_state

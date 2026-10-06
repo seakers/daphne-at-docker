@@ -25,97 +25,197 @@ import os
 #     os.system('cls' if os.name == 'nt' else 'clear')
 # clear_terminal()
 
-# import time
-# Time script run time
-# start_time = time.time()
-
 import json
 import pickle
 
-from pgmpy.models import BayesianNetwork
+# from pgmpy.models import BayesianNetwork
 # from pgmpy.factors.discrete import TabularCPD <-- NOTE: with parameter learning, model built in learn_probabilities.py
 # (or more efficiently in 'learn_probabilities_threaded.py')
 # NOTE: using VariableElimination instead of BeliefPropagation (can update if found that this is needed)
 from pgmpy.inference import VariableElimination
 
-# Record run results for current timestep
-from AT.diagnosis.bayesian.Gateway.run_logger import log_run
+# Set which Gateway network variant is being used ('default' or 'updated')
+NETWORK_TYPE = os.getenv('NETWORK_TYPE', 'default')
+
+# Map each network variant to its Gateway networks folder, pickled model,
+# and probability dictionaries.
+network_config = {
+    'default': {
+        'folder': os.path.join('networks', 'default'),
+        'model_pickle': os.path.join('default_learned_model.pkl'),
+        'split_probability_dict': 'split_probabilities_dict.json',
+        'hidden_probabilities_dict': 'hidden_probabilities_dict.json',
+    },
+    'updated': {
+        'folder': os.path.join('networks', 'updated'),
+        'model_pickle': os.path.join('updated_learned_model.pkl'),
+        'split_probability_dict': 'updated_split_probabilities_dict.json',
+        'hidden_probabilities_dict': 'updated_hidden_probabilities_dict.json',
+    },
+}
+
+folder = network_config[NETWORK_TYPE]
+
+# Load .json files from the correct Gateway network folder
+def load_network_json(current_dir: str, file_key: str) -> dict:
+    file = os.path.join(current_dir, folder['folder'], folder[file_key])
+    with open(file, "r") as f:
+        return json.load(f)
+
+# Load the pickled, parameter-learned model from the correct Gateway network folder
+def load_model(current_dir: str):
+    model_path = os.path.join(current_dir, folder['folder'], folder['model_pickle'])
+    with open(model_path, 'rb') as f:
+        return pickle.load(f)
 
 # Import dictionaries from other files
-# ----- GATEWAY NETWORK (PARAMETER LEARNING) -----
-from AT.diagnosis.bayesian.Gateway.reduced_network_structure import reduced_network
-from AT.diagnosis.bayesian.Gateway.reduced_ranges import measurement_ranges
+from AT.diagnosis.bayesian.Gateway.ranges import measurement_ranges
 from AT.diagnosis.bayesian.user_input import query_parameters, query_additional_evidence
 from AT.diagnosis.bayesian.reduce_entropy import calculate_entropy, select_best_evidence
+# Record run results for current timestep
+from AT.diagnosis.bayesian.Gateway.run_logger import log_run, _hits_at_k
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# NOTE: Make sure to run both files to ensure that probabilities are updated
-split_probability_dict = os.path.join(current_dir, "reduced_split_probabilities_dict.json")
-hidden_probabilities_dict = os.path.join(current_dir, "reduced_hidden_probabilities_dict.json")
+# Module-level flags (persist across calls within same script instance)
+_initial_inference_done = False
+_stored_initial_entropy = None
+_stored_initial_runtime = None
+_stored_initial_top_anomaly = None
+_stored_initial_best_evidence = None
+_stored_initial_best_evidence_rt = None
+_stored_initial_hits1 = None
+_stored_initial_hits3 = None
 
-def load_initial_model(fan_status, telemetry_values, additional_evidence):
+def _build_inference_engine(current_dir):
+    """Unpickle the current NETWORK_TYPE's learned model and return a VariableElimination engine."""
+    model = load_model(current_dir)
+    return VariableElimination(model)
+
+
+def get_probabilities(telemetry_values, fan_status=None, additional_evidence=None,
+                      calculate_best_evidence=True, should_log=True):
+
+    # Define the anomaly scenario being injected, along with the fan status
+    # NOTE: Make sure anomaly aligns with the scenario in simulation.py
+    #       Additionally, Fan Status is currently a manually-set piece of evidence;
+    #       this should be updated to be read in from BioSim in evidence
+    #       (with any non-zero values denotes as fan_status=1)
+    anomaly_name = 'O2 Delivery System Malfunction (HALO)'
+    fan_status = False
+
+    global _initial_inference_done, _stored_initial_entropy, _stored_initial_runtime, \
+           _stored_initial_top_anomaly, _stored_initial_best_evidence, \
+           _stored_initial_best_evidence_rt, _stored_initial_hits1, _stored_initial_hits3
+    # is_followup = _initial_inference_done
+    is_followup = bool(additional_evidence)
+    print(f"get_probabilities called | followup={is_followup} | additional_evidence={additional_evidence} | should_log={should_log}")
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    split_probability_dict = os.path.join(current_dir, "reduced_split_probabilities_dict.json")
-    hidden_probabilities_dict = os.path.join(current_dir, "reduced_hidden_probabilities_dict.json")
-    with open(split_probability_dict, "r") as file:
-        split_probability_dict = json.load(file)
-    with open(hidden_probabilities_dict, "r") as file:
-        hidden_probabilities_dict = json.load(file)
+    # NOTE: Make sure to run both files to ensure that probabilities are
+    # updated for whichever NETWORK_TYPE the script is running
+    split_probability_dict = load_network_json(current_dir, 'split_probability_dict')
+    hidden_probabilities_dict = load_network_json(current_dir, 'hidden_probabilities_dict')
 
-    # Renamed model to differentiate from other experimental runs
-    model = pickle.load(open(os.path.join(current_dir, "parameter_learning", "model", "final_learned_model.pkl"),'rb'))
+    infer = _build_inference_engine(current_dir)
 
-    # To perform inference on the Bayesian Network, the Variable Elimination algorithm is used.
-    # For more information on VariableElimination within the pgmpy library, refer here:
-    # https://pgmpy.org/exact_infer/ve.html 
-    infer = VariableElimination(model)
-
-    # NOTE: Fan Status is currently a manually-set piece of evidence; this should be updated to be read in from biosim in evidence
-    # (with any non-zero values denotes as fan_status=1)
-    fan_status = True
-
-    # Add user-provided evidence to the Bayesian network and update the beliefs about the presence of anomalies
-    # print(query_parameters(infer, telemetry_values, measurement_ranges, split_probability_dict))
-    probabilities, evidence = query_parameters(infer, fan_status, telemetry_values, measurement_ranges, split_probability_dict, additional_evidence, hidden_probabilities_dict)
-
-    return infer, probabilities, evidence, split_probability_dict, hidden_probabilities_dict
-
-def get_probabilities(telemetry_values, fan_status=None, additional_evidence=None, calculate_best_evidence=True, should_log=True):
-
-    infer, probabilities, evidence, split_probability_dict, hidden_probabilities_dict = load_initial_model(fan_status, telemetry_values, additional_evidence)
+    probabilities, evidence, inference_runtime = query_parameters(
+        infer, fan_status, telemetry_values, measurement_ranges,
+        split_probability_dict, additional_evidence, hidden_probabilities_dict
+    )
 
     initial_entropy = None
     best_evidence = None
+    best_evidence_runtime = None
+    post_evidence_entropy = None
+    updated_inference_runtime = None
+    current_top_anomaly = None
+    current_hits1 = None
+    current_hits3 = None
 
-    # Only calculate best evidence if requested
-    if calculate_best_evidence and probabilities:
-        initial_probabilities = list(probabilities.values())
-        initial_entropy = calculate_entropy(initial_probabilities)
-        print(f'Initial entropy: {initial_entropy}')
-        print()
-        best_evidence = select_best_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, evidence, initial_entropy, probabilities)
-    
-    hidden_components = load_hidden_components()
-
-    # NOTE: UPDATE THE SCENARIO ID AND TRUE ANOMALY FIELDS WHEN STORING RUN RESULTS
-    # Store run results for just telemetry feed values (without additional evidence)
+    if probabilities:
+        ranked = sorted(probabilities.keys(), key=lambda k: probabilities[k], reverse=True)
+        current_top_anomaly = ranked[0] if ranked else None
+        current_hits1 = _hits_at_k(probabilities, anomaly_name, k=1)
+        current_hits3 = _hits_at_k(probabilities, anomaly_name, k=3)
+ 
+        entropy = calculate_entropy(list(probabilities.values()))
+        if is_followup:
+            post_evidence_entropy = entropy
+            updated_inference_runtime = inference_runtime
+            initial_entropy = _stored_initial_entropy
+            print(f'Updated entropy: {post_evidence_entropy}\n')
+        else:
+            initial_entropy = entropy
+            _stored_initial_entropy = entropy
+            print(f'Initial entropy: {initial_entropy}\n')
+            _stored_initial_runtime = inference_runtime
+            _stored_initial_top_anomaly = current_top_anomaly
+            _stored_initial_hits1 = current_hits1
+            _stored_initial_hits3 = current_hits3
+ 
+        # if not _initial_inference_done:
+        #     _initial_inference_done = True
+        #     _stored_initial_runtime = inference_runtime
+ 
+        if calculate_best_evidence:
+            best_evidence, best_evidence_runtime = select_best_evidence(
+                infer, measurement_ranges, split_probability_dict,
+                hidden_probabilities_dict, evidence, entropy, probabilities
+            )
+            if not is_followup:
+                _stored_initial_best_evidence = best_evidence
+                _stored_initial_best_evidence_rt = best_evidence_runtime
+    else:
+        print('No evidence entered. Exiting script.')
+ 
     record = None
+    results_filename = f'{NETWORK_TYPE}_results.jsonl'
+ 
     if should_log:
         record = log_run(
-            scenario_id='vccr_sbs_ihab.biosim',
-            true_anomaly='VCCR Sorbent Bed Saturation',
+            scenario_id=anomaly_name,
+            true_anomaly=anomaly_name,
             probabilities=probabilities,
             initial_entropy=initial_entropy,
-            best_evidence=best_evidence,
-            telemetry_snapshot=telemetry_values
+            updated_entropy=post_evidence_entropy,
+            initial_top_anomaly=_stored_initial_top_anomaly,
+            updated_top_anomaly=current_top_anomaly if is_followup else None,
+            initial_best_evidence=_stored_initial_best_evidence,
+            updated_best_evidence=best_evidence if is_followup else None,
+            initial_best_evidence_runtime=_stored_initial_best_evidence_rt,
+            updated_best_evidence_runtime=best_evidence_runtime if is_followup else None,
+            initial_hits1=_stored_initial_hits1,
+            initial_hits3=_stored_initial_hits3,
+            updated_hits1=current_hits1 if is_followup else None,
+            updated_hits3=current_hits3 if is_followup else None,
+            initial_inference_runtime=_stored_initial_runtime,
+            updated_inference_runtime=updated_inference_runtime if is_followup else None,
+            telemetry_snapshot=telemetry_values,
+            is_followup=is_followup,
+            filename=results_filename
         )
         print(json.dumps(record, indent=2))
-
+ 
+    hidden_components = load_hidden_components()
+ 
     return probabilities, best_evidence, hidden_components
 
+
 def update_probabilities_additional(telemetry_values, additional_evidence, fan_status=None, calculate_best_evidence=True):
-    # Read .json files with probability dictionary (such that these do not need to computed each time the script is ran)
-    infer, probabilities, evidence, split_probability_dict, hidden_probabilities_dict = load_initial_model(fan_status, telemetry_values, additional_evidence)
+    # NOTE: Fan Status is currently a manually-set piece of evidence; this should be updated to be
+    # read in from BioSim in evidence (with any non-zero value denoted as fan_status=1)
+    fan_status = True
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Read .json probability dictionaries for the current NETWORK_TYPE
+    split_probability_dict = load_network_json(current_dir, 'split_probability_dict')
+    hidden_probabilities_dict = load_network_json(current_dir, 'hidden_probabilities_dict')
+
+    infer = _build_inference_engine(current_dir)
+
+    probabilities, evidence, inference_runtime = query_parameters(
+        infer, fan_status, telemetry_values, measurement_ranges,
+        split_probability_dict, additional_evidence, hidden_probabilities_dict
+    )    
 
     if probabilities:
         # Calculate the initial entropy of the probability distribution based on only readings from the telemetry feed
@@ -151,18 +251,9 @@ def load_hidden_components():
         list: A list of all hidden component names
     """
     try:
-        # Get the file path relative to the current script
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(script_dir, 'hidden_probabilities_dict.json')
-        
-        # Open and load the JSON file
-        with open(file_path, 'r') as file:
-            hidden_probabilities = json.load(file)
-        
-        # Extract all top-level keys (hidden component names)
-        hidden_components = list(hidden_probabilities.keys())
-        
-        return hidden_components
+        hidden_probabilities = load_network_json(script_dir, 'hidden_probabilities_dict')
+        return list(hidden_probabilities.keys())
     except Exception as e:
         print(f"Error loading hidden components: {e}")
         return []
@@ -175,6 +266,6 @@ print("Hidden Components:")
 for component in HIDDEN_COMPONENTS:
     print(f" - {component}")
 
-test_model = BayesianNetwork(reduced_network)
+test_model = load_model(os.path.dirname(os.path.abspath(__file__)))
 print("Number of nodes:", test_model.number_of_nodes())
 print("Number of edges:", test_model.number_of_edges())

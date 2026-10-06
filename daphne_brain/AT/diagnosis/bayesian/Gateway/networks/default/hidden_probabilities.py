@@ -1,4 +1,4 @@
-# reduced_hidden_probabilities.py
+# hidden_probabilities.py
 # Author: Joshua Elston
 # Last Edited: 08/27/2026
 
@@ -163,7 +163,7 @@ def check_probabilities_sum(probability_dict):
 check_probabilities_sum(reduced_hidden_probabilities_dict)
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-output_file_path = os.path.join(current_dir, "reduced_hidden_probabilities_dict.json")
+output_file_path = os.path.join(current_dir, "hidden_probabilities_dict.json")
 
 # Store hidden probabilities dictionary as a .json file
 with open(output_file_path, "w") as file:

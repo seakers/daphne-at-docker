@@ -1,4 +1,4 @@
-# reduced_prior_probabilities.py
+# updated_prior_probabilities.py
 # Author: Joshua Elston
 # Last Edited: 03/06/2026
 
@@ -23,5 +23,5 @@ reduced_prior_probabilities = {
     "Excess CO2 in Cabin (HALO)": 10**-4,
     "Loss of Pressure (IHab)": 10**-5,
     "Loss of Pressure (HALO)": 10**-5,
-    # "Unknown Anomaly": 10**-4
+    "O2 Tank Leak": 10**-4 # NOTE: NEW
 }

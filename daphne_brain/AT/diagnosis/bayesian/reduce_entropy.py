@@ -1,6 +1,6 @@
 # reduce_entropy.py
 # Author: Joshua Elston
-# Last Edited: 06/08/2026
+# Last Edited: 09/26/2026
 
 # Allows VA to intelligently select pieces of additional evidence to obtain to reduce the entropy in the current
 # probabilitiy distribution (to maximize information gain)
@@ -8,6 +8,8 @@
 # Changes on 04/20/2026 seek to introduce threading to compute inference more quickly
 # Minor updates on 06/08/2026 to correctly include Unknown Anomaly in the set of variables to query for inference
 # and to prevent a math domain error for log values of 0 (occurrs when Unknown Anomaly has near-100% probability)
+# Updated to include best_evidence_runtime output, along with establishing framework
+# for testing multiprocessing speedup times
 
 import time
 import math
@@ -49,26 +51,6 @@ def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, 
     anomalies_to_query.append("Unknown Anomaly")
     # print('Anomalies to query:', anomalies_to_query)
 
-
-    # from AT.diagnosis.bayesian.reduced_anomaly_names import QUERYABLE_ANOMALY_NAMES as ANOMALY_NAMES
-
-    # # Only query anomaly/subsystem nodes that actually exist in the trained
-    # # model graph. This replaces deriving names from split_probability_dict's
-    # # nested keys (fragile — that JSON drifts out of sync with the model's
-    # # actual node names on every rename) with a direct check against the
-    # # graph itself, so a stale name is skipped with a warning instead of
-    # # raising a pgmpy 'node not in digraph' error.
-    # model_nodes = set(infer.model.nodes())
-    # anomalies_to_query = [a for a in ANOMALY_NAMES if a in model_nodes]
-
-    # missing = set(ANOMALY_NAMES) - model_nodes
-    # if missing:
-    #     print(f"Warning: anomaly names not found in model graph, skipping: {missing}")
-
-    # print("done querying till now")
-    # print('```query not using threading```')
-
-
     # Create a worker function that runs a single infer.query call for one anomaly
     # (i.e., piece of hidden evidence)
     def query_single_anomaly(anomaly):
@@ -96,19 +78,6 @@ def hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, 
     for anomaly, probability in anomaly_probabilities.items():
         normalized_probabilities[anomaly] = probability / total_anomaly_probabilities
 
-    # Sort anomalies based on the probability of their presence
-    # sorted_anomalies = sorted(normalized_probabilities.items(), key = lambda x: x[1], reverse = True)
-
-    # Print the sorted anomalies with their probabilities of being present
-    # print()
-    # print("Anomalies ranked by probability of presence:")
-    # for anomaly, prob in sorted_anomalies[:5]:
-    #     if anomaly == 'No Anomalies Present':
-    #         print(f"P({anomaly}): {prob:.6f}")
-    #     else:
-    #         print(f"P({anomaly} = 1): {prob:.6f}")
-    # print()
-
     formatted_probabilities = {key: float(value) for key, value in normalized_probabilities.items()}
     # print(f'Formatted probabilities: {formatted_probabilities}')
 
@@ -127,25 +96,32 @@ def calculate_entropy(probabilities):
         elif prob > 1:
             print(f"Warning: probability {prob} exceeds 1, skipping.")
             continue
-        entropy_distribution += -1 * prob * math.log(prob)
-        entropy_distribution = round(entropy_distribution, 8) # MAY DELETE ROUNDING LATER, MORE FOR READABILITY
+        entropy_distribution += -1 * prob * math.log2(prob)
+        entropy_distribution = round(entropy_distribution, 4)
 
     return entropy_distribution
 
-def select_best_evidence(infer, measurement_ranges, split_probability_dict, hidden_probabilities_dict, current_evidence, initial_entropy, probabilities, top_n_anomalies=10):
-    # Initialize variables for the reduction in entropy and additional evidence being iterated through
-    best_entropy_reduction = float('-inf')
-    best_evidence = None
+def select_best_evidence(infer, measurement_ranges, split_probability_dict,
+                         hidden_probabilities_dict, current_evidence,
+                         initial_entropy, probabilities,
+                         top_n_anomalies=10, n_workers=None,
+                         benchmark_threads=False,
+                         benchmark_worker_counts=(None, 1, 2, 3, 4, 5, 10)):
+    """
+    n_workers: worker count actually used for the production evaluation (None = serial, no threading setup).
+               This is the number whose timing becomes the returned best_evidence_runtime.
+    benchmark_threads: if True, additionally re-runs the evaluation once per count in benchmark_worker_counts
+               purely to print comparative timings. This is diagnostic only -- it does not affect
+               best_evidence/best_evidence_runtime and roughly multiplies runtime by len(benchmark_worker_counts),
+               so leave it off outside of explicit benchmarking runs.
+    """
 
-    tic = time.time()
-    
     # Get top N most probable anomalies
     top_anomalies = sorted(probabilities.items(), key=lambda x: x[1], reverse=True)[:top_n_anomalies]
     top_anomaly_names = set([name for name, _ in top_anomalies])
     
     print(f"Top {top_n_anomalies} anomalies: {[f'{name} ({prob:.4f})' for name, prob in top_anomalies]}")
     
-
     # NOTE: NEW CODE ON 09/16/2026
     # Filter hidden components to those relevant to the present diagnosis
     FAULT_ISOLATION_NODES = [
@@ -184,7 +160,7 @@ def select_best_evidence(infer, measurement_ranges, split_probability_dict, hidd
     
     if not relevant_hidden_components:
         print("No relevant hidden components found for top anomalies")
-        return None
+        return None, 0.0
 
     # Add worker function to use threading correctly (of all pieces of evidence in parallel rather
     # than sequential passing as before)
@@ -197,76 +173,86 @@ def select_best_evidence(infer, measurement_ranges, split_probability_dict, hidd
             evidence = current_evidence.copy()
             new_probabilities = hidden_queries(infer, measurement_ranges, split_probability_dict, evidence, potential_evidence, outcome)
             entropy = calculate_entropy(new_probabilities.values())
-            entropy = round(entropy, 8)
+            entropy = round(entropy, 4)
             entropies.append(entropy)
 
         average_entropy = ((1 - hp_equals_1) * entropies[0]) + (hp_equals_1 * entropies[1])
-        average_entropy = round(average_entropy, 8)
+        average_entropy = round(average_entropy, 4)
         delta_h = initial_entropy - average_entropy
-        delta_h = round(delta_h, 8)
+        delta_h = round(delta_h, 4)
         return potential_evidence, delta_h
-    
-    # Run benchmark across worker counts
-    worker_counts = [None, 1, 2, 3, 4, 5, 10]
-    serial_time = None
-    total_inference_times = {}
 
-    for n_workers in worker_counts:
-        # Run all anomaly queries with n worker threads. If n_workers=None, queries will be
-        # executed in series (NOT the same thing as n=1)
-        label = 'Serial (no threads)' if n_workers is None else f'{n_workers} workers'
-        component_results = {}
-        inference_start = time.perf_counter()
-
-        try:
-            if n_workers is None:
-                # Serial baseline (no threading)
-                for component in relevant_hidden_components:
-                    name, delta_h = evaluate_hidden_component(component)
-                    component_results[name] = delta_h
-            else:
-                # Use theading to perform multiple hidden parameter queries at once
-                # (can also perform threading with one worker, still requires threading setup)
-                with ThreadPoolExecutor(max_workers=n_workers) as executor:
+    # Shared serial/threaded dispatch, reused by both the production pass below and the optional
+    # benchmark sweep, so the two paths can't drift out of sync with each other.
+    def evaluate_all_components(worker_count):
+        # If worker_count=None, queries are executed in series (NOT the same thing as worker_count=1,
+        # which still pays threading setup cost).
+        results = {}
+        if worker_count is None:
+            for component in relevant_hidden_components:
+                name, delta_h = evaluate_hidden_component(component)
+                results[name] = delta_h
+        else:
+            try:
+                with ThreadPoolExecutor(max_workers=worker_count) as executor:
                     futures = {
                         executor.submit(evaluate_hidden_component, component): component
                         for component in relevant_hidden_components
                     }
-
                     for future in as_completed(futures):
                         component = futures[future]
                         try:
                             name, delta_h = future.result()
-                            component_results[name] = delta_h
+                            results[name] = delta_h
                         except Exception as e:
                             raise RuntimeError(f"Error evaluating component '{component}': {e}")
-        except RuntimeError:
-            raise  # re-raise so the caller sees it
-        except Exception as e:
-            raise RuntimeError(f"Error during threaded inference: {e}")
+            except RuntimeError:
+                raise  # re-raise so the caller sees it
+            except Exception as e:
+                raise RuntimeError(f"Error during threaded inference: {e}")
+        return results
 
-        # Record elapsed time to perform inference
-        elapsed = time.perf_counter() - inference_start
-        total_inference_times[label] = elapsed
+    # Production pass: timing becomes best_evidence_runtime
+    tic = time.perf_counter()
+    component_results = evaluate_all_components(n_workers)
+    toc = time.perf_counter()
+    best_evidence_runtime = toc - tic
 
-        if serial_time is None:
-            serial_time = elapsed
-            speedup_str = '1.00x (baseline)'
-        else:
-            speedup = serial_time / elapsed if elapsed > 0 else float('inf')
-            speedup_str = f'{speedup:.2f}x'
-
-        print(f'{label}: {elapsed:12.4f} {speedup_str}')
-
-    # Use the results from the serial baseline run to select the best evidence
+    best_entropy_reduction = float('-inf')
+    best_evidence = None
     for component, delta_h in component_results.items():
         if delta_h > best_entropy_reduction:
             best_entropy_reduction = delta_h
             best_evidence = component
             print(f"  New best: {best_evidence} (ΔH = {delta_h:.6f})")
-    
-    elapsed = time.time() - tic
-    print(f"Best evidence selection completed in {elapsed:.2f}s (evaluated {len(relevant_hidden_components)} components)")
+
+    print(f"Best evidence selection completed in {best_evidence_runtime:.2f}s (evaluated {len(relevant_hidden_components)} components, "
+          f"{'serial' if n_workers is None else f'{n_workers} workers'})")
     print(f"Selected best evidence: {best_evidence} with entropy reduction: {best_entropy_reduction:.6f}")
 
-    return best_evidence
+    # Optional diagnostic: compare runtime across different thread counts
+    # Off by default, re-evaluates every component once per entry in
+    # benchmark_worker_counts, so total runtime is roughly multiplied
+    # by len(benchmark_worker_counts). Results are print-only and do
+    # not affect best_evidence/best_evidence_runtime.
+    if benchmark_threads:
+        serial_time = None
+        total_inference_times = {}
+
+        for worker_count in benchmark_worker_counts:
+            label = 'Serial (no threads)' if worker_count is None else f'{worker_count} workers'
+            bench_start = time.perf_counter()
+            evaluate_all_components(worker_count)
+            bench_elapsed = time.perf_counter() - bench_start
+            total_inference_times[label] = bench_elapsed
+
+            if serial_time is None:
+                serial_time = bench_elapsed
+                speedup_str = '1.00x (baseline)'
+            else:
+                speedup = serial_time / bench_elapsed if bench_elapsed > 0 else float('inf')
+                speedup_str = f'{speedup:.2f}x'
+
+            print(f'{label}: {bench_elapsed:12.4f}s {speedup_str}')
+
+    return best_evidence, best_evidence_runtime
